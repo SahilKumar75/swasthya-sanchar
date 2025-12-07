@@ -1,0 +1,41 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "/Users/sahilkumarsingh/Desktop/swasthya-sanchar/contracts/contracts/HealthRecords.sol": {
+      "lastModificationDate": 1765130176591,
+      "contentHash": "6e127b3b9e5feda4855e7e76a9a121a5",
+      "sourceName": "contracts/contracts/HealthRecords.sol",
+      "solcConfig": {
+        "version": "0.8.24",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.24"
+      ],
+      "artifacts": [
+        "HealthRecords"
+      ]
+    }
+  }
+}
