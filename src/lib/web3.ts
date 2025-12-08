@@ -32,6 +32,26 @@ export function isMetaMaskInstalled(): boolean {
   return typeof (window as any).ethereum !== "undefined";
 }
 
+// Logout - set flag in localStorage to prevent auto-reconnect
+export function disconnectWallet(): void {
+  if (typeof window !== "undefined") {
+    localStorage.setItem("wallet_disconnected", "true");
+  }
+}
+
+// Clear logout flag - called when user explicitly connects
+export function clearDisconnectFlag(): void {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("wallet_disconnected");
+  }
+}
+
+// Check if user has logged out
+export function isWalletDisconnected(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem("wallet_disconnected") === "true";
+}
+
 // Connect to MetaMask and get the current account
 export async function connectWallet(): Promise<WalletConnection | null> {
   if (!isMetaMaskInstalled()) {
@@ -81,6 +101,9 @@ export async function connectWallet(): Promise<WalletConnection | null> {
       }
     }
 
+    // Clear logout flag when user explicitly connects
+    clearDisconnectFlag();
+    
     // Request account access
     const accounts = await (window as any).ethereum.request({
       method: "eth_requestAccounts",
@@ -119,6 +142,9 @@ export async function connectWallet(): Promise<WalletConnection | null> {
 // Get the current connected account without requesting connection
 export async function getCurrentAccount(): Promise<`0x${string}` | null> {
   if (!isMetaMaskInstalled()) return null;
+  
+  // Check if user has logged out
+  if (isWalletDisconnected()) return null;
 
   try {
     const accounts = await (window as any).ethereum.request({

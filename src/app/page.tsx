@@ -1,7 +1,78 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FeatureShowcase } from "@/components/landing/FeatureShowcase";
+import { getCurrentAccount, readContract, connectWallet } from "@/lib/web3";
 
 export default function Home() {
+  const router = useRouter();
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    async function checkAuthAndRedirect() {
+      try {
+        const account = await getCurrentAccount();
+        if (!account) {
+          setChecking(false);
+          return;
+        }
+
+        // User has wallet connected, check their role
+        const connection = await connectWallet();
+        
+        if (!connection) {
+          setChecking(false);
+          return;
+        }
+        
+        // Check if patient
+        try {
+          const patient = await readContract(connection, "getPatient", [account]);
+          if (patient && (patient as any).isRegistered) {
+            // Registered patient → redirect to dashboard
+            router.push("/patient");
+            return;
+          }
+        } catch (e) {
+          // Not a patient, check if doctor
+        }
+
+        // Check if doctor
+        try {
+          const isDoctor = await readContract(connection, "authorizedDoctors", [account]);
+          if (isDoctor) {
+            // Authorized doctor → redirect to doctor portal
+            router.push("/doctor");
+            return;
+          }
+        } catch (e) {
+          // Not authorized
+        }
+
+        // Wallet connected but no role → stay on landing
+        setChecking(false);
+      } catch (error) {
+        console.error("Auth check error:", error);
+        setChecking(false);
+      }
+    }
+
+    checkAuthAndRedirect();
+  }, [router]);
+
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-neutral-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neutral-900 dark:border-neutral-100 mx-auto mb-4"></div>
+          <p className="text-neutral-600 dark:text-neutral-400">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-white dark:bg-neutral-900">
       {/* Hero Section */}

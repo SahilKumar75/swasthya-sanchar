@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { connectWallet, getCurrentAccount, formatAddress, onAccountsChanged, readContract, type WalletConnection } from "@/lib/web3";
+import { useRouter } from "next/navigation";
+import { connectWallet, getCurrentAccount, formatAddress, onAccountsChanged, readContract, disconnectWallet, type WalletConnection } from "@/lib/web3";
 import { HEALTH_RECORDS_ABI, HEALTH_RECORDS_ADDRESS } from "@/lib/contracts";
 import { mockMedicalRecords, type MedicalRecord } from "@/lib/mockRecords";
 
 export default function DoctorPortal() {
+  const router = useRouter();
   const [connection, setConnection] = useState<WalletConnection | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -17,15 +19,19 @@ export default function DoctorPortal() {
   const [accessError, setAccessError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check if already connected on mount
+    // AUTH GUARD: Check wallet connection on mount
     async function checkConnection() {
       const account = await getCurrentAccount();
-      if (account) {
-        const conn = await connectWallet();
-        setConnection(conn);
-        if (conn) {
-          await checkAuthorizationStatus(conn);
-        }
+      if (!account) {
+        // No wallet connected - redirect to landing
+        router.push("/");
+        return;
+      }
+      
+      const conn = await connectWallet();
+      setConnection(conn);
+      if (conn) {
+        await checkAuthorizationStatus(conn);
       }
       setLoading(false);
     }
@@ -35,8 +41,10 @@ export default function DoctorPortal() {
     // Listen for account changes
     const handleAccountsChanged = async (accounts: string[]) => {
       if (accounts.length === 0) {
+        // Wallet disconnected - redirect to landing
         setConnection(null);
         setIsAuthorized(false);
+        router.push("/");
       } else {
         const conn = await connectWallet();
         setConnection(conn);
@@ -47,7 +55,7 @@ export default function DoctorPortal() {
     };
 
     onAccountsChanged(handleAccountsChanged);
-  }, []);
+  }, [router]);
 
   async function checkAuthorizationStatus(conn: WalletConnection) {
     try {
@@ -67,6 +75,16 @@ export default function DoctorPortal() {
     const conn = await connectWallet();
     setConnection(conn);
     setLoading(false);
+  };
+
+  const handleLogout = () => {
+    // Set logout flag and clear connection state
+    disconnectWallet();
+    setConnection(null);
+    setIsAuthorized(false);
+    setPatientRecords(null);
+    setAccessError(null);
+    router.push("/");
   };
 
   async function handleCheckAccess() {
@@ -121,6 +139,12 @@ export default function DoctorPortal() {
                 <span className="px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 rounded-lg font-mono text-sm border border-neutral-200 dark:border-neutral-700">
                   {formatAddress(connection.account)}
                 </span>
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition border border-neutral-200 dark:border-neutral-700"
+                >
+                  Logout
+                </button>
               </div>
             ) : (
               <button

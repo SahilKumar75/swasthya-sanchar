@@ -2,44 +2,103 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
-import { connectWallet, getCurrentAccount, formatAddress, onAccountsChanged, type WalletConnection } from "@/lib/web3";
+import { connectWallet, getCurrentAccount, formatAddress, onAccountsChanged, readContract, disconnectWallet, type WalletConnection } from "@/lib/web3";
 import { mockEmergencyProfile } from "@/lib/mockRecords";
 
 export default function EmergencyProfilePage() {
+  const router = useRouter();
   const [connection, setConnection] = useState<WalletConnection | null>(null);
   const [loading, setLoading] = useState(true);
   const [qrGenerated, setQrGenerated] = useState(false);
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [checkingRegistration, setCheckingRegistration] = useState(true);
 
   useEffect(() => {
+    // AUTH GUARD: Check wallet connection and registration on mount
     async function checkConnection() {
       const account = await getCurrentAccount();
-      if (account) {
-        const conn = await connectWallet();
-        setConnection(conn);
+      if (!account) {
+        // No wallet connected - redirect to landing
+        router.push("/");
+        return;
       }
+      
+      const conn = await connectWallet();
+      setConnection(conn);
+      
+      if (conn) {
+        // Check if patient is registered
+        try {
+          const result = await readContract(conn, "getPatient", [conn.account]);
+          const patient = result as any;
+          const isPatientRegistered = patient && patient.name && patient.name.trim() !== "" && patient.name !== "0x" && patient.name !== "0x0000000000000000000000000000000000000000000000000000000000000000";
+          
+          if (!isPatientRegistered) {
+            // Not registered - redirect to patient portal to register first
+            alert("Please register as a patient first before accessing emergency features.");
+            router.push("/patient");
+            return;
+          }
+          
+          setIsRegistered(true);
+        } catch (error) {
+          console.error("Error checking registration:", error);
+          router.push("/patient");
+          return;
+        }
+      }
+      
       setLoading(false);
+      setCheckingRegistration(false);
     }
 
     checkConnection();
 
     const handleAccountsChanged = async (accounts: string[]) => {
       if (accounts.length === 0) {
+        // Wallet disconnected - redirect to landing
         setConnection(null);
+        router.push("/");
       } else {
         const conn = await connectWallet();
         setConnection(conn);
+        // Re-check registration
+        if (conn) {
+          try {
+            const result = await readContract(conn, "getPatient", [conn.account]);
+            const patient = result as any;
+            const isPatientRegistered = patient && patient.name && patient.name.trim() !== "" && patient.name !== "0x";
+            
+            if (!isPatientRegistered) {
+              router.push("/patient");
+            } else {
+              setIsRegistered(true);
+            }
+          } catch (error) {
+            router.push("/patient");
+          }
+        }
       }
     };
 
     onAccountsChanged(handleAccountsChanged);
-  }, []);
+  }, [router]);
 
   const handleConnect = async () => {
     setLoading(true);
     const conn = await connectWallet();
     setConnection(conn);
     setLoading(false);
+  };
+
+  const handleLogout = () => {
+    // Set logout flag and clear connection state
+    disconnectWallet();
+    setConnection(null);
+    setIsRegistered(false);
+    router.push("/");
   };
 
   const handleGenerateQR = () => {
@@ -53,26 +112,44 @@ export default function EmergencyProfilePage() {
     return `${baseUrl}/emergency/${connection.account}`;
   };
 
+  // Show loading state while checking registration
+  if (checkingRegistration) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-neutral-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neutral-900 dark:border-neutral-100 mx-auto mb-4"></div>
+          <p className="text-neutral-600 dark:text-neutral-400">Verifying registration...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white dark:bg-neutral-900">
       <header className="border-b border-neutral-200 dark:border-neutral-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <Link href="/patient" className="text-2xl font-bold text-red-600">
+          <Link href="/patient" className="text-xl font-bold text-neutral-900 dark:text-neutral-50 hover:text-neutral-700 dark:hover:text-neutral-300 transition">
             ← Back to Patient Portal
           </Link>
           <div>
             {connection ? (
               <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-600">Connected:</span>
-                <span className="px-4 py-2 bg-red-100 text-red-700 rounded-lg font-mono text-sm">
+                <span className="text-sm text-neutral-600 dark:text-neutral-400">Connected:</span>
+                <span className="px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 rounded-lg font-mono text-sm border border-neutral-200 dark:border-neutral-700">
                   {formatAddress(connection.account)}
                 </span>
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition border border-neutral-200 dark:border-neutral-700"
+                >
+                  Logout
+                </button>
               </div>
             ) : (
               <button
                 onClick={handleConnect}
                 disabled={loading}
-                className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+                className="px-4 py-2 bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition disabled:opacity-50"
               >
                 {loading ? "Connecting..." : "Connect Wallet"}
               </button>
