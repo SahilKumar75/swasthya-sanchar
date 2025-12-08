@@ -78,21 +78,32 @@ export default function PatientPortal() {
       // For emergency hash, we'll use an empty string for now (can be updated later)
       const emergencyHash = "";
       
+      console.log("Registering patient:", { name: formData.name, dateTimestamp });
+      
       await writeContract(
         connection,
         "registerPatient",
         [formData.name, dateTimestamp, emergencyHash]
       );
 
-      // Wait a moment and check registration status
+      console.log("Transaction completed, waiting for blockchain state update...");
+
+      // Wait longer for blockchain state to update, then check multiple times
       setTimeout(async () => {
+        console.log("First check after 3 seconds...");
         await checkRegistrationStatus(connection);
-        setFormData({ name: "", dateOfBirth: "" });
-      }, 2000);
+        
+        // If still not registered, try again after another 2 seconds
+        setTimeout(async () => {
+          console.log("Second check after 5 seconds total...");
+          await checkRegistrationStatus(connection);
+        }, 2000);
+      }, 3000);
+      
+      setFormData({ name: "", dateOfBirth: "" });
     } catch (error) {
       console.error("Registration error:", error);
       alert("Registration failed. Please try again.");
-    } finally {
       setRegistering(false);
     }
   }
@@ -190,6 +201,22 @@ export default function PatientPortal() {
                 <p className="text-neutral-600 dark:text-neutral-400 mb-6">
                   Create your blockchain identity—you control who accesses your records
                 </p>
+                
+                {/* Success message after registration */}
+                {registering && (
+                  <div className="mb-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                    <p className="text-blue-900 dark:text-blue-100 font-medium">
+                      ⏳ Transaction submitted! Waiting for blockchain confirmation...
+                    </p>
+                    <button
+                      onClick={() => checkRegistrationStatus(connection!)}
+                      className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      Click here to refresh if registration doesn't update automatically
+                    </button>
+                  </div>
+                )}
+                
                 <div className="space-y-4 max-w-md">
                   <div>
                     <label htmlFor="name" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
