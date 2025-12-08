@@ -77,8 +77,8 @@ export default function PatientPortal() {
       setRegistering(true);
       // Convert date string to Unix timestamp (seconds since epoch)
       const dateTimestamp = BigInt(Math.floor(new Date(formData.dateOfBirth).getTime() / 1000));
-      // For emergency hash, we'll use a placeholder for now
-      const emergencyHash = "0x0000000000000000000000000000000000000000000000000000000000000000";
+      // For emergency hash, we'll use an empty string for now (can be updated later)
+      const emergencyHash = "";
       
       await writeContract(
         connection,
@@ -140,7 +140,7 @@ export default function PatientPortal() {
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Patient Portal</h1>
           <p className="text-lg text-gray-600">
-            Manage your health records on the blockchain
+            Your medical records, your control—securely stored on blockchain
           </p>
         </div>
 
@@ -165,12 +165,13 @@ export default function PatientPortal() {
               Connect Your Wallet
             </h2>
             <p className="text-gray-600 mb-6">
-              Please connect your MetaMask wallet to access the patient portal
+              Connect MetaMask to take ownership of your health data on blockchain
             </p>
             <button
               onClick={handleConnect}
               disabled={loading}
               className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 text-lg"
+              aria-label="Connect MetaMask wallet to access patient portal"
             >
               {loading ? "Connecting..." : "Connect Wallet"}
             </button>
@@ -189,7 +190,7 @@ export default function PatientPortal() {
                   Register as a Patient
                 </h2>
                 <p className="text-gray-600 mb-6">
-                  You need to register before using the patient portal
+                  Create your blockchain identity—you control who accesses your records
                 </p>
                 <div className="space-y-4 max-w-md">
                   <div>
@@ -204,6 +205,8 @@ export default function PatientPortal() {
                       placeholder="Enter your full name"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       disabled={registering}
+                      aria-required="true"
+                      aria-describedby="name-helper"
                     />
                   </div>
                   <div>

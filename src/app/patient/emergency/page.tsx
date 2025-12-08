@@ -85,7 +85,7 @@ export default function EmergencyProfilePage() {
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Emergency Profile</h1>
           <p className="text-lg text-gray-600">
-            Your emergency medical information for first responders
+            Generate your life-saving QR code—instant access for first responders, no wallet needed
           </p>
         </div>
 
@@ -193,7 +193,7 @@ export default function EmergencyProfilePage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
                     </svg>
                     <p className="text-gray-600 mb-4 text-center">
-                      Generate a QR code for emergency responders
+                      Generate your life-saving QR code—responders scan it to access critical info instantly
                     </p>
                     <button
                       className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium"
@@ -202,7 +202,7 @@ export default function EmergencyProfilePage() {
                       Generate Emergency QR Code
                     </button>
                     <p className="text-sm text-gray-500 mt-4 text-center">
-                      First responders can scan this QR code to access your emergency information
+                      💡 Print on your ID card or save to your phone's lock screen for 24/7 access
                     </p>
                   </>
                 ) : (
@@ -217,7 +217,7 @@ export default function EmergencyProfilePage() {
                     </div>
                     <p className="text-green-600 font-semibold mb-2">✓ QR Code Generated</p>
                     <p className="text-sm text-gray-600 text-center mb-4">
-                      Show this QR to emergency responders
+                      🚨 Responders scan this—no wallet, no login—instant access to your allergies, blood type, meds, and emergency contacts
                     </p>
                     <p className="text-xs text-gray-500 text-center bg-gray-100 p-2 rounded font-mono break-all max-w-md">
                       {getEmergencyUrl()}

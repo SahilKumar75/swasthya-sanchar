@@ -6,7 +6,7 @@ test.describe('Doctor Access Control', () => {
     
     // Check page loaded
     await expect(page.getByRole('heading', { name: 'Doctor Portal' })).toBeVisible();
-    await expect(page.getByText('Access and manage patient medical records')).toBeVisible();
+    await expect(page.getByText(/Access patient records with consent/i)).toBeVisible();
     
     // Check for connect wallet button or wallet connection UI
     const connectButton = page.getByRole('button', { name: /Connect Wallet/i });

@@ -140,7 +140,7 @@ export default function DoctorPortal() {
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Doctor Portal</h1>
           <p className="text-lg text-gray-600">
-            Access and manage patient medical records
+            Access patient records with consent—authorized, transparent, secure
           </p>
         </div>
 
@@ -165,12 +165,13 @@ export default function DoctorPortal() {
               Connect Your Wallet
             </h2>
             <p className="text-gray-600 mb-6">
-              Please connect your MetaMask wallet to access the doctor portal
+              Connect MetaMask to access your authorized doctor dashboard
             </p>
             <button
               onClick={handleConnect}
               disabled={loading}
               className="px-8 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 text-lg"
+              aria-label="Connect MetaMask wallet to access doctor portal"
             >
               {loading ? "Connecting..." : "Connect Wallet"}
             </button>
@@ -204,7 +205,7 @@ export default function DoctorPortal() {
                       
                       {/* Patient Access Form */}
                       <div className="bg-gray-50 rounded-lg p-6 mb-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Check Patient Records</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Access Patient Records (Consent-Based)</h3>
                         <div className="flex gap-3">
                           <input
                             type="text"
@@ -213,6 +214,8 @@ export default function DoctorPortal() {
                             placeholder="Enter patient address (0x...)"
                             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                             disabled={checkingAccess}
+                            aria-label="Enter patient blockchain address to check access"
+                            aria-describedby="access-error"
                           />
                           <button
                             onClick={handleCheckAccess}

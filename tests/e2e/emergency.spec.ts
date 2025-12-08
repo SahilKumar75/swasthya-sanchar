@@ -19,8 +19,8 @@ test.describe('Emergency Responder Page', () => {
     await page.goto(`http://localhost:3000/emergency/${testPatientAddress}`);
     
     // Check for emergency alert
-    await expect(page.getByText('Emergency Medical Information')).toBeVisible();
-    await expect(page.getByText(/critical patient information for emergency responders/i)).toBeVisible();
+    await expect(page.getByText(/Instant Emergency Access.*No Wallet Required/i)).toBeVisible();
+    await expect(page.getByText(/Critical patient info from blockchain/i)).toBeVisible();
   });
 
   test('should show patient blockchain address', async ({ page }) => {

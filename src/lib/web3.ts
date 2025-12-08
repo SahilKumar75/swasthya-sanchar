@@ -1,8 +1,23 @@
 "use client";
 
-import { createPublicClient, createWalletClient, custom, http, type PublicClient, type WalletClient } from "viem";
-import { localhost } from "viem/chains";
+import { createPublicClient, createWalletClient, custom, http, type PublicClient, type WalletClient, defineChain } from "viem";
 import { HEALTH_RECORDS_ABI, HEALTH_RECORDS_ADDRESS } from "./contracts";
+
+// Define Hardhat local chain with correct chain ID (31337)
+const hardhatLocal = defineChain({
+  id: 31337,
+  name: 'Hardhat Local',
+  network: 'hardhat',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'Ether',
+    symbol: 'ETH',
+  },
+  rpcUrls: {
+    default: { http: ['http://127.0.0.1:8545'] },
+    public: { http: ['http://127.0.0.1:8545'] },
+  },
+});
 
 // Types
 export interface WalletConnection {
@@ -79,14 +94,14 @@ export async function connectWallet(): Promise<WalletConnection | null> {
 
     // Create public client for reading blockchain data
     const publicClient = createPublicClient({
-      chain: localhost,
+      chain: hardhatLocal,
       transport: http(),
     });
 
     // Create wallet client for signing transactions
     const walletClient = createWalletClient({
       account,
-      chain: localhost,
+      chain: hardhatLocal,
       transport: custom((window as any).ethereum),
     });
 
@@ -143,31 +158,42 @@ export async function writeContract(
   functionName: string,
   args?: readonly unknown[]
 ) {
-  // Simulate the contract call first to check for errors
-  await connection.publicClient.simulateContract({
-    address: HEALTH_RECORDS_ADDRESS,
-    abi: HEALTH_RECORDS_ABI,
-    functionName: functionName as any,
-    args: args as any,
-    account: connection.account,
-  });
+  try {
+    console.log("Writing contract:", { functionName, args, account: connection.account });
+    
+    // Simulate the contract call first to check for errors
+    const { request } = await connection.publicClient.simulateContract({
+      address: HEALTH_RECORDS_ADDRESS,
+      abi: HEALTH_RECORDS_ABI,
+      functionName: functionName as any,
+      args: args as any,
+      account: connection.account,
+    });
 
-  // Write to the contract
-  const hash = await connection.walletClient.writeContract({
-    address: HEALTH_RECORDS_ADDRESS,
-    abi: HEALTH_RECORDS_ABI,
-    functionName: functionName as any,
-    args: args as any,
-    chain: localhost,
-    account: connection.account,
-  });
+    console.log("Simulation successful, writing to contract...");
 
-  // Wait for transaction confirmation
-  const receipt = await connection.publicClient.waitForTransactionReceipt({
-    hash,
-  });
+    // Write to the contract
+    const hash = await connection.walletClient.writeContract(request);
 
-  return receipt;
+    console.log("Transaction sent:", hash);
+
+    // Wait for transaction confirmation
+    const receipt = await connection.publicClient.waitForTransactionReceipt({
+      hash,
+    });
+
+    console.log("Transaction confirmed:", receipt);
+
+    return receipt;
+  } catch (error: any) {
+    console.error("Contract write error:", error);
+    console.error("Error details:", {
+      message: error.message,
+      cause: error.cause,
+      shortMessage: error.shortMessage,
+    });
+    throw error;
+  }
 }
 
 // Format address for display

@@ -11,7 +11,7 @@ test.describe('Landing Page', () => {
     await expect(page.locator('h1')).toContainText('Swasthya Sanchar');
     
     // Check subtitle
-    await expect(page.locator('text=Blockchain-based Healthcare Records System')).toBeVisible();
+    await expect(page.locator('text=Your Health, Your Control, Your Blockchain')).toBeVisible();
   });
 
   test('should have patient and doctor portal buttons', async ({ page }) => {
