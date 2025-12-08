@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { QRCodeSVG } from "qrcode.react";
 import { connectWallet, getCurrentAccount, formatAddress, onAccountsChanged, type WalletConnection } from "@/lib/web3";
 import { mockEmergencyProfile } from "@/lib/mockRecords";
 
 export default function EmergencyProfilePage() {
   const [connection, setConnection] = useState<WalletConnection | null>(null);
   const [loading, setLoading] = useState(true);
+  const [qrGenerated, setQrGenerated] = useState(false);
 
   useEffect(() => {
     async function checkConnection() {
@@ -38,6 +40,17 @@ export default function EmergencyProfilePage() {
     const conn = await connectWallet();
     setConnection(conn);
     setLoading(false);
+  };
+
+  const handleGenerateQR = () => {
+    setQrGenerated(true);
+  };
+
+  const getEmergencyUrl = () => {
+    if (!connection) return "";
+    // For development, use localhost. In production, this would be the Vercel URL
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+    return `${baseUrl}/emergency/${connection.account}`;
   };
 
   return (
@@ -170,25 +183,53 @@ export default function EmergencyProfilePage() {
               </div>
             </div>
 
-            {/* QR Code Placeholder */}
+            {/* QR Code Section */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Emergency QR Code</h2>
               <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-8">
-                <svg className="w-24 h-24 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                </svg>
-                <p className="text-gray-600 mb-4 text-center">
-                  Emergency QR code will be generated here
-                </p>
-                <button
-                  className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium"
-                  onClick={() => alert("QR code generation coming soon!")}
-                >
-                  Generate Emergency QR Code
-                </button>
-                <p className="text-sm text-gray-500 mt-4 text-center">
-                  First responders can scan this QR code to access your emergency information
-                </p>
+                {!qrGenerated ? (
+                  <>
+                    <svg className="w-24 h-24 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                    </svg>
+                    <p className="text-gray-600 mb-4 text-center">
+                      Generate a QR code for emergency responders
+                    </p>
+                    <button
+                      className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium"
+                      onClick={handleGenerateQR}
+                    >
+                      Generate Emergency QR Code
+                    </button>
+                    <p className="text-sm text-gray-500 mt-4 text-center">
+                      First responders can scan this QR code to access your emergency information
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <div className="bg-white p-4 rounded-lg shadow-inner mb-4">
+                      <QRCodeSVG
+                        value={getEmergencyUrl()}
+                        size={256}
+                        level="H"
+                        includeMargin={true}
+                      />
+                    </div>
+                    <p className="text-green-600 font-semibold mb-2">✓ QR Code Generated</p>
+                    <p className="text-sm text-gray-600 text-center mb-4">
+                      Show this QR to emergency responders
+                    </p>
+                    <p className="text-xs text-gray-500 text-center bg-gray-100 p-2 rounded font-mono break-all max-w-md">
+                      {getEmergencyUrl()}
+                    </p>
+                    <button
+                      className="mt-4 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm"
+                      onClick={() => setQrGenerated(false)}
+                    >
+                      Regenerate QR Code
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
