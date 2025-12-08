@@ -1,97 +1,206 @@
 import Link from "next/link";
+import { FeatureShowcase } from "@/components/landing/FeatureShowcase";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <main className="max-w-6xl mx-auto px-4 py-16">
-        {/* Hero Section */}
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">
-            Swasthya Sanchar
-          </h1>
-          <p className="text-xl text-gray-600 mb-2">
-            Your Health, Your Control, Your Blockchain
-          </p>
-          <p className="text-lg text-gray-500 mb-8">
-            Patient-owned medical records with life-saving emergency access
-          </p>
-          <div className="flex gap-4 justify-center">
-            <Link
-              href="/patient"
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-            >
-              Patient Portal
-            </Link>
-            <Link
-              href="/doctor"
-              className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-            >
-              Doctor Portal
-            </Link>
+    <main className="min-h-screen bg-white dark:bg-neutral-900">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden border-b border-neutral-200 dark:border-neutral-800">
+        <div className="max-w-5xl mx-auto px-6 lg:px-8 py-24 md:py-32">
+          <div className="space-y-8">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
+              <div className="w-1.5 h-1.5 rounded-full bg-neutral-900 dark:bg-neutral-100" />
+              <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                Blockchain Healthcare Platform
+              </span>
+            </div>
+
+            {/* Headline */}
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-neutral-900 dark:text-neutral-50">
+              Medical Records That Save Lives
+            </h1>
+
+            <p className="max-w-2xl text-xl text-neutral-600 dark:text-neutral-400 leading-relaxed">
+              Swasthya Sanchar puts you in control of your health data. Access your medical records anywhere, 
+              share with doctors securely, and enable first responders to save your life in emergencies.
+            </p>
+
+            {/* Problem Statement */}
+            <div className="max-w-2xl p-5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700">
+              <p className="text-neutral-700 dark:text-neutral-300 leading-relaxed">
+                <span className="font-semibold text-neutral-900 dark:text-neutral-100">The Problem:</span> In medical emergencies, 
+                first responders often can't access critical information like blood type, allergies, 
+                or current medications—wasting precious seconds that could mean life or death.
+              </p>
+            </div>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-4">
+              <Link
+                href="/patient"
+                className="group inline-flex items-center justify-center gap-2 px-6 py-3 bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 font-medium rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors duration-200"
+              >
+                Register as Patient
+                <svg
+                  className="w-4 h-4 group-hover:translate-x-0.5 transition-transform"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 7l5 5m0 0l-5 5m5-5H6"
+                  />
+                </svg>
+              </Link>
+              
+              <Link
+                href="/doctor"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 font-medium rounded-lg border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors duration-200"
+              >
+                I'm a Doctor
+              </Link>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* About/Story Section */}
-        <div className="bg-white rounded-lg shadow-md p-8 max-w-3xl mx-auto">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-            Why Swasthya Sanchar?
+      {/* How It Works Section */}
+      <div className="max-w-5xl mx-auto px-6 lg:px-8 py-20 md:py-28 border-b border-neutral-200 dark:border-neutral-800">
+        <div className="mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold text-neutral-900 dark:text-neutral-50 mb-4">
+            How It Works
           </h2>
+          <p className="text-lg text-neutral-600 dark:text-neutral-400 max-w-2xl leading-relaxed">
+            Four simple steps from registration to life-saving emergency access. 
+            See how blockchain technology empowers you and protects your privacy.
+          </p>
+        </div>
+        
+        <FeatureShowcase />
+      </div>
+
+      {/* Key Benefits Section */}
+      <div className="max-w-5xl mx-auto px-6 lg:px-8 py-20 md:py-28 border-b border-neutral-200 dark:border-neutral-800">
+        <div className="mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 dark:text-neutral-50 mb-4">
+            Why Blockchain for Healthcare?
+          </h2>
+          <p className="text-lg text-neutral-600 dark:text-neutral-400 max-w-2xl">
+            Traditional systems fail when you need them most. Here's what makes us different.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
+          {/* Benefit Cards */}
+          <div className="group p-6 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 transition-colors duration-200">
+            <div className="text-2xl mb-3">🔐</div>
+            <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50 mb-2">You Own Your Data</h3>
+            <p className="text-neutral-600 dark:text-neutral-400 text-sm leading-relaxed">No hospital, no government, no corporation owns your health records. Only you control who sees what.</p>
+          </div>
+
+          <div className="group p-6 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 transition-colors duration-200">
+            <div className="text-2xl mb-3">⚡</div>
+            <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50 mb-2">Emergency Ready</h3>
+            <p className="text-neutral-600 dark:text-neutral-400 text-sm leading-relaxed">QR code on your ID gives first responders instant access to life-saving info—no wallet or login needed.</p>
+          </div>
+
+          <div className="group p-6 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 transition-colors duration-200">
+            <div className="text-2xl mb-3">🔗</div>
+            <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50 mb-2">Permanent & Portable</h3>
+            <p className="text-neutral-600 dark:text-neutral-400 text-sm leading-relaxed">Your records live on the blockchain forever. Change hospitals? Your history follows you automatically.</p>
+          </div>
+
+          <div className="group p-6 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 transition-colors duration-200">
+            <div className="text-2xl mb-3">✅</div>
+            <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50 mb-2">Consent-Based Sharing</h3>
+            <p className="text-neutral-600 dark:text-neutral-400 text-sm leading-relaxed">Authorize specific doctors to view your records. Revoke access anytime. Every access is logged transparently.</p>
+          </div>
+
+          <div className="group p-6 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 transition-colors duration-200">
+            <div className="text-2xl mb-3">🌍</div>
+            <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50 mb-2">Global Access</h3>
+            <p className="text-neutral-600 dark:text-neutral-400 text-sm leading-relaxed">Travel abroad? Your medical history is accessible worldwide, cutting through language and system barriers.</p>
+          </div>
+
+          <div className="group p-6 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 transition-colors duration-200">
+            <div className="text-2xl mb-3">🛡️</div>
+            <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50 mb-2">Tamper-Proof</h3>
+            <p className="text-neutral-600 dark:text-neutral-400 text-sm leading-relaxed">Blockchain ensures your records can't be altered or deleted. Complete audit trail of every interaction.</p>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="text-center p-6 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700">
+            <div className="text-4xl font-bold text-neutral-900 dark:text-neutral-50 mb-1">
+              100%
+            </div>
+            <p className="text-neutral-700 dark:text-neutral-300 font-medium text-sm">Patient Owned</p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-1">Complete control over your health data</p>
+          </div>
           
-          <div className="space-y-6">
-            {/* Problem */}
-            <div className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                <span className="text-red-600 font-bold">⚠</span>
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-1">The Problem</h3>
-                <p className="text-gray-600 text-sm">
-                  Medical records are fragmented across hospitals. In emergencies, responders can't access critical info like allergies or blood type—costing precious time and lives.
-                </p>
-              </div>
+          <div className="text-center p-6 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700">
+            <div className="text-4xl font-bold text-neutral-900 dark:text-neutral-50 mb-1">
+              24/7
             </div>
-
-            {/* Solution */}
-            <div className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-blue-600 font-bold">🔗</span>
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-1">Our Solution</h3>
-                <p className="text-gray-600 text-sm">
-                  A blockchain-based health locker where <strong>patients own</strong> their data. Doctors access records only with consent. Emergency QR codes provide instant, wallet-free access to life-saving info.
-                </p>
-              </div>
+            <p className="text-neutral-700 dark:text-neutral-300 font-medium text-sm">Emergency Access</p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-1">First responders access critical info instantly</p>
+          </div>
+          
+          <div className="text-center p-6 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700">
+            <div className="text-4xl font-bold text-neutral-900 dark:text-neutral-50 mb-1">
+              0
             </div>
+            <p className="text-neutral-700 dark:text-neutral-300 font-medium text-sm">Crypto Knowledge</p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-1">Emergency QR works for anyone, anywhere</p>
+          </div>
+        </div>
+      </div>
 
-            {/* Unique Value */}
-            <div className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                <span className="text-green-600 font-bold">🚨</span>
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-1">The Emergency Edge</h3>
-                <p className="text-gray-600 text-sm">
-                  Patients generate a QR code (printed on ID or phone lock screen). First responders scan it—no wallet, no login—instantly seeing allergies, blood type, medications, and emergency contacts.
-                </p>
-              </div>
-            </div>
-
-            {/* Impact */}
-            <div className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                <span className="text-purple-600 font-bold">✨</span>
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-1">Real-World Impact</h3>
-                <p className="text-gray-600 text-sm">
-                  Empowers patients with data sovereignty, streamlines doctor workflows, and saves lives by eliminating the "information gap" during critical moments.
-                </p>
-              </div>
+      {/* CTA Section */}
+      <div className="max-w-5xl mx-auto px-6 lg:px-8 py-20 md:py-28">
+        <div className="p-12 md:p-16 rounded-lg bg-neutral-900 dark:bg-neutral-800 border border-neutral-800 dark:border-neutral-700">
+          <div className="space-y-6 max-w-2xl mx-auto text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-neutral-50">
+              Ready to Take Control?
+            </h2>
+            <p className="text-lg text-neutral-300 dark:text-neutral-400">
+              Join the future of healthcare where you own your records and technology saves lives.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
+              <Link
+                href="/patient"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-neutral-50 text-neutral-900 font-medium rounded-lg hover:bg-neutral-100 transition-colors duration-200"
+              >
+                Get Started Now
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 7l5 5m0 0l-5 5m5-5H6"
+                  />
+                </svg>
+              </Link>
+              <Link
+                href="/emergency-qr"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-transparent text-neutral-50 font-medium rounded-lg border border-neutral-700 hover:bg-neutral-800 transition-colors duration-200"
+              >
+                View Demo QR
+              </Link>
             </div>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }

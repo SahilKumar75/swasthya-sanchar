@@ -107,18 +107,18 @@ export default function DoctorPortal() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100">
+    <div className="min-h-screen bg-white dark:bg-neutral-900">
       {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <Link href="/" className="text-2xl font-bold text-indigo-600">
+      <header className="border-b border-neutral-200 dark:border-neutral-800">
+        <div className="max-w-5xl mx-auto px-6 lg:px-8 py-4 flex justify-between items-center">
+          <Link href="/" className="text-xl font-bold text-neutral-900 dark:text-neutral-50">
             Swasthya Sanchar
           </Link>
           <div>
             {connection ? (
               <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-600">Connected:</span>
-                <span className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg font-mono text-sm">
+                <span className="text-sm text-neutral-600 dark:text-neutral-400">Connected:</span>
+                <span className="px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 rounded-lg font-mono text-sm border border-neutral-200 dark:border-neutral-700">
                   {formatAddress(connection.account)}
                 </span>
               </div>
@@ -126,7 +126,7 @@ export default function DoctorPortal() {
               <button
                 onClick={handleConnect}
                 disabled={loading}
-                className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
+                className="px-4 py-2 bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition disabled:opacity-50"
               >
                 {loading ? "Connecting..." : "Connect Wallet"}
               </button>
@@ -136,19 +136,19 @@ export default function DoctorPortal() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="max-w-5xl mx-auto px-6 lg:px-8 py-12">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Doctor Portal</h1>
-          <p className="text-lg text-gray-600">
+          <h1 className="text-4xl font-bold text-neutral-900 dark:text-neutral-50 mb-2">Doctor Portal</h1>
+          <p className="text-lg text-neutral-600 dark:text-neutral-400">
             Access patient records with consent—authorized, transparent, secure
           </p>
         </div>
 
         {!connection ? (
-          <div className="bg-white rounded-lg shadow-md p-8 text-center">
+          <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-8 text-center">
             <div className="mb-6">
               <svg
-                className="mx-auto h-16 w-16 text-gray-400"
+                className="mx-auto h-16 w-16 text-neutral-400 dark:text-neutral-500"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -161,16 +161,16 @@ export default function DoctorPortal() {
                 />
               </svg>
             </div>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50 mb-4">
               Connect Your Wallet
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-neutral-600 dark:text-neutral-400 mb-6">
               Connect MetaMask to access your authorized doctor dashboard
             </p>
             <button
               onClick={handleConnect}
               disabled={loading}
-              className="px-8 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 text-lg"
+              className="px-6 py-3 bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition disabled:opacity-50 font-medium"
               aria-label="Connect MetaMask wallet to access doctor portal"
             >
               {loading ? "Connecting..." : "Connect Wallet"}
@@ -180,39 +180,39 @@ export default function DoctorPortal() {
           <div className="space-y-6">
             {/* Authorization Check Status */}
             {checkingAuthorization ? (
-              <div className="bg-white rounded-lg shadow-md p-6 text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-                <p className="text-gray-600">Checking authorization status...</p>
+              <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-900 dark:border-neutral-100 mx-auto mb-4"></div>
+                <p className="text-neutral-600 dark:text-neutral-400">Checking authorization status...</p>
               </div>
             ) : (
               <>
                 {/* Connected Dashboard */}
-                <div className="bg-white rounded-lg shadow-md p-6">
+                <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className={`w-3 h-3 rounded-full ${isAuthorized ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                    <h2 className="text-2xl font-semibold text-gray-900">
+                    <div className="w-2 h-2 rounded-full bg-neutral-900 dark:bg-neutral-100"></div>
+                    <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50">
                       Your Dashboard
                     </h2>
                   </div>
-                  <p className="text-gray-600 mb-2">
-                    Connected as: <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">{connection.account}</span>
+                  <p className="text-neutral-600 dark:text-neutral-400 mb-2">
+                    Connected as: <span className="font-mono text-sm bg-neutral-200 dark:bg-neutral-700 px-2 py-1 rounded">{connection.account}</span>
                   </p>
                   {isAuthorized ? (
                     <div className="mb-4">
-                      <p className="text-green-600 font-medium mb-4">
+                      <p className="text-neutral-700 dark:text-neutral-300 font-medium mb-4">
                         ✓ Authorized Doctor
                       </p>
                       
                       {/* Patient Access Form */}
-                      <div className="bg-gray-50 rounded-lg p-6 mb-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Access Patient Records (Consent-Based)</h3>
+                      <div className="bg-neutral-100 dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6 mb-6">
+                        <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50 mb-4">Access Patient Records (Consent-Based)</h3>
                         <div className="flex gap-3">
                           <input
                             type="text"
                             value={patientAddress}
                             onChange={(e) => setPatientAddress(e.target.value)}
                             placeholder="Enter patient address (0x...)"
-                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            className="flex-1 px-4 py-2 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100 focus:border-transparent text-neutral-900 dark:text-neutral-100"
                             disabled={checkingAccess}
                             aria-label="Enter patient blockchain address to check access"
                             aria-describedby="access-error"
@@ -220,40 +220,40 @@ export default function DoctorPortal() {
                           <button
                             onClick={handleCheckAccess}
                             disabled={checkingAccess || !patientAddress}
-                            className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                            className="px-6 py-2 bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                           >
                             {checkingAccess ? "Checking..." : "Check Access"}
                           </button>
                         </div>
                         
                         {accessError && (
-                          <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
-                            <p className="text-red-800 text-sm">{accessError}</p>
+                          <div className="mt-4 bg-neutral-200 dark:bg-neutral-700 border border-neutral-300 dark:border-neutral-600 rounded-lg p-4">
+                            <p className="text-neutral-900 dark:text-neutral-100 text-sm">{accessError}</p>
                           </div>
                         )}
                       </div>
 
                       {/* Medical Records Display */}
                       {patientRecords && (
-                        <div className="bg-white border border-gray-200 rounded-lg p-6">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg p-6">
+                          <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50 mb-4">
                             Medical Records for {formatAddress(patientAddress as `0x${string}`)}
                           </h3>
                           <div className="space-y-4">
                             {patientRecords.map((record) => (
-                              <div key={record.id} className="border border-gray-200 rounded-lg p-4">
+                              <div key={record.id} className="border border-neutral-200 dark:border-neutral-700 rounded-lg p-4">
                                 <div className="flex justify-between items-start mb-2">
                                   <div>
-                                    <p className="font-semibold text-gray-900">{record.type}</p>
-                                    <p className="text-sm text-gray-500">ID: {record.id}</p>
+                                    <p className="font-semibold text-neutral-900 dark:text-neutral-50">{record.type}</p>
+                                    <p className="text-sm text-neutral-500 dark:text-neutral-400">ID: {record.id}</p>
                                   </div>
-                                  <p className="text-sm text-gray-600">{record.date}</p>
+                                  <p className="text-sm text-neutral-600 dark:text-neutral-400">{record.date}</p>
                                 </div>
                                 <div className="space-y-2 text-sm">
-                                  <p><span className="font-medium text-gray-700">Diagnosis:</span> {record.diagnosis}</p>
-                                  <p><span className="font-medium text-gray-700">Prescription:</span> {record.prescription}</p>
-                                  <p><span className="font-medium text-gray-700">Doctor:</span> {record.doctor}</p>
-                                  <p><span className="font-medium text-gray-700">Notes:</span> {record.notes}</p>
+                                  <p><span className="font-medium text-neutral-700 dark:text-neutral-300">Diagnosis:</span> <span className="text-neutral-600 dark:text-neutral-400">{record.diagnosis}</span></p>
+                                  <p><span className="font-medium text-neutral-700 dark:text-neutral-300">Prescription:</span> <span className="text-neutral-600 dark:text-neutral-400">{record.prescription}</span></p>
+                                  <p><span className="font-medium text-neutral-700 dark:text-neutral-300">Doctor:</span> <span className="text-neutral-600 dark:text-neutral-400">{record.doctor}</span></p>
+                                  <p><span className="font-medium text-neutral-700 dark:text-neutral-300">Notes:</span> <span className="text-neutral-600 dark:text-neutral-400">{record.notes}</span></p>
                                 </div>
                               </div>
                             ))}
@@ -262,14 +262,14 @@ export default function DoctorPortal() {
                       )}
                     </div>
                   ) : (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                    <div className="bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg p-4 mb-4">
                       <div className="flex items-start gap-3">
-                        <svg className="w-6 h-6 text-yellow-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="w-6 h-6 text-neutral-700 dark:text-neutral-300 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
                         <div>
-                          <p className="text-yellow-800 font-medium">Not Authorized</p>
-                          <p className="text-yellow-700 text-sm mt-1">
+                          <p className="text-neutral-900 dark:text-neutral-50 font-medium">Not Authorized</p>
+                          <p className="text-neutral-700 dark:text-neutral-300 text-sm mt-1">
                             Your wallet address is not authorized as a doctor. Please contact the system administrator to request authorization.
                           </p>
                         </div>
@@ -280,17 +280,17 @@ export default function DoctorPortal() {
 
                 {/* Future Features Preview */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className={`bg-white rounded-lg shadow p-4 border-l-4 border-indigo-500 ${!isAuthorized && 'opacity-50'}`}>
-                    <h3 className="font-semibold text-gray-900 mb-2">👨‍⚕️ Authorization</h3>
-                    <p className="text-sm text-gray-600">{isAuthorized ? 'Authorized' : 'Not authorized'}</p>
+                  <div className={`bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-4 ${!isAuthorized && 'opacity-50'}`}>
+                    <h3 className="font-semibold text-neutral-900 dark:text-neutral-50 mb-2">👨‍⚕️ Authorization</h3>
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400">{isAuthorized ? 'Authorized' : 'Not authorized'}</p>
                   </div>
-                  <div className={`bg-white rounded-lg shadow p-4 border-l-4 border-green-500 ${!isAuthorized && 'opacity-50'}`}>
-                    <h3 className="font-semibold text-gray-900 mb-2">📋 Create Records</h3>
-                    <p className="text-sm text-gray-600">Add new medical records</p>
+                  <div className={`bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-4 ${!isAuthorized && 'opacity-50'}`}>
+                    <h3 className="font-semibold text-neutral-900 dark:text-neutral-50 mb-2">📋 Create Records</h3>
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400">Add new medical records</p>
                   </div>
-                  <div className={`bg-white rounded-lg shadow p-4 border-l-4 border-blue-500 ${!isAuthorized && 'opacity-50'}`}>
-                    <h3 className="font-semibold text-gray-900 mb-2">👥 Patients</h3>
-                    <p className="text-sm text-gray-600">View patient records</p>
+                  <div className={`bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-4 ${!isAuthorized && 'opacity-50'}`}>
+                    <h3 className="font-semibold text-neutral-900 dark:text-neutral-50 mb-2">👥 Patients</h3>
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400">View patient records</p>
                   </div>
                 </div>
               </>

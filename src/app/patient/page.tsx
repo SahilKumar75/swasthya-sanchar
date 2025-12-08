@@ -107,18 +107,18 @@ export default function PatientPortal() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-white dark:bg-neutral-900">
       {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <Link href="/" className="text-2xl font-bold text-blue-600">
+      <header className="border-b border-neutral-200 dark:border-neutral-800">
+        <div className="max-w-5xl mx-auto px-6 lg:px-8 py-4 flex justify-between items-center">
+          <Link href="/" className="text-xl font-bold text-neutral-900 dark:text-neutral-50">
             Swasthya Sanchar
           </Link>
           <div>
             {connection ? (
               <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-600">Connected:</span>
-                <span className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg font-mono text-sm">
+                <span className="text-sm text-neutral-600 dark:text-neutral-400">Connected:</span>
+                <span className="px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 rounded-lg font-mono text-sm border border-neutral-200 dark:border-neutral-700">
                   {formatAddress(connection.account)}
                 </span>
               </div>
@@ -126,7 +126,7 @@ export default function PatientPortal() {
               <button
                 onClick={handleConnect}
                 disabled={loading}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                className="px-4 py-2 bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition disabled:opacity-50"
               >
                 {loading ? "Connecting..." : "Connect Wallet"}
               </button>
@@ -136,19 +136,19 @@ export default function PatientPortal() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="max-w-5xl mx-auto px-6 lg:px-8 py-12">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Patient Portal</h1>
-          <p className="text-lg text-gray-600">
+          <h1 className="text-4xl font-bold text-neutral-900 dark:text-neutral-50 mb-2">Patient Portal</h1>
+          <p className="text-lg text-neutral-600 dark:text-neutral-400">
             Your medical records, your control—securely stored on blockchain
           </p>
         </div>
 
         {!connection ? (
-          <div className="bg-white rounded-lg shadow-md p-8 text-center">
+          <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-8 text-center">
             <div className="mb-6">
               <svg
-                className="mx-auto h-16 w-16 text-gray-400"
+                className="mx-auto h-16 w-16 text-neutral-400 dark:text-neutral-500"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -161,16 +161,16 @@ export default function PatientPortal() {
                 />
               </svg>
             </div>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+            <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50 mb-4">
               Connect Your Wallet
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-neutral-600 dark:text-neutral-400 mb-6">
               Connect MetaMask to take ownership of your health data on blockchain
             </p>
             <button
               onClick={handleConnect}
               disabled={loading}
-              className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 text-lg"
+              className="px-6 py-3 bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition disabled:opacity-50 font-medium"
               aria-label="Connect MetaMask wallet to access patient portal"
             >
               {loading ? "Connecting..." : "Connect Wallet"}
@@ -180,21 +180,21 @@ export default function PatientPortal() {
           <div className="space-y-6">
             {/* Registration Check Status */}
             {checkingRegistration ? (
-              <div className="bg-white rounded-lg shadow-md p-6 text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-600">Checking registration status...</p>
+              <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-900 dark:border-neutral-100 mx-auto mb-4"></div>
+                <p className="text-neutral-600 dark:text-neutral-400">Checking registration status...</p>
               </div>
             ) : !isRegistered ? (
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+              <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6">
+                <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50 mb-4">
                   Register as a Patient
                 </h2>
-                <p className="text-gray-600 mb-6">
+                <p className="text-neutral-600 dark:text-neutral-400 mb-6">
                   Create your blockchain identity—you control who accesses your records
                 </p>
                 <div className="space-y-4 max-w-md">
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="name" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                       Full Name
                     </label>
                     <input
@@ -203,14 +203,14 @@ export default function PatientPortal() {
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder="Enter your full name"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100 focus:border-transparent text-neutral-900 dark:text-neutral-100"
                       disabled={registering}
                       aria-required="true"
                       aria-describedby="name-helper"
                     />
                   </div>
                   <div>
-                    <label htmlFor="dob" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="dob" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                       Date of Birth
                     </label>
                     <input
@@ -218,14 +218,14 @@ export default function PatientPortal() {
                       type="date"
                       value={formData.dateOfBirth}
                       onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-2 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100 focus:border-transparent text-neutral-900 dark:text-neutral-100"
                       disabled={registering}
                     />
                   </div>
                   <button
                     onClick={handleRegister}
                     disabled={registering || !formData.name || !formData.dateOfBirth}
-                    className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                    className="w-full px-6 py-3 bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                   >
                     {registering ? "Registering..." : "Register on Blockchain"}
                   </button>
@@ -234,24 +234,24 @@ export default function PatientPortal() {
             ) : (
               <>
                 {/* Connected Dashboard - Registered */}
-                <div className="bg-white rounded-lg shadow-md p-6">
+                <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <h2 className="text-2xl font-semibold text-gray-900">
+                    <div className="w-2 h-2 bg-neutral-900 dark:bg-neutral-100 rounded-full"></div>
+                    <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50">
                       Your Dashboard
                     </h2>
                   </div>
-                  <p className="text-gray-600 mb-2">
-                    Connected as: <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">{connection.account}</span>
+                  <p className="text-neutral-600 dark:text-neutral-400 mb-2">
+                    Connected as: <span className="font-mono text-sm bg-neutral-200 dark:bg-neutral-700 px-2 py-1 rounded">{connection.account}</span>
                   </p>
-                  <p className="text-green-600 font-medium mb-4">
+                  <p className="text-neutral-700 dark:text-neutral-300 font-medium mb-4">
                     ✓ Registered Patient
                   </p>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                    <p className="text-gray-500">
+                  <div className="border-2 border-dashed border-neutral-300 dark:border-neutral-700 rounded-lg p-8 text-center">
+                    <p className="text-neutral-500 dark:text-neutral-400">
                       📋 Record management features will be added in the next phase.
                     </p>
-                    <p className="text-gray-400 text-sm mt-2">
+                    <p className="text-neutral-400 dark:text-neutral-500 text-sm mt-2">
                       Coming soon: View your medical records, manage permissions, and more.
                     </p>
                   </div>
@@ -259,17 +259,17 @@ export default function PatientPortal() {
 
                 {/* Future Features Preview */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
-                    <h3 className="font-semibold text-gray-900 mb-2">📝 Profile</h3>
-                    <p className="text-sm text-gray-600">View your patient profile</p>
+                  <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-4">
+                    <h3 className="font-semibold text-neutral-900 dark:text-neutral-50 mb-2">📝 Profile</h3>
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400">View your patient profile</p>
                   </div>
-                  <div className="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
-                    <h3 className="font-semibold text-gray-900 mb-2">🏥 Records</h3>
-                    <p className="text-sm text-gray-600">View your medical records</p>
+                  <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-4">
+                    <h3 className="font-semibold text-neutral-900 dark:text-neutral-50 mb-2">🏥 Records</h3>
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400">View your medical records</p>
                   </div>
-                  <div className="bg-white rounded-lg shadow p-4 border-l-4 border-purple-500">
-                    <h3 className="font-semibold text-gray-900 mb-2">🔐 Access</h3>
-                    <p className="text-sm text-gray-600">Grant doctor permissions</p>
+                  <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-4">
+                    <h3 className="font-semibold text-neutral-900 dark:text-neutral-50 mb-2">🔐 Access</h3>
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400">Grant doctor permissions</p>
                   </div>
                 </div>
               </>
