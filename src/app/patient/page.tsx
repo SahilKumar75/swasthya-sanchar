@@ -53,9 +53,14 @@ export default function PatientPortal() {
       const patient = result as any;
       // If patient.name is not empty, they're registered
       setIsRegistered(patient.name && patient.name !== "");
-    } catch (error) {
-      console.error("Error checking registration:", error);
-      setIsRegistered(false);
+    } catch (error: any) {
+      // "Patient not registered" error means they need to register
+      if (error?.message?.includes("Patient not registered")) {
+        setIsRegistered(false);
+      } else {
+        console.error("Error checking registration:", error);
+        setIsRegistered(false);
+      }
     } finally {
       setCheckingRegistration(false);
     }
@@ -70,13 +75,15 @@ export default function PatientPortal() {
 
     try {
       setRegistering(true);
+      // Convert date string to Unix timestamp (seconds since epoch)
+      const dateTimestamp = BigInt(Math.floor(new Date(formData.dateOfBirth).getTime() / 1000));
       // For emergency hash, we'll use a placeholder for now
       const emergencyHash = "0x0000000000000000000000000000000000000000000000000000000000000000";
       
       await writeContract(
         connection,
         "registerPatient",
-        [formData.name, formData.dateOfBirth, emergencyHash]
+        [formData.name, dateTimestamp, emergencyHash]
       );
 
       // Wait a moment and check registration status

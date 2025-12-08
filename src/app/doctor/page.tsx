@@ -4,12 +4,17 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { connectWallet, getCurrentAccount, formatAddress, onAccountsChanged, readContract, type WalletConnection } from "@/lib/web3";
 import { HEALTH_RECORDS_ABI, HEALTH_RECORDS_ADDRESS } from "@/lib/contracts";
+import { mockMedicalRecords, type MedicalRecord } from "@/lib/mockRecords";
 
 export default function DoctorPortal() {
   const [connection, setConnection] = useState<WalletConnection | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [checkingAuthorization, setCheckingAuthorization] = useState(false);
+  const [patientAddress, setPatientAddress] = useState("");
+  const [checkingAccess, setCheckingAccess] = useState(false);
+  const [patientRecords, setPatientRecords] = useState<MedicalRecord[] | null>(null);
+  const [accessError, setAccessError] = useState<string | null>(null);
 
   useEffect(() => {
     // Check if already connected on mount
@@ -63,6 +68,43 @@ export default function DoctorPortal() {
     setConnection(conn);
     setLoading(false);
   };
+
+  async function handleCheckAccess() {
+    if (!connection || !isAuthorized) return;
+    if (!patientAddress || !patientAddress.startsWith("0x")) {
+      setAccessError("Please enter a valid Ethereum address");
+      return;
+    }
+
+    try {
+      setCheckingAccess(true);
+      setAccessError(null);
+      setPatientRecords(null);
+
+      // Check if patient is registered
+      const patientData = await readContract(connection, "getPatient", [patientAddress as `0x${string}`]);
+      const patient = patientData as any;
+      
+      if (!patient.name || patient.name === "") {
+        setAccessError("Patient not registered in the system");
+        return;
+      }
+
+      // In a real system, we'd check if this doctor has access to this patient's records
+      // For now, if doctor is authorized and patient exists, grant access
+      setPatientRecords(mockMedicalRecords);
+      
+    } catch (error: any) {
+      if (error?.message?.includes("Patient not registered")) {
+        setAccessError("Patient not registered in the system");
+      } else {
+        console.error("Error checking access:", error);
+        setAccessError("Failed to check access. Please try again.");
+      }
+    } finally {
+      setCheckingAccess(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100">
@@ -156,17 +198,65 @@ export default function DoctorPortal() {
                   </p>
                   {isAuthorized ? (
                     <div className="mb-4">
-                      <p className="text-green-600 font-medium mb-2">
+                      <p className="text-green-600 font-medium mb-4">
                         ✓ Authorized Doctor
                       </p>
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                        <p className="text-gray-500">
-                          🏥 Patient record management features will be added in the next phase.
-                        </p>
-                        <p className="text-gray-400 text-sm mt-2">
-                          Coming soon: Create records, view patient data, and more.
-                        </p>
+                      
+                      {/* Patient Access Form */}
+                      <div className="bg-gray-50 rounded-lg p-6 mb-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Check Patient Records</h3>
+                        <div className="flex gap-3">
+                          <input
+                            type="text"
+                            value={patientAddress}
+                            onChange={(e) => setPatientAddress(e.target.value)}
+                            placeholder="Enter patient address (0x...)"
+                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            disabled={checkingAccess}
+                          />
+                          <button
+                            onClick={handleCheckAccess}
+                            disabled={checkingAccess || !patientAddress}
+                            className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                          >
+                            {checkingAccess ? "Checking..." : "Check Access"}
+                          </button>
+                        </div>
+                        
+                        {accessError && (
+                          <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
+                            <p className="text-red-800 text-sm">{accessError}</p>
+                          </div>
+                        )}
                       </div>
+
+                      {/* Medical Records Display */}
+                      {patientRecords && (
+                        <div className="bg-white border border-gray-200 rounded-lg p-6">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                            Medical Records for {formatAddress(patientAddress as `0x${string}`)}
+                          </h3>
+                          <div className="space-y-4">
+                            {patientRecords.map((record) => (
+                              <div key={record.id} className="border border-gray-200 rounded-lg p-4">
+                                <div className="flex justify-between items-start mb-2">
+                                  <div>
+                                    <p className="font-semibold text-gray-900">{record.type}</p>
+                                    <p className="text-sm text-gray-500">ID: {record.id}</p>
+                                  </div>
+                                  <p className="text-sm text-gray-600">{record.date}</p>
+                                </div>
+                                <div className="space-y-2 text-sm">
+                                  <p><span className="font-medium text-gray-700">Diagnosis:</span> {record.diagnosis}</p>
+                                  <p><span className="font-medium text-gray-700">Prescription:</span> {record.prescription}</p>
+                                  <p><span className="font-medium text-gray-700">Doctor:</span> {record.doctor}</p>
+                                  <p><span className="font-medium text-gray-700">Notes:</span> {record.notes}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">

@@ -25,6 +25,47 @@ export async function connectWallet(): Promise<WalletConnection | null> {
   }
 
   try {
+    // Request to switch to localhost network
+    try {
+      await (window as any).ethereum.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: "0x7a69" }], // 31337 in hex
+      });
+    } catch (switchError: any) {
+      // If the chain hasn't been added to MetaMask
+      if (switchError.code === 4902) {
+        try {
+          await (window as any).ethereum.request({
+            method: "wallet_addEthereumChain",
+            params: [
+              {
+                chainId: "0x7a69",
+                chainName: "Localhost 8545",
+                rpcUrls: ["http://127.0.0.1:8545"],
+                nativeCurrency: {
+                  name: "ETH",
+                  symbol: "ETH",
+                  decimals: 18,
+                },
+              },
+            ],
+          });
+        } catch (addError) {
+          console.error("Failed to add network:", addError);
+          alert("Please manually add Hardhat Local network (Chain ID: 31337, RPC: http://127.0.0.1:8545) to MetaMask");
+          return null;
+        }
+      } else if (switchError.code === 4001) {
+        // User rejected the request
+        alert("Please switch to Hardhat Local network in MetaMask to continue");
+        return null;
+      } else {
+        console.error("Failed to switch network:", switchError);
+        alert("Failed to switch network. Please manually select Hardhat Local (Chain ID: 31337) in MetaMask");
+        return null;
+      }
+    }
+
     // Request account access
     const accounts = await (window as any).ethereum.request({
       method: "eth_requestAccounts",
