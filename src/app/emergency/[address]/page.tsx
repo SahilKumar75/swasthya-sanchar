@@ -1,23 +1,12 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { mockEmergencyProfile } from "@/lib/mockRecords";
 
-export default function EmergencyResponderPage({ params }: { params: Promise<{ address: string }> }) {
-  const [address, setAddress] = useState<string>("");
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Unwrap params promise for Next.js 15 compatibility
-    params.then((resolvedParams) => {
-      setAddress(resolvedParams.address);
-      setLoading(false);
-    }).catch(() => {
-      setAddress("0x0000000000000000000000000000000000000000");
-      setLoading(false);
-    });
-  }, [params]);
+export default function EmergencyResponderPage({ params }: { params: { address: string } }) {
+  const [address, setAddress] = useState<string>(params.address || "");
+  const [loading, setLoading] = useState(false);
 
   if (loading) {
     return (
