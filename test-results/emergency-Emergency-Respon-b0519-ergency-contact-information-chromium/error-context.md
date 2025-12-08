@@ -18,14 +18,14 @@
         - button "Close" [ref=e18] [cursor=pointer]:
           - img [ref=e20]
       - heading "Unhandled Runtime Error" [level=1] [ref=e23]
-      - paragraph [ref=e24]: "Error: An unsupported type was passed to use(): [object Object]"
+      - paragraph [ref=e24]: "TypeError: params.then is not a function"
     - generic [ref=e25]:
       - heading "Source" [level=2] [ref=e26]
       - generic [ref=e27]:
-        - link "src/app/emergency/[address]/page.tsx (8:27) @ params" [ref=e29] [cursor=pointer]:
-          - generic [ref=e30]: src/app/emergency/[address]/page.tsx (8:27) @ params
+        - link "src/app/emergency/[address]/page.tsx (13:12) @ then" [ref=e29] [cursor=pointer]:
+          - generic [ref=e30]: src/app/emergency/[address]/page.tsx (13:12) @ then
           - img [ref=e31]
-        - generic [ref=e35]: "6 | 7 | export default function EmergencyResponderPage({ params }: { params: Promise<{ address: string }> }) { > 8 | const { address } = use(params); | ^ 9 | 10 | return ( 11 | <div className=\"min-h-screen bg-gradient-to-br from-red-50 to-orange-100\">"
+        - generic [ref=e35]: "11 | useEffect(() => { 12 | // Unwrap params promise for Next.js 15 compatibility > 13 | params.then((resolvedParams) => { | ^ 14 | setAddress(resolvedParams.address); 15 | setLoading(false); 16 | }).catch(() => {"
       - heading "Call Stack" [level=2] [ref=e36]
       - button "Show collapsed frames" [ref=e37] [cursor=pointer]
 ```

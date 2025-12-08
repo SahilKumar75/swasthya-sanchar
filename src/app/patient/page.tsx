@@ -51,16 +51,14 @@ export default function PatientPortal() {
       setCheckingRegistration(true);
       const result = await readContract(conn, "getPatient", [conn.account]);
       const patient = result as any;
-      // If patient.name is not empty, they're registered
-      setIsRegistered(patient.name && patient.name !== "");
+      // If patient.name exists and is not empty string, they're registered
+      const isPatientRegistered = patient && patient.name && patient.name.trim() !== "" && patient.name !== "0x" && patient.name !== "0x0000000000000000000000000000000000000000000000000000000000000000";
+      console.log("Registration check:", { patient, isPatientRegistered });
+      setIsRegistered(isPatientRegistered);
     } catch (error: any) {
       // "Patient not registered" error means they need to register
-      if (error?.message?.includes("Patient not registered")) {
-        setIsRegistered(false);
-      } else {
-        console.error("Error checking registration:", error);
-        setIsRegistered(false);
-      }
+      console.error("Error checking registration:", error);
+      setIsRegistered(false);
     } finally {
       setCheckingRegistration(false);
     }
@@ -247,6 +245,23 @@ export default function PatientPortal() {
                   <p className="text-neutral-700 dark:text-neutral-300 font-medium mb-4">
                     ✓ Registered Patient
                   </p>
+                  
+                  {/* Emergency Access CTA */}
+                  <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-lg p-6 mb-6">
+                    <h3 className="text-xl font-bold text-red-900 dark:text-red-100 mb-2 flex items-center gap-2">
+                      🚨 Emergency Access
+                    </h3>
+                    <p className="text-red-700 dark:text-red-200 mb-4">
+                      Generate your life-saving QR code for first responders—no wallet needed to scan
+                    </p>
+                    <Link
+                      href="/patient/emergency"
+                      className="inline-block px-6 py-3 bg-red-600 dark:bg-red-700 text-white rounded-lg hover:bg-red-700 dark:hover:bg-red-800 transition font-medium"
+                    >
+                      Generate Emergency QR Code →
+                    </Link>
+                  </div>
+
                   <div className="border-2 border-dashed border-neutral-300 dark:border-neutral-700 rounded-lg p-8 text-center">
                     <p className="text-neutral-500 dark:text-neutral-400">
                       📋 Record management features will be added in the next phase.
