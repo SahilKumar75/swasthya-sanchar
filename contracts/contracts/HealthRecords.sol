@@ -35,6 +35,7 @@ contract HealthRecords {
 
     // Events
     event PatientRegistered(address indexed patient, string name, uint256 timestamp);
+    event PatientUpdated(address indexed patient, string name, uint256 timestamp);
     event DoctorAuthorized(address indexed doctor, uint256 timestamp);
     event RecordCreated(uint256 indexed recordId, address indexed patient, address indexed doctor);
     event RecordUpdated(uint256 indexed recordId, string newRecordHash);
@@ -79,6 +80,23 @@ contract HealthRecords {
         });
 
         emit PatientRegistered(msg.sender, _name, block.timestamp);
+    }
+
+    /**
+     * @dev Update patient information (only registered patients can update their own data)
+     */
+    function updatePatient(
+        string memory _name,
+        uint256 _dateOfBirth,
+        string memory _emergencyProfileHash
+    ) external {
+        require(patients[msg.sender].isRegistered, "Patient not registered");
+        
+        patients[msg.sender].name = _name;
+        patients[msg.sender].dateOfBirth = _dateOfBirth;
+        patients[msg.sender].emergencyProfileHash = _emergencyProfileHash;
+
+        emit PatientUpdated(msg.sender, _name, block.timestamp);
     }
 
     /**

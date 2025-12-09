@@ -71,37 +71,42 @@ export default function PatientHome() {
       const result = await readContract(conn, "getPatient", [conn.account]);
       const patient = result as any;
 
-      if (patient && patient.emergencyContactHash) {
-        // Parse the emergency contact hash to get all the data
-        try {
-          const emergencyData = JSON.parse(patient.emergencyContactHash);
-          
-          // Calculate age from timestamp
-          const birthDate = new Date(Number(patient.dateOfBirth) * 1000);
-          const dateOfBirth = birthDate.toISOString().split('T')[0];
+      console.log("Loaded patient data:", patient);
 
-          setPatientData({
-            name: patient.name || "",
-            dateOfBirth: dateOfBirth,
-            gender: emergencyData.gender || "",
-            bloodGroup: emergencyData.bloodGroup || "",
-            phone: emergencyData.phone || "",
-            email: emergencyData.email || "",
-            address: emergencyData.address || "",
-            city: emergencyData.city || "",
-            state: emergencyData.state || "",
-            pincode: emergencyData.pincode || "",
-            emergencyName: emergencyData.name || "",
-            emergencyRelation: emergencyData.relation || "",
-            emergencyPhone: emergencyData.phone || "",
-            allergies: emergencyData.allergies || "",
-            chronicConditions: emergencyData.chronicConditions || "",
-            currentMedications: emergencyData.currentMedications || "",
-            previousSurgeries: emergencyData.previousSurgeries || ""
-          });
+      if (patient && patient.name) {
+        // Parse the emergency contact hash to get additional data
+        let emergencyData: any = {};
+        try {
+          if (patient.emergencyProfileHash) {
+            emergencyData = JSON.parse(patient.emergencyProfileHash);
+          }
         } catch (parseError) {
-          console.error("Error parsing patient data:", parseError);
+          console.error("Error parsing emergency data:", parseError);
         }
+        
+        // Calculate age from timestamp
+        const birthDate = new Date(Number(patient.dateOfBirth) * 1000);
+        const dateOfBirth = birthDate.toISOString().split('T')[0];
+
+        setPatientData({
+          name: patient.name || "",
+          dateOfBirth: dateOfBirth,
+          gender: emergencyData.gender || "",
+          bloodGroup: emergencyData.bloodGroup || "",
+          phone: emergencyData.phone || "",
+          email: emergencyData.email || session?.user?.email || "",
+          address: emergencyData.address || "",
+          city: emergencyData.city || "",
+          state: emergencyData.state || "",
+          pincode: emergencyData.pincode || "",
+          emergencyName: emergencyData.name || "",
+          emergencyRelation: emergencyData.relation || "",
+          emergencyPhone: emergencyData.emergencyPhone || "",
+          allergies: emergencyData.allergies || "",
+          chronicConditions: emergencyData.chronicConditions || "",
+          currentMedications: emergencyData.currentMedications || "",
+          previousSurgeries: emergencyData.previousSurgeries || ""
+        });
       }
     } catch (error) {
       console.error("Error loading patient data:", error);

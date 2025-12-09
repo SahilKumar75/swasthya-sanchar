@@ -6,8 +6,602 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { connectWallet, onAccountsChanged, readContract, writeContract, type WalletConnection } from "@/lib/web3";
 import { PatientHeader } from "@/components/ui/patient-header";
+import { Edit2, User, Calendar, Phone, Mail, MapPin, AlertCircle, Heart, Activity, FileText, QrCode, Save, X } from "lucide-react";
+import QRCode from "qrcode";
 
-export default function PatientPortal() {
+interface PatientData {
+  name: string;
+  dateOfBirth: string;
+  gender: string;
+  bloodGroup: string;
+  phone: string;
+  email: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  emergencyName: string;
+  emergencyRelation: string;
+  emergencyPhone: string;
+  allergies: string;
+  chronicConditions: string;
+  currentMedications: string;
+  previousSurgeries: string;
+}
+
+function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
+  const [patientData, setPatientData] = useState<PatientData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [qrCode, setQrCode] = useState<string>("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editFormData, setEditFormData] = useState<PatientData | null>(null);
+  const [updating, setUpdating] = useState(false);
+
+  useEffect(() => {
+    loadPatientData();
+  }, [connection]);
+
+  async function loadPatientData() {
+    try {
+      const result = await readContract(connection, "getPatient", [connection.account]);
+      const patient = result as any;
+
+      console.log("Raw patient data from blockchain:", patient);
+      console.log("Emergency profile hash:", patient.emergencyProfileHash);
+
+      if (patient && patient.name) {
+        let emergencyData: any = {};
+        try {
+          if (patient.emergencyProfileHash) {
+            console.log("Parsing emergency profile hash:", patient.emergencyProfileHash);
+            emergencyData = JSON.parse(patient.emergencyProfileHash);
+            console.log("Parsed emergency data:", emergencyData);
+          }
+        } catch (parseError) {
+          console.error("Error parsing emergency data:", parseError);
+        }
+        
+        const birthDate = new Date(Number(patient.dateOfBirth) * 1000);
+        const dateOfBirth = birthDate.toISOString().split('T')[0];
+
+        const data: PatientData = {
+          name: patient.name || "",
+          dateOfBirth: dateOfBirth,
+          gender: emergencyData.gender || "",
+          bloodGroup: emergencyData.bloodGroup || "",
+          phone: emergencyData.phone || "",
+          email: emergencyData.email || "",
+          address: emergencyData.address || "",
+          city: emergencyData.city || "",
+          state: emergencyData.state || "",
+          pincode: emergencyData.pincode || "",
+          emergencyName: emergencyData.name || "",
+          emergencyRelation: emergencyData.relation || "",
+          emergencyPhone: emergencyData.emergencyPhone || "",
+          allergies: emergencyData.allergies || "",
+          chronicConditions: emergencyData.chronicConditions || "",
+          currentMedications: emergencyData.currentMedications || "",
+          previousSurgeries: emergencyData.previousSurgeries || ""
+        };
+
+        setPatientData(data);
+        setEditFormData(data); // Initialize edit form with current data
+        
+        // Sync to database cache
+        try {
+          await fetch("/api/patient/sync", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              patientData: data,
+              walletAddress: connection.account,
+            }),
+          });
+          console.log("✓ Dashboard data synced to cache");
+        } catch (syncError) {
+          console.error("Failed to sync dashboard data:", syncError);
+        }
+        
+        // Generate QR code
+        const emergencyUrl = `${window.location.origin}/emergency/${connection.account}`;
+        const qr = await QRCode.toDataURL(emergencyUrl, { width: 200, margin: 2 });
+        setQrCode(qr);
+      }
+    } catch (error) {
+      console.error("Error loading patient data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleUpdateProfile() {
+    if (!editFormData) return;
+    
+    try {
+      setUpdating(true);
+
+      // Prepare updated data
+      const dateTimestamp = BigInt(Math.floor(new Date(editFormData.dateOfBirth).getTime() / 1000));
+      
+      const emergencyData = {
+        gender: editFormData.gender,
+        bloodGroup: editFormData.bloodGroup,
+        phone: editFormData.phone,
+        email: editFormData.email,
+        address: editFormData.address,
+        city: editFormData.city,
+        state: editFormData.state,
+        pincode: editFormData.pincode,
+        name: editFormData.emergencyName,
+        relation: editFormData.emergencyRelation,
+        emergencyPhone: editFormData.emergencyPhone,
+        allergies: editFormData.allergies,
+        chronicConditions: editFormData.chronicConditions,
+        currentMedications: editFormData.currentMedications,
+        previousSurgeries: editFormData.previousSurgeries,
+      };
+      
+      const emergencyHash = JSON.stringify(emergencyData);
+
+      // Update on blockchain
+      await writeContract(
+        connection,
+        "updatePatient",
+        [editFormData.name, dateTimestamp, emergencyHash]
+      );
+
+      console.log("✓ Profile updated on blockchain");
+
+      // Sync to database cache
+      await fetch("/api/patient/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          patientData: editFormData,
+          walletAddress: connection.account,
+        }),
+      });
+
+      console.log("✓ Profile synced to database");
+
+      // Reload data
+      await loadPatientData();
+      setIsEditing(false);
+      alert("Profile updated successfully!");
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert("Failed to update profile. Please try again.");
+    } finally {
+      setUpdating(false);
+    }
+  }
+
+  const handleEditChange = (field: keyof PatientData, value: string) => {
+    if (editFormData) {
+      setEditFormData({ ...editFormData, [field]: value });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-12 text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neutral-900 dark:border-neutral-100 mx-auto mb-4"></div>
+        <p className="text-neutral-600 dark:text-neutral-400">Loading your profile...</p>
+      </div>
+    );
+  }
+
+  const calculateAge = (dob: string) => {
+    const birth = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header with Edit Button */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold text-neutral-900 dark:text-neutral-50">Your Profile</h2>
+          <p className="text-neutral-600 dark:text-neutral-400 mt-1">Complete health information at a glance</p>
+        </div>
+        <div className="flex gap-2">
+          {isEditing ? (
+            <>
+              <button 
+                onClick={() => {
+                  setIsEditing(false);
+                  setEditFormData(patientData);
+                }}
+                disabled={updating}
+                className="flex items-center gap-2 px-4 py-2 bg-neutral-200 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-600 transition disabled:opacity-50"
+              >
+                <X className="w-4 h-4" />
+                Cancel
+              </button>
+              <button 
+                onClick={handleUpdateProfile}
+                disabled={updating}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition disabled:opacity-50"
+              >
+                <Save className="w-4 h-4" />
+                {updating ? "Saving..." : "Save Changes"}
+              </button>
+            </>
+          ) : (
+            <button 
+              onClick={() => setIsEditing(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition"
+            >
+              <Edit2 className="w-4 h-4" />
+              Edit Profile
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Profile Section */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Personal Information */}
+          <div className="bg-white dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <User className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-50">Personal Information</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">Full Name</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editFormData?.name || ""}
+                    onChange={(e) => handleEditChange("name", e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+                  />
+                ) : (
+                  <p className="text-lg text-neutral-900 dark:text-neutral-100 font-medium">{patientData?.name || <span className="text-neutral-400">Not provided</span>}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">Date of Birth</label>
+                {isEditing ? (
+                  <input
+                    type="date"
+                    value={editFormData?.dateOfBirth || ""}
+                    onChange={(e) => handleEditChange("dateOfBirth", e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+                  />
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-neutral-500" />
+                    <p className="text-lg text-neutral-900 dark:text-neutral-100 font-medium">
+                      {patientData?.dateOfBirth ? `${patientData.dateOfBirth} (${calculateAge(patientData.dateOfBirth)} years)` : <span className="text-neutral-400">Not provided</span>}
+                    </p>
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">Gender</label>
+                {isEditing ? (
+                  <select
+                    value={editFormData?.gender || ""}
+                    onChange={(e) => handleEditChange("gender", e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+                  >
+                    <option value="">Select Gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                ) : (
+                  <p className="text-lg text-neutral-900 dark:text-neutral-100 font-medium capitalize">{patientData?.gender || <span className="text-neutral-400">Not provided</span>}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">Blood Group</label>
+                {isEditing ? (
+                  <select
+                    value={editFormData?.bloodGroup || ""}
+                    onChange={(e) => handleEditChange("bloodGroup", e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+                  >
+                    <option value="">Select Blood Group</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                  </select>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-red-500" />
+                    <p className="text-lg font-bold text-red-600 dark:text-red-400">{patientData?.bloodGroup || <span className="text-neutral-400 font-normal">Not provided</span>}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Contact Information */}
+          <div className="bg-white dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Phone className="w-6 h-6 text-green-600 dark:text-green-400" />
+              <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-50">Contact Information</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">Phone Number</label>
+                {isEditing ? (
+                  <input
+                    type="tel"
+                    value={editFormData?.phone || ""}
+                    onChange={(e) => handleEditChange("phone", e.target.value)}
+                    placeholder="+91 9876543210"
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+                  />
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-neutral-500" />
+                    <p className="text-lg text-neutral-900 dark:text-neutral-100 font-medium">{patientData?.phone || <span className="text-neutral-400">Not provided</span>}</p>
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">Email</label>
+                {isEditing ? (
+                  <input
+                    type="email"
+                    value={editFormData?.email || ""}
+                    onChange={(e) => handleEditChange("email", e.target.value)}
+                    placeholder="email@example.com"
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+                  />
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-neutral-500" />
+                    <p className="text-lg text-neutral-900 dark:text-neutral-100 font-medium">{patientData?.email || <span className="text-neutral-400">Not provided</span>}</p>
+                  </div>
+                )}
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">Address</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editFormData?.address || ""}
+                    onChange={(e) => handleEditChange("address", e.target.value)}
+                    placeholder="Street address"
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+                  />
+                ) : (
+                  <div className="flex items-start gap-2">
+                    <MapPin className="w-4 h-4 text-neutral-500 mt-1" />
+                    <div>
+                      <p className="text-lg text-neutral-900 dark:text-neutral-100 font-medium">
+                        {patientData?.address || <span className="text-neutral-400">Not provided</span>}
+                      </p>
+                      {(patientData?.city || patientData?.state || patientData?.pincode) && (
+                        <p className="text-neutral-600 dark:text-neutral-400">
+                          {[patientData?.city, patientData?.state, patientData?.pincode].filter(Boolean).join(", ")}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+              {isEditing && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">City</label>
+                    <input
+                      type="text"
+                      value={editFormData?.city || ""}
+                      onChange={(e) => handleEditChange("city", e.target.value)}
+                      placeholder="City"
+                      className="w-full px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">State</label>
+                    <input
+                      type="text"
+                      value={editFormData?.state || ""}
+                      onChange={(e) => handleEditChange("state", e.target.value)}
+                      placeholder="State"
+                      className="w-full px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">Pincode</label>
+                    <input
+                      type="text"
+                      value={editFormData?.pincode || ""}
+                      onChange={(e) => handleEditChange("pincode", e.target.value)}
+                      placeholder="Pincode"
+                      className="w-full px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Emergency Contact */}
+          <div className="bg-red-50 dark:bg-red-900/20 rounded-lg border-2 border-red-200 dark:border-red-800 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+              <h3 className="text-xl font-semibold text-red-900 dark:text-red-100">Emergency Contact</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-red-700 dark:text-red-300 mb-1">Contact Name</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editFormData?.emergencyName || ""}
+                    onChange={(e) => handleEditChange("emergencyName", e.target.value)}
+                    placeholder="Emergency contact name"
+                    className="w-full px-3 py-2 rounded-lg border border-red-300 dark:border-red-700 bg-white dark:bg-red-900/30 text-red-900 dark:text-red-100"
+                  />
+                ) : (
+                  <p className="text-lg text-red-900 dark:text-red-100 font-medium">{patientData?.emergencyName || <span className="text-red-400">Not provided</span>}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-red-700 dark:text-red-300 mb-1">Relationship</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editFormData?.emergencyRelation || ""}
+                    onChange={(e) => handleEditChange("emergencyRelation", e.target.value)}
+                    placeholder="e.g., Spouse, Parent, Sibling"
+                    className="w-full px-3 py-2 rounded-lg border border-red-300 dark:border-red-700 bg-white dark:bg-red-900/30 text-red-900 dark:text-red-100"
+                  />
+                ) : (
+                  <p className="text-lg text-red-900 dark:text-red-100 font-medium capitalize">{patientData?.emergencyRelation || <span className="text-red-400">Not provided</span>}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-red-700 dark:text-red-300 mb-1">Phone Number</label>
+                {isEditing ? (
+                  <input
+                    type="tel"
+                    value={editFormData?.emergencyPhone || ""}
+                    onChange={(e) => handleEditChange("emergencyPhone", e.target.value)}
+                    placeholder="+91 9876543210"
+                    className="w-full px-3 py-2 rounded-lg border border-red-300 dark:border-red-700 bg-white dark:bg-red-900/30 text-red-900 dark:text-red-100"
+                  />
+                ) : (
+                  <p className="text-lg text-red-900 dark:text-red-100 font-medium">{patientData?.emergencyPhone || <span className="text-red-400">Not provided</span>}</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Medical Information */}
+          <div className="bg-white dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Heart className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-50">Medical Information</h3>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">Known Allergies</label>
+                {isEditing ? (
+                  <textarea
+                    value={editFormData?.allergies || ""}
+                    onChange={(e) => handleEditChange("allergies", e.target.value)}
+                    placeholder="List any known allergies (e.g., Penicillin, Peanuts)"
+                    rows={2}
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+                  />
+                ) : (
+                  <p className="text-neutral-900 dark:text-neutral-100">{patientData?.allergies || <span className="text-neutral-400">None reported</span>}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">Chronic Conditions</label>
+                {isEditing ? (
+                  <textarea
+                    value={editFormData?.chronicConditions || ""}
+                    onChange={(e) => handleEditChange("chronicConditions", e.target.value)}
+                    placeholder="List any chronic conditions (e.g., Diabetes, Hypertension)"
+                    rows={2}
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+                  />
+                ) : (
+                  <p className="text-neutral-900 dark:text-neutral-100">{patientData?.chronicConditions || <span className="text-neutral-400">None reported</span>}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">Current Medications</label>
+                {isEditing ? (
+                  <textarea
+                    value={editFormData?.currentMedications || ""}
+                    onChange={(e) => handleEditChange("currentMedications", e.target.value)}
+                    placeholder="List current medications with dosage"
+                    rows={2}
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+                  />
+                ) : (
+                  <p className="text-neutral-900 dark:text-neutral-100">{patientData?.currentMedications || <span className="text-neutral-400">None reported</span>}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">Previous Surgeries</label>
+                {isEditing ? (
+                  <textarea
+                    value={editFormData?.previousSurgeries || ""}
+                    onChange={(e) => handleEditChange("previousSurgeries", e.target.value)}
+                    placeholder="List any previous surgeries with dates"
+                    rows={2}
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+                  />
+                ) : (
+                  <p className="text-neutral-900 dark:text-neutral-100">{patientData?.previousSurgeries || <span className="text-neutral-400">None reported</span>}</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Blockchain Info */}
+          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              <h3 className="text-xl font-semibold text-blue-900 dark:text-blue-100">Blockchain Information</h3>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-blue-700 dark:text-blue-300 mb-1">Wallet Address</label>
+              <p className="text-blue-900 dark:text-blue-100 font-mono text-sm bg-blue-100 dark:bg-blue-900/40 px-3 py-2 rounded border border-blue-200 dark:border-blue-800 break-all">
+                {connection.account}
+              </p>
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                ✓ Your medical records are securely stored on the blockchain
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Sidebar with QR Code */}
+        <div className="space-y-6">
+          {/* Emergency QR Code */}
+          <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-lg border-2 border-red-200 dark:border-red-800 p-6 sticky top-24">
+            <div className="flex items-center gap-3 mb-4">
+              <QrCode className="w-6 h-6 text-red-600 dark:text-red-400" />
+              <h3 className="text-xl font-bold text-red-900 dark:text-red-100">Emergency QR</h3>
+            </div>
+            <p className="text-sm text-red-700 dark:text-red-200 mb-4">
+              First responders can scan this code to access your vital medical information instantly
+            </p>
+            {qrCode && (
+              <div className="bg-white p-4 rounded-lg mb-4">
+                <img src={qrCode} alt="Emergency QR Code" className="w-full" />
+              </div>
+            )}
+            <Link
+              href="/patient/emergency"
+              className="block w-full text-center px-4 py-3 bg-red-600 dark:bg-red-700 text-white rounded-lg hover:bg-red-700 dark:hover:bg-red-800 transition font-medium"
+            >
+              View Full Emergency Page
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+export default function PatientDashboard() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [connection, setConnection] = useState<WalletConnection | null>(null);
@@ -154,19 +748,37 @@ export default function PatientPortal() {
         // Convert date string to Unix timestamp (seconds since epoch)
         const dateTimestamp = BigInt(Math.floor(new Date(formData.dateOfBirth).getTime() / 1000));
         
-        // Create emergency contact hash (JSON string of emergency info)
+        // Store ALL collected data in emergency contact hash
         const emergencyData = {
+          // Personal info
+          gender: formData.gender,
+          bloodGroup: formData.bloodGroup,
+          // Contact info
+          phone: formData.phone,
+          email: formData.email,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          pincode: formData.pincode,
+          // Emergency contact
           name: formData.emergencyName,
           relation: formData.emergencyRelation,
-          phone: formData.emergencyPhone,
+          emergencyPhone: formData.emergencyPhone,
+          // Medical info
           allergies: formData.allergies,
           chronicConditions: formData.chronicConditions,
           currentMedications: formData.currentMedications,
-          bloodGroup: formData.bloodGroup
+          previousSurgeries: formData.previousSurgeries
         };
         const emergencyHash = JSON.stringify(emergencyData);
         
-        console.log("Registering patient:", { name: formData.name, dateTimestamp });
+        console.log("=== REGISTRATION DATA ===");
+        console.log("Name:", formData.name);
+        console.log("Date of Birth:", formData.dateOfBirth);
+        console.log("Full formData:", formData);
+        console.log("Emergency Data Object:", emergencyData);
+        console.log("Emergency Hash (JSON):", emergencyHash);
+        console.log("========================");
         
         await writeContract(
           connection,
@@ -175,6 +787,38 @@ export default function PatientPortal() {
         );
 
         console.log("Transaction completed, waiting for blockchain state update...");
+
+        // Sync data to database cache
+        try {
+          await fetch("/api/patient/sync", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              patientData: {
+                gender: formData.gender,
+                bloodGroup: formData.bloodGroup,
+                phone: formData.phone,
+                email: formData.email,
+                address: formData.address,
+                city: formData.city,
+                state: formData.state,
+                pincode: formData.pincode,
+                emergencyName: formData.emergencyName,
+                emergencyRelation: formData.emergencyRelation,
+                emergencyPhone: formData.emergencyPhone,
+                allergies: formData.allergies,
+                chronicConditions: formData.chronicConditions,
+                currentMedications: formData.currentMedications,
+                previousSurgeries: formData.previousSurgeries,
+              },
+              walletAddress: connection.account,
+            }),
+          });
+          console.log("✓ Data synced to database cache");
+        } catch (syncError) {
+          console.error("Failed to sync to database cache:", syncError);
+          // Don't block the flow if cache sync fails
+        }
 
         // Wait for blockchain state to update
         setTimeout(async () => {
@@ -226,7 +870,7 @@ export default function PatientPortal() {
       {/* Main Content */}
       <main className="max-w-5xl mx-auto px-6 lg:px-8 py-12 pt-24">{/* pt-24 for fixed header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-neutral-900 dark:text-neutral-50 mb-2">Patient Portal</h1>
+          <h1 className="text-4xl font-bold text-neutral-900 dark:text-neutral-50 mb-2">Dashboard</h1>
           <p className="text-lg text-neutral-600 dark:text-neutral-400">
             Your medical records, your control—securely stored on blockchain
           </p>
@@ -604,61 +1248,7 @@ export default function PatientPortal() {
             ) : (
               <>
                 {/* Connected Dashboard - Registered */}
-                <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-2 h-2 bg-neutral-900 dark:bg-neutral-100 rounded-full"></div>
-                    <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50">
-                      Your Dashboard
-                    </h2>
-                  </div>
-                  <p className="text-neutral-600 dark:text-neutral-400 mb-2">
-                    Connected as: <span className="font-mono text-sm bg-neutral-200 dark:bg-neutral-700 px-2 py-1 rounded">{connection.account}</span>
-                  </p>
-                  <p className="text-neutral-700 dark:text-neutral-300 font-medium mb-4">
-                    ✓ Registered Patient
-                  </p>
-                  
-                  {/* Emergency Access CTA */}
-                  <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-lg p-6 mb-6">
-                    <h3 className="text-xl font-bold text-red-900 dark:text-red-100 mb-2 flex items-center gap-2">
-                      🚨 Emergency Access
-                    </h3>
-                    <p className="text-red-700 dark:text-red-200 mb-4">
-                      Generate your life-saving QR code for first responders—no wallet needed to scan
-                    </p>
-                    <Link
-                      href="/patient/emergency"
-                      className="inline-block px-6 py-3 bg-red-600 dark:bg-red-700 text-white rounded-lg hover:bg-red-700 dark:hover:bg-red-800 transition font-medium"
-                    >
-                      Generate Emergency QR Code →
-                    </Link>
-                  </div>
-
-                  <div className="border-2 border-dashed border-neutral-300 dark:border-neutral-700 rounded-lg p-8 text-center">
-                    <p className="text-neutral-500 dark:text-neutral-400">
-                      📋 Record management features will be added in the next phase.
-                    </p>
-                    <p className="text-neutral-400 dark:text-neutral-500 text-sm mt-2">
-                      Coming soon: View your medical records, manage permissions, and more.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Future Features Preview */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-4">
-                    <h3 className="font-semibold text-neutral-900 dark:text-neutral-50 mb-2">📝 Profile</h3>
-                    <p className="text-sm text-neutral-600 dark:text-neutral-400">View your patient profile</p>
-                  </div>
-                  <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-4">
-                    <h3 className="font-semibold text-neutral-900 dark:text-neutral-50 mb-2">🏥 Records</h3>
-                    <p className="text-sm text-neutral-600 dark:text-neutral-400">View your medical records</p>
-                  </div>
-                  <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-4">
-                    <h3 className="font-semibold text-neutral-900 dark:text-neutral-50 mb-2">🔐 Access</h3>
-                    <p className="text-sm text-neutral-600 dark:text-neutral-400">Grant doctor permissions</p>
-                  </div>
-                </div>
+                <RegisteredDashboard connection={connection} />
               </>
             )}
           </div>

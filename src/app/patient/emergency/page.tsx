@@ -5,101 +5,104 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
 import { connectWallet, getCurrentAccount, formatAddress, onAccountsChanged, readContract, disconnectWallet, type WalletConnection } from "@/lib/web3";
-import { mockEmergencyProfile } from "@/lib/mockRecords";
+import { PatientHeader } from "@/components/ui/patient-header";
+import { useSession } from "next-auth/react";
+
+interface PatientData {
+  name: string;
+  dateOfBirth: string;
+  bloodGroup: string;
+  phone: string;
+  emergencyName: string;
+  emergencyRelation: string;
+  emergencyPhone: string;
+  allergies: string;
+  chronicConditions: string;
+  currentMedications: string;
+}
 
 export default function EmergencyProfilePage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [connection, setConnection] = useState<WalletConnection | null>(null);
   const [loading, setLoading] = useState(true);
   const [qrGenerated, setQrGenerated] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
+  const [patientData, setPatientData] = useState<PatientData | null>(null);
   const [checkingRegistration, setCheckingRegistration] = useState(true);
 
   useEffect(() => {
-    // AUTH GUARD: Check wallet connection and registration on mount
-    async function checkConnection() {
-      const account = await getCurrentAccount();
-      if (!account) {
-        // No wallet connected - redirect to landing
-        router.push("/");
+    // AUTH GUARD: Check session and wallet
+    async function checkAuth() {
+      if (status === "loading") return;
+
+      if (status === "unauthenticated" || !session?.user) {
+        router.push("/auth/login");
         return;
       }
-      
-      const conn = await connectWallet();
-      setConnection(conn);
-      
-      if (conn) {
-        // Check if patient is registered
-        try {
-          const result = await readContract(conn, "getPatient", [conn.account]);
-          const patient = result as any;
-          const isPatientRegistered = patient && patient.name && patient.name.trim() !== "" && patient.name !== "0x" && patient.name !== "0x0000000000000000000000000000000000000000000000000000000000000000";
-          
-          if (!isPatientRegistered) {
-            // Not registered - redirect to patient portal to register first
-            alert("Please register as a patient first before accessing emergency features.");
-            router.push("/patient");
-            return;
-          }
-          
-          setIsRegistered(true);
-        } catch (error) {
-          console.error("Error checking registration:", error);
-          router.push("/patient");
-          return;
-        }
+
+      if (session.user.role !== "patient") {
+        router.push(session.user.role === "doctor" ? "/doctor" : "/");
+        return;
       }
-      
+
+      try {
+        const conn = await connectWallet();
+        if (conn) {
+          setConnection(conn);
+          await loadPatientData(conn);
+        }
+      } catch (error) {
+        console.log("Error connecting wallet:", error);
+      }
+
       setLoading(false);
       setCheckingRegistration(false);
     }
 
-    checkConnection();
+    checkAuth();
+  }, [session, status, router]);
 
-    const handleAccountsChanged = async (accounts: string[]) => {
-      if (accounts.length === 0) {
-        // Wallet disconnected - redirect to landing
-        setConnection(null);
-        router.push("/");
-      } else {
-        const conn = await connectWallet();
-        setConnection(conn);
-        // Re-check registration
-        if (conn) {
-          try {
-            const result = await readContract(conn, "getPatient", [conn.account]);
-            const patient = result as any;
-            const isPatientRegistered = patient && patient.name && patient.name.trim() !== "" && patient.name !== "0x";
-            
-            if (!isPatientRegistered) {
-              router.push("/patient");
-            } else {
-              setIsRegistered(true);
-            }
-          } catch (error) {
-            router.push("/patient");
+  async function loadPatientData(conn: WalletConnection) {
+    try {
+      const result = await readContract(conn, "getPatient", [conn.account]);
+      const patient = result as any;
+
+      if (patient && patient.name) {
+        let emergencyData: any = {};
+        try {
+          if (patient.emergencyProfileHash) {
+            emergencyData = JSON.parse(patient.emergencyProfileHash);
           }
+        } catch (parseError) {
+          console.error("Error parsing emergency data:", parseError);
         }
+
+        const birthDate = new Date(Number(patient.dateOfBirth) * 1000);
+        const dateOfBirth = birthDate.toISOString().split('T')[0];
+
+        setPatientData({
+          name: patient.name || "",
+          dateOfBirth: dateOfBirth,
+          bloodGroup: emergencyData.bloodGroup || "",
+          phone: emergencyData.phone || "",
+          emergencyName: emergencyData.name || "",
+          emergencyRelation: emergencyData.relation || "",
+          emergencyPhone: emergencyData.emergencyPhone || "",
+          allergies: emergencyData.allergies || "",
+          chronicConditions: emergencyData.chronicConditions || "",
+          currentMedications: emergencyData.currentMedications || "",
+        });
+
+        setIsRegistered(true);
+      } else {
+        router.push("/patient");
       }
-    };
-
-    onAccountsChanged(handleAccountsChanged);
-  }, [router]);
-
-  const handleConnect = async () => {
-    setLoading(true);
-    const conn = await connectWallet();
-    setConnection(conn);
-    setLoading(false);
-  };
-
-  const handleLogout = () => {
-    // Set logout flag and clear connection state
-    disconnectWallet();
-    setConnection(null);
-    setIsRegistered(false);
-    router.push("/");
-  };
+    } catch (error) {
+      console.error("Error loading patient data:", error);
+      router.push("/patient");
+    }
+  }
 
   const handleGenerateQR = () => {
     setQrGenerated(true);
@@ -107,7 +110,6 @@ export default function EmergencyProfilePage() {
 
   const getEmergencyUrl = () => {
     if (!connection) return "";
-    // For development, use localhost. In production, this would be the Vercel URL
     const baseUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
     return `${baseUrl}/emergency/${connection.account}`;
   };
@@ -126,39 +128,9 @@ export default function EmergencyProfilePage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-neutral-900">
-      <header className="border-b border-neutral-200 dark:border-neutral-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <Link href="/patient" className="text-xl font-bold text-neutral-900 dark:text-neutral-50 hover:text-neutral-700 dark:hover:text-neutral-300 transition">
-            ← Back to Patient Portal
-          </Link>
-          <div>
-            {connection ? (
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-neutral-600 dark:text-neutral-400">Connected:</span>
-                <span className="px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 rounded-lg font-mono text-sm border border-neutral-200 dark:border-neutral-700">
-                  {formatAddress(connection.account)}
-                </span>
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition border border-neutral-200 dark:border-neutral-700"
-                >
-                  Logout
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={handleConnect}
-                disabled={loading}
-                className="px-4 py-2 bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition disabled:opacity-50"
-              >
-                {loading ? "Connecting..." : "Connect Wallet"}
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
+      <PatientHeader connection={connection} />
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-24">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-neutral-900 dark:text-neutral-50 mb-2">Emergency Profile</h1>
           <p className="text-lg text-neutral-600 dark:text-neutral-400">
@@ -166,36 +138,10 @@ export default function EmergencyProfilePage() {
           </p>
         </div>
 
-        {!connection ? (
-          <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-8 text-center">
-            <div className="mb-6">
-              <svg
-                className="mx-auto h-16 w-16 text-neutral-400 dark:text-neutral-500"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50 mb-4">
-              Connect Your Wallet
-            </h2>
-            <p className="text-neutral-600 dark:text-neutral-400 mb-6">
-              Please connect your wallet to view your emergency profile
-            </p>
-            <button
-              onClick={handleConnect}
-              disabled={loading}
-              className="px-6 py-3 bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition disabled:opacity-50 font-medium"
-            >
-              {loading ? "Connecting..." : "Connect Wallet"}
-            </button>
+        {!connection || !patientData ? (
+          <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-12 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neutral-900 dark:border-neutral-100 mx-auto mb-4"></div>
+            <p className="text-neutral-600 dark:text-neutral-400">Loading your emergency profile...</p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -212,51 +158,47 @@ export default function EmergencyProfilePage() {
                 <div className="border border-neutral-200 dark:border-neutral-700 rounded-lg p-4 bg-white dark:bg-neutral-900">
                   <h3 className="font-semibold text-neutral-900 dark:text-neutral-50 mb-3">Basic Information</h3>
                   <div className="space-y-2 text-sm">
-                    <p><span className="font-medium text-neutral-700 dark:text-neutral-300">Patient Address:</span></p>
-                    <p className="font-mono text-xs bg-neutral-100 dark:bg-neutral-800 p-2 rounded break-all text-neutral-900 dark:text-neutral-100">{connection.account}</p>
-                    <p><span className="font-medium text-neutral-700 dark:text-neutral-300">Blood Group:</span> {mockEmergencyProfile.bloodGroup}</p>
+                    <p><span className="font-medium text-neutral-700 dark:text-neutral-300">Name:</span> <span className="text-neutral-900 dark:text-neutral-100">{patientData.name}</span></p>
+                    <p><span className="font-medium text-neutral-700 dark:text-neutral-300">Blood Group:</span> <span className="text-red-600 dark:text-red-400 font-bold">{patientData.bloodGroup || "Not provided"}</span></p>
+                    <p><span className="font-medium text-neutral-700 dark:text-neutral-300">Date of Birth:</span> <span className="text-neutral-900 dark:text-neutral-100">{patientData.dateOfBirth}</span></p>
                   </div>
                 </div>
 
                 <div className="border border-neutral-200 dark:border-neutral-700 rounded-lg p-4 bg-white dark:bg-neutral-900">
                   <h3 className="font-semibold text-neutral-900 dark:text-neutral-50 mb-3">Emergency Contact</h3>
                   <div className="space-y-2 text-sm">
-                    <p><span className="font-medium text-neutral-700 dark:text-neutral-300">Name:</span> <span className="text-neutral-900 dark:text-neutral-100">{mockEmergencyProfile.emergencyContact.name}</span></p>
-                    <p><span className="font-medium text-neutral-700 dark:text-neutral-300">Relationship:</span> <span className="text-neutral-900 dark:text-neutral-100">{mockEmergencyProfile.emergencyContact.relationship}</span></p>
-                    <p><span className="font-medium text-neutral-700 dark:text-neutral-300">Phone:</span> <span className="text-neutral-900 dark:text-neutral-100">{mockEmergencyProfile.emergencyContact.phone}</span></p>
+                    <p><span className="font-medium text-neutral-700 dark:text-neutral-300">Name:</span> <span className="text-neutral-900 dark:text-neutral-100">{patientData.emergencyName || "Not provided"}</span></p>
+                    <p><span className="font-medium text-neutral-700 dark:text-neutral-300">Relationship:</span> <span className="text-neutral-900 dark:text-neutral-100">{patientData.emergencyRelation || "Not provided"}</span></p>
+                    <p><span className="font-medium text-neutral-700 dark:text-neutral-300">Phone:</span> <span className="text-neutral-900 dark:text-neutral-100">{patientData.emergencyPhone || "Not provided"}</span></p>
                   </div>
                 </div>
 
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-900 mb-3">Allergies</h3>
-                  <div className="space-y-1">
-                    {mockEmergencyProfile.allergies.map((allergy, idx) => (
-                      <span key={idx} className="inline-block bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">
-                        {allergy}
-                      </span>
-                    ))}
-                  </div>
+                <div className="border border-neutral-200 dark:border-neutral-700 rounded-lg p-4 bg-red-50 dark:bg-red-900/20">
+                  <h3 className="font-semibold text-red-900 dark:text-red-100 mb-3">⚠️ Allergies</h3>
+                  <p className="text-sm text-red-800 dark:text-red-200">
+                    {patientData.allergies || "None reported"}
+                  </p>
                 </div>
 
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-900 mb-3">Medical Conditions</h3>
-                  <div className="space-y-1">
-                    {mockEmergencyProfile.medicalConditions.map((condition, idx) => (
-                      <span key={idx} className="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm mr-2 mb-2">
-                        {condition}
-                      </span>
-                    ))}
-                  </div>
+                <div className="border border-neutral-200 dark:border-neutral-700 rounded-lg p-4 bg-yellow-50 dark:bg-yellow-900/20">
+                  <h3 className="font-semibold text-yellow-900 dark:text-yellow-100 mb-3">Medical Conditions</h3>
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                    {patientData.chronicConditions || "None reported"}
+                  </p>
                 </div>
               </div>
 
-              <div className="mt-6 border border-gray-200 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-900 mb-3">Current Medications</h3>
-                <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
-                  {mockEmergencyProfile.currentMedications.map((med, idx) => (
-                    <li key={idx}>{med}</li>
-                  ))}
-                </ul>
+              <div className="mt-6 border border-neutral-200 dark:border-neutral-700 rounded-lg p-4 bg-white dark:bg-neutral-900">
+                <h3 className="font-semibold text-neutral-900 dark:text-neutral-50 mb-3">Current Medications</h3>
+                <p className="text-sm text-neutral-700 dark:text-neutral-300">
+                  {patientData.currentMedications || "None reported"}
+                </p>
+              </div>
+
+              <div className="mt-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-4">
+                <p className="text-sm text-blue-800 dark:text-blue-200">
+                  📱 <strong>For First Responders:</strong> This information is stored securely on the blockchain. No login required to access in emergencies.
+                </p>
               </div>
             </div>
 
