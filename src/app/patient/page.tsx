@@ -35,20 +35,14 @@ interface PatientData {
 }
 
 interface PrivacySettings {
-  // Always public for emergency responders
-  bloodGroup: boolean;  // Always true
-  allergies: boolean;   // Always true
-  chronicConditions: boolean;  // Always true
-  currentMedications: boolean; // Always true
+  // Always public for emergency responders: bloodGroup, allergies, chronicConditions, currentMedications, name, dateOfBirth, emergencyContact
+  // These fields are no longer in the privacy settings - they're always visible
   
-  // User can control
-  name: boolean;
-  dateOfBirth: boolean;
+  // User can control (optional fields)
   gender: boolean;
   phone: boolean;
   email: boolean;
   address: boolean;
-  emergencyContact: boolean;
   height: boolean;
   weight: boolean;
   waistCircumference: boolean;
@@ -113,19 +107,11 @@ function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
           waistCircumference: emergencyData.waistCircumference || "",
           lastCheckedDate: emergencyData.lastCheckedDate || "",
           privacySettings: emergencyData.privacySettings || {
-            // Always public for emergency
-            bloodGroup: true,
-            allergies: true,
-            chronicConditions: true,
-            currentMedications: true,
-            // Default to public for critical info
-            name: true,
-            dateOfBirth: true,
+            // Only optional fields - always-public fields removed
             gender: true,
             phone: true,
             email: false,
             address: true,
-            emergencyContact: true,
             height: false,
             weight: false,
             waistCircumference: false,
@@ -692,15 +678,18 @@ function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
                 <h3 className="text-xl font-semibold text-purple-900 dark:text-purple-100">Privacy Settings</h3>
               </div>
               <p className="text-sm text-purple-700 dark:text-purple-300 mb-4">
-                Control what information is visible on your emergency QR code. Critical medical information (blood group, allergies, conditions, medications) is always public for your safety.
+                Control what optional information is visible on your emergency QR code. Essential information (name, age, blood group, emergency contact, allergies, conditions, medications) is always public for your safety.
               </p>
               
               <div className="space-y-3">
                 <div className="bg-white dark:bg-purple-900/30 p-4 rounded-lg">
-                  <p className="text-xs font-semibold text-purple-700 dark:text-purple-300 mb-3 uppercase">Always Public (For Emergency)</p>
+                  <p className="text-xs font-semibold text-purple-700 dark:text-purple-300 mb-3 uppercase">Always Public (Essential Information)</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {[
+                      { key: 'name', label: 'Name', locked: true },
+                      { key: 'dateOfBirth', label: 'Date of Birth / Age', locked: true },
                       { key: 'bloodGroup', label: 'Blood Group', locked: true },
+                      { key: 'emergencyContact', label: 'Emergency Contact', locked: true },
                       { key: 'allergies', label: 'Allergies', locked: true },
                       { key: 'chronicConditions', label: 'Chronic Conditions', locked: true },
                       { key: 'currentMedications', label: 'Current Medications', locked: true },
@@ -717,16 +706,13 @@ function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
                 </div>
 
                 <div className="bg-white dark:bg-purple-900/30 p-4 rounded-lg">
-                  <p className="text-xs font-semibold text-purple-700 dark:text-purple-300 mb-3 uppercase">You Control</p>
+                  <p className="text-xs font-semibold text-purple-700 dark:text-purple-300 mb-3 uppercase">You Control (Optional Fields)</p>
                   <div className="space-y-2">
                     {[
-                      { key: 'name' as keyof PrivacySettings, label: 'Name', icon: User },
-                      { key: 'dateOfBirth' as keyof PrivacySettings, label: 'Date of Birth', icon: Calendar },
                       { key: 'gender' as keyof PrivacySettings, label: 'Gender', icon: User },
                       { key: 'phone' as keyof PrivacySettings, label: 'Phone Number', icon: Phone },
                       { key: 'email' as keyof PrivacySettings, label: 'Email', icon: Mail },
                       { key: 'address' as keyof PrivacySettings, label: 'Address', icon: MapPin },
-                      { key: 'emergencyContact' as keyof PrivacySettings, label: 'Emergency Contact', icon: AlertCircle },
                       { key: 'height' as keyof PrivacySettings, label: 'Height', icon: Activity },
                       { key: 'weight' as keyof PrivacySettings, label: 'Weight', icon: Activity },
                       { key: 'waistCircumference' as keyof PrivacySettings, label: 'Waist Circumference', icon: Activity },

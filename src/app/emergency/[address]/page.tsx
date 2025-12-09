@@ -6,17 +6,11 @@ import { readContract, connectWallet } from "@/lib/web3";
 import { Shield } from "lucide-react";
 
 interface PrivacySettings {
-  bloodGroup: boolean;
-  allergies: boolean;
-  chronicConditions: boolean;
-  currentMedications: boolean;
-  name: boolean;
-  dateOfBirth: boolean;
+  // Only optional fields - name, DOB, bloodGroup, emergencyContact are ALWAYS visible
   gender: boolean;
   phone: boolean;
   email: boolean;
   address: boolean;
-  emergencyContact: boolean;
   height: boolean;
   weight: boolean;
   waistCircumference: boolean;
@@ -106,17 +100,11 @@ export default function EmergencyResponderPage({ params }: { params: { address: 
         weight: emergencyData.weight || "",
         waistCircumference: emergencyData.waistCircumference || "",
         privacySettings: emergencyData.privacySettings || {
-          bloodGroup: true,
-          allergies: true,
-          chronicConditions: true,
-          currentMedications: true,
-          name: true,
-          dateOfBirth: true,
+          // Only optional fields
           gender: true,
           phone: true,
           email: false,
           address: true,
-          emergencyContact: true,
           height: false,
           weight: false,
           waistCircumference: false,
@@ -198,13 +186,12 @@ export default function EmergencyResponderPage({ params }: { params: { address: 
             <div className="bg-white dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6">
               <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 mb-4">Patient Emergency Profile</h2>
               
-              {(isVisible('name') || isVisible('dateOfBirth') || isVisible('gender')) && (
-                <div className="mb-6 grid grid-cols-3 gap-4">
-                  {isVisible('name') && patientData.name && (<div><p className="text-sm text-neutral-600 dark:text-neutral-400">Name</p><p className="font-semibold">{patientData.name}</p></div>)}
-                  {isVisible('dateOfBirth') && patientData.dateOfBirth && (<div><p className="text-sm text-neutral-600 dark:text-neutral-400">DOB</p><p className="font-semibold">{patientData.dateOfBirth}</p></div>)}
-                  {isVisible('gender') && patientData.gender && (<div><p className="text-sm text-neutral-600 dark:text-neutral-400">Gender</p><p className="font-semibold capitalize">{patientData.gender}</p></div>)}
-                </div>
-              )}
+              {/* Personal Info - Name and DOB always visible */}
+              <div className="mb-6 grid grid-cols-3 gap-4">
+                {patientData.name && (<div><p className="text-sm text-neutral-600 dark:text-neutral-400">Name</p><p className="font-semibold">{patientData.name}</p></div>)}
+                {patientData.dateOfBirth && (<div><p className="text-sm text-neutral-600 dark:text-neutral-400">DOB</p><p className="font-semibold">{patientData.dateOfBirth}</p></div>)}
+                {isVisible('gender') && patientData.gender && (<div><p className="text-sm text-neutral-600 dark:text-neutral-400">Gender</p><p className="font-semibold capitalize">{patientData.gender}</p></div>)}
+              </div>
 
               <div className="grid grid-cols-2 gap-6">
                 <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-lg p-4">
@@ -228,7 +215,8 @@ export default function EmergencyResponderPage({ params }: { params: { address: 
                 </div>
               </div>
 
-              {isVisible('emergencyContact') && (patientData.emergencyName || patientData.emergencyPhone) && (
+              {/* Emergency Contact - Always visible */}
+              {(patientData.emergencyName || patientData.emergencyPhone) && (
                 <div className="mt-6 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-300 dark:border-blue-800 rounded-lg p-4">
                   <h3 className="font-bold text-blue-900 dark:text-blue-100 mb-2">Emergency Contact</h3>
                   {patientData.emergencyName && <p><span className="font-semibold">Name:</span> {patientData.emergencyName}</p>}
@@ -242,7 +230,7 @@ export default function EmergencyResponderPage({ params }: { params: { address: 
                   <Shield className="w-4 h-4 text-purple-600" />
                   <p className="text-sm font-semibold">Privacy Notice</p>
                 </div>
-                <p className="text-sm text-neutral-600 italic">Patient controls visibility. Critical medical info always shown for safety.</p>
+                <p className="text-sm text-neutral-600 italic">Essential information (name, age, blood type, emergency contact, allergies, conditions, medications) is always visible for safety. Patient controls visibility of optional fields.</p>
               </div>
             </div>
 
