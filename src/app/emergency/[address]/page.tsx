@@ -2,11 +2,139 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { mockEmergencyProfile } from "@/lib/mockRecords";
+import { readContract, getProvider } from "@/lib/web3";
+import { Shield, Eye, EyeOff } from "lucide-react";
+
+interface PrivacySettings {
+  bloodGroup: boolean;
+  allergies: boolean;
+  chronicConditions: boolean;
+  currentMedications: boolean;
+  name: boolean;
+  dateOfBirth: boolean;
+  gender: boolean;
+  phone: boolean;
+  email: boolean;
+  address: boolean;
+  emergencyContact: boolean;
+  height: boolean;
+  weight: boolean;
+  waistCircumference: boolean;
+  previousSurgeries: boolean;
+}
+
+interface PatientEmergencyData {
+  name: string;
+  dateOfBirth: string;
+  gender: string;
+  bloodGroup: string;
+  phone: string;
+  email: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+  emergencyName: string;
+  emergencyRelation: string;
+  emergencyPhone: string;
+  allergies: string;
+  chronicConditions: string;
+  currentMedications: string;
+  previousSurgeries: string;
+  height: string;
+  weight: string;
+  waistCircumference: string;
+  privacySettings: PrivacySettings;
+}
 
 export default function EmergencyResponderPage({ params }: { params: { address: string } }) {
   const [address, setAddress] = useState<string>(params.address || "");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [patientData, setPatientData] = useState<PatientEmergencyData | null>(null);
+  const [error, setError] = useState<string>("");
+
+  useEffect(() => {
+    loadEmergencyData();
+  }, [address]);
+
+  async function loadEmergencyData() {
+    try {
+      setLoading(true);
+      setError("");
+      
+      const provider = await getProvider();
+      const connection = { provider, account: address };
+      
+      const result = await readContract(connection, "getPatient", [address]);
+      const patient = result as any;
+
+      if (!patient || !patient.name) {
+        setError("Patient not found or not registered");
+        return;
+      }
+
+      let emergencyData: any = {};
+      if (patient.emergencyProfileHash) {
+        emergencyData = JSON.parse(patient.emergencyProfileHash);
+      }
+
+      const birthDate = new Date(Number(patient.dateOfBirth) * 1000);
+      const dateOfBirth = birthDate.toISOString().split('T')[0];
+
+      const data: PatientEmergencyData = {
+        name: patient.name || "",
+        dateOfBirth: dateOfBirth,
+        gender: emergencyData.gender || "",
+        bloodGroup: emergencyData.bloodGroup || "",
+        phone: emergencyData.phone || "",
+        email: emergencyData.email || "",
+        address: emergencyData.address || "",
+        city: emergencyData.city || "",
+        state: emergencyData.state || "",
+        pincode: emergencyData.pincode || "",
+        emergencyName: emergencyData.name || "",
+        emergencyRelation: emergencyData.relation || "",
+        emergencyPhone: emergencyData.emergencyPhone || "",
+        allergies: emergencyData.allergies || "",
+        chronicConditions: emergencyData.chronicConditions || "",
+        currentMedications: emergencyData.currentMedications || "",
+        previousSurgeries: emergencyData.previousSurgeries || "",
+        height: emergencyData.height || "",
+        weight: emergencyData.weight || "",
+        waistCircumference: emergencyData.waistCircumference || "",
+        privacySettings: emergencyData.privacySettings || {
+          bloodGroup: true,
+          allergies: true,
+          chronicConditions: true,
+          currentMedications: true,
+          name: true,
+          dateOfBirth: true,
+          gender: true,
+          phone: true,
+          email: false,
+          address: true,
+          emergencyContact: true,
+          height: false,
+          weight: false,
+          waistCircumference: false,
+          previousSurgeries: false
+        }
+      };
+
+      setPatientData(data);
+    } catch (error) {
+      console.error("Error loading emergency data:", error);
+      setError("Failed to load patient emergency data");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Helper function to check if field should be visible
+  const isVisible = (field: keyof PrivacySettings): boolean => {
+    if (!patientData) return false;
+    return patientData.privacySettings[field] ?? false;
+  };
 
   if (loading) {
     return (

@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { connectWallet, onAccountsChanged, readContract, writeContract, type WalletConnection } from "@/lib/web3";
 import { PatientHeader } from "@/components/ui/patient-header";
-import { Edit2, User, Calendar, Phone, Mail, MapPin, AlertCircle, Heart, Activity, FileText, QrCode, Save, X } from "lucide-react";
+import { Edit2, User, Calendar, Phone, Mail, MapPin, AlertCircle, Heart, Activity, FileText, QrCode, Save, X, Lock, Unlock, Eye, EyeOff, Shield } from "lucide-react";
 import QRCode from "qrcode";
 
 interface PatientData {
@@ -31,6 +31,28 @@ interface PatientData {
   weight: string;
   waistCircumference: string;
   lastCheckedDate: string;
+  privacySettings: PrivacySettings;
+}
+
+interface PrivacySettings {
+  // Always public for emergency responders
+  bloodGroup: boolean;  // Always true
+  allergies: boolean;   // Always true
+  chronicConditions: boolean;  // Always true
+  currentMedications: boolean; // Always true
+  
+  // User can control
+  name: boolean;
+  dateOfBirth: boolean;
+  gender: boolean;
+  phone: boolean;
+  email: boolean;
+  address: boolean;
+  emergencyContact: boolean;
+  height: boolean;
+  weight: boolean;
+  waistCircumference: boolean;
+  previousSurgeries: boolean;
 }
 
 function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
@@ -89,7 +111,26 @@ function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
           height: emergencyData.height || "",
           weight: emergencyData.weight || "",
           waistCircumference: emergencyData.waistCircumference || "",
-          lastCheckedDate: emergencyData.lastCheckedDate || ""
+          lastCheckedDate: emergencyData.lastCheckedDate || "",
+          privacySettings: emergencyData.privacySettings || {
+            // Always public for emergency
+            bloodGroup: true,
+            allergies: true,
+            chronicConditions: true,
+            currentMedications: true,
+            // Default to public for critical info
+            name: true,
+            dateOfBirth: true,
+            gender: true,
+            phone: true,
+            email: false,
+            address: true,
+            emergencyContact: true,
+            height: false,
+            weight: false,
+            waistCircumference: false,
+            previousSurgeries: false
+          }
         };
 
         setPatientData(data);
@@ -150,7 +191,8 @@ function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
         height: editFormData.height,
         weight: editFormData.weight,
         waistCircumference: editFormData.waistCircumference,
-        lastCheckedDate: editFormData.lastCheckedDate
+        lastCheckedDate: editFormData.lastCheckedDate,
+        privacySettings: editFormData.privacySettings
       };
       
       const emergencyHash = JSON.stringify(emergencyData);
@@ -191,6 +233,18 @@ function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
   const handleEditChange = (field: keyof PatientData, value: string) => {
     if (editFormData) {
       setEditFormData({ ...editFormData, [field]: value });
+    }
+  };
+
+  const handlePrivacyChange = (field: keyof PrivacySettings, value: boolean) => {
+    if (editFormData) {
+      setEditFormData({
+        ...editFormData,
+        privacySettings: {
+          ...editFormData.privacySettings,
+          [field]: value
+        }
+      });
     }
   };
 
@@ -630,6 +684,92 @@ function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
             </div>
           </div>
 
+          {/* Privacy Settings - Only show in edit mode */}
+          {isEditing && (
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg border-2 border-purple-200 dark:border-purple-800 p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Shield className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                <h3 className="text-xl font-semibold text-purple-900 dark:text-purple-100">Privacy Settings</h3>
+              </div>
+              <p className="text-sm text-purple-700 dark:text-purple-300 mb-4">
+                Control what information is visible on your emergency QR code. Critical medical information (blood group, allergies, conditions, medications) is always public for your safety.
+              </p>
+              
+              <div className="space-y-3">
+                <div className="bg-white dark:bg-purple-900/30 p-4 rounded-lg">
+                  <p className="text-xs font-semibold text-purple-700 dark:text-purple-300 mb-3 uppercase">Always Public (For Emergency)</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {[
+                      { key: 'bloodGroup', label: 'Blood Group', locked: true },
+                      { key: 'allergies', label: 'Allergies', locked: true },
+                      { key: 'chronicConditions', label: 'Chronic Conditions', locked: true },
+                      { key: 'currentMedications', label: 'Current Medications', locked: true },
+                    ].map(({ key, label, locked }) => (
+                      <div key={key} className="flex items-center justify-between p-2 bg-purple-50 dark:bg-purple-900/50 rounded">
+                        <span className="text-sm text-purple-900 dark:text-purple-100">{label}</span>
+                        <div className="flex items-center gap-2">
+                          <Lock className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                          <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">Public</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-purple-900/30 p-4 rounded-lg">
+                  <p className="text-xs font-semibold text-purple-700 dark:text-purple-300 mb-3 uppercase">You Control</p>
+                  <div className="space-y-2">
+                    {[
+                      { key: 'name' as keyof PrivacySettings, label: 'Name', icon: User },
+                      { key: 'dateOfBirth' as keyof PrivacySettings, label: 'Date of Birth', icon: Calendar },
+                      { key: 'gender' as keyof PrivacySettings, label: 'Gender', icon: User },
+                      { key: 'phone' as keyof PrivacySettings, label: 'Phone Number', icon: Phone },
+                      { key: 'email' as keyof PrivacySettings, label: 'Email', icon: Mail },
+                      { key: 'address' as keyof PrivacySettings, label: 'Address', icon: MapPin },
+                      { key: 'emergencyContact' as keyof PrivacySettings, label: 'Emergency Contact', icon: AlertCircle },
+                      { key: 'height' as keyof PrivacySettings, label: 'Height', icon: Activity },
+                      { key: 'weight' as keyof PrivacySettings, label: 'Weight', icon: Activity },
+                      { key: 'waistCircumference' as keyof PrivacySettings, label: 'Waist Circumference', icon: Activity },
+                      { key: 'previousSurgeries' as keyof PrivacySettings, label: 'Previous Surgeries', icon: Heart },
+                    ].map(({ key, label, icon: Icon }) => {
+                      const isPublic = editFormData?.privacySettings[key] ?? false;
+                      return (
+                        <div key={key} className="flex items-center justify-between p-3 bg-white dark:bg-purple-900/40 rounded hover:bg-purple-50 dark:hover:bg-purple-900/60 transition">
+                          <div className="flex items-center gap-2">
+                            <Icon className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                            <span className="text-sm text-purple-900 dark:text-purple-100">{label}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handlePrivacyChange(key, !isPublic)}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+                              isPublic 
+                                ? 'bg-green-600 dark:bg-green-500' 
+                                : 'bg-gray-300 dark:bg-gray-600'
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                                isPublic ? 'translate-x-6' : 'translate-x-1'
+                              }`}
+                            />
+                          </button>
+                          <span className={`text-xs font-medium ml-2 w-16 ${
+                            isPublic 
+                              ? 'text-green-600 dark:text-green-400' 
+                              : 'text-gray-600 dark:text-gray-400'
+                          }`}>
+                            {isPublic ? 'Public' : 'Private'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Blockchain Info */}
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-6">
             <div className="flex items-center gap-3 mb-4">
@@ -862,7 +1002,25 @@ export default function PatientDashboard() {
           height: formData.height,
           weight: formData.weight,
           waistCircumference: formData.waistCircumference,
-          lastCheckedDate: formData.lastCheckedDate
+          lastCheckedDate: formData.lastCheckedDate,
+          // Privacy settings - default to public for critical info
+          privacySettings: {
+            bloodGroup: true,
+            allergies: true,
+            chronicConditions: true,
+            currentMedications: true,
+            name: true,
+            dateOfBirth: true,
+            gender: true,
+            phone: true,
+            email: false,
+            address: true,
+            emergencyContact: true,
+            height: false,
+            weight: false,
+            waistCircumference: false,
+            previousSurgeries: false
+          }
         };
         const emergencyHash = JSON.stringify(emergencyData);
         
