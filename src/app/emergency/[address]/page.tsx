@@ -225,6 +225,54 @@ export default function EmergencyResponderPage({ params }: { params: { address: 
                 </div>
               )}
 
+              {/* Contact Information - Optional */}
+              {(isVisible('phone') || isVisible('email') || isVisible('address')) && (patientData.phone || patientData.email || patientData.address) && (
+                <div className="mt-6 border-2 border-neutral-300 dark:border-neutral-700 rounded-lg p-4">
+                  <h3 className="font-bold mb-3">Contact Information</h3>
+                  <div className="space-y-2">
+                    {isVisible('phone') && patientData.phone && (
+                      <p><span className="font-semibold">Phone:</span> <a href={`tel:${patientData.phone}`} className="text-blue-600 underline">{patientData.phone}</a></p>
+                    )}
+                    {isVisible('email') && patientData.email && (
+                      <p><span className="font-semibold">Email:</span> <a href={`mailto:${patientData.email}`} className="text-blue-600 underline">{patientData.email}</a></p>
+                    )}
+                    {isVisible('address') && (patientData.address || patientData.city || patientData.state) && (
+                      <p><span className="font-semibold">Address:</span> {[patientData.address, patientData.city, patientData.state, patientData.pincode].filter(Boolean).join(', ')}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Physical Measurements - Optional */}
+              {(isVisible('height') || isVisible('weight') || isVisible('waistCircumference')) && (patientData.height || patientData.weight || patientData.waistCircumference) && (
+                <div className="mt-6 border-2 border-neutral-300 dark:border-neutral-700 rounded-lg p-4">
+                  <h3 className="font-bold mb-3">Physical Measurements</h3>
+                  <div className="grid grid-cols-3 gap-4">
+                    {isVisible('height') && patientData.height && (
+                      <div><p className="text-sm text-neutral-600 dark:text-neutral-400">Height</p><p className="font-semibold">{patientData.height}</p></div>
+                    )}
+                    {isVisible('weight') && patientData.weight && (
+                      <div><p className="text-sm text-neutral-600 dark:text-neutral-400">Weight</p><p className="font-semibold">{patientData.weight}</p></div>
+                    )}
+                    {isVisible('waistCircumference') && patientData.waistCircumference && (
+                      <div><p className="text-sm text-neutral-600 dark:text-neutral-400">Waist</p><p className="font-semibold">{patientData.waistCircumference}</p></div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Previous Surgeries - Optional */}
+              {isVisible('previousSurgeries') && patientData.previousSurgeries && (
+                <div className="mt-6 border-2 border-neutral-300 dark:border-neutral-700 rounded-lg p-4">
+                  <h3 className="font-bold mb-3">Previous Surgeries</h3>
+                  <ul className="list-disc list-inside">
+                    {patientData.previousSurgeries.split(',').map((surgery, i) => (
+                      <li key={i}>{surgery.trim()}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               <div className="mt-6 pt-6 border-t">
                 <div className="flex items-center gap-2 mb-2">
                   <Shield className="w-4 h-4 text-purple-600" />
