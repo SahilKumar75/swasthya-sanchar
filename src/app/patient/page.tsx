@@ -791,10 +791,12 @@ function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
               </div>
             )}
             <Link
-              href="/patient/emergency"
+              href={`/emergency/${connection.account}`}
+              target="_blank"
+              rel="noopener noreferrer"
               className="block w-full text-center px-4 py-3 bg-red-600 dark:bg-red-700 text-white rounded-lg hover:bg-red-700 dark:hover:bg-red-800 transition font-medium"
             >
-              View Full Emergency Page
+              View Emergency Page
             </Link>
           </div>
         </div>
