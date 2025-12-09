@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { readContract, connectWallet } from "@/lib/web3";
+import { readContractPublic } from "@/lib/web3";
 import { Shield } from "lucide-react";
 
 interface PrivacySettings {
@@ -56,13 +56,8 @@ export default function EmergencyResponderPage({ params }: { params: { address: 
       setLoading(true);
       setError("");
       
-      const connection = await connectWallet();
-      if (!connection) {
-        setError("Failed to connect to blockchain");
-        return;
-      }
-      
-      const result = await readContract(connection, "getPatient", [address]);
+      // Use read-only client - no wallet required for emergency access
+      const result = await readContractPublic("getPatient", [address]);
       const patient = result as any;
 
       if (!patient || !patient.name) {

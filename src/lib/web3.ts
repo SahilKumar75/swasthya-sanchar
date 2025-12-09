@@ -222,6 +222,28 @@ export async function writeContract(
   }
 }
 
+// Create read-only public client (no wallet required)
+export function createReadOnlyClient(): PublicClient {
+  return createPublicClient({
+    chain: hardhatLocal,
+    transport: http(),
+  });
+}
+
+// Read contract without wallet connection (for emergency access)
+export async function readContractPublic(
+  functionName: string,
+  args?: readonly unknown[]
+) {
+  const publicClient = createReadOnlyClient();
+  return publicClient.readContract({
+    address: HEALTH_RECORDS_ADDRESS,
+    abi: HEALTH_RECORDS_ABI,
+    functionName: functionName as any,
+    args: args as any,
+  });
+}
+
 // Format address for display
 export function formatAddress(address: string): string {
   if (!address) return "";
