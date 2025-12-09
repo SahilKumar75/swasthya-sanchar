@@ -41,6 +41,12 @@ export const patients = sqliteTable("patients", {
   currentMedications: text("current_medications"),
   previousSurgeries: text("previous_surgeries"),
   
+  // Physical Measurements (cached from blockchain)
+  height: text("height"),
+  weight: text("weight"),
+  waistCircumference: text("waist_circumference"),
+  lastCheckedDate: text("last_checked_date"),
+  
   // Blockchain tracking
   registeredOnBlockchain: integer("registered_on_blockchain", { mode: "boolean" }).default(false).notNull(),
   blockchainTxHash: text("blockchain_tx_hash"),

@@ -60,6 +60,12 @@ export async function POST(request: NextRequest) {
         currentMedications: patientData.currentMedications || null,
         previousSurgeries: patientData.previousSurgeries || null,
         
+        // Physical Measurements
+        height: patientData.height || null,
+        weight: patientData.weight || null,
+        waistCircumference: patientData.waistCircumference || null,
+        lastCheckedDate: patientData.lastCheckedDate || null,
+        
         // Update tracking fields
         registeredOnBlockchain: true,
         lastSyncedAt: new Date(),

@@ -27,6 +27,10 @@ interface PatientData {
   chronicConditions: string;
   currentMedications: string;
   previousSurgeries: string;
+  height: string;
+  weight: string;
+  waistCircumference: string;
+  lastCheckedDate: string;
 }
 
 function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
@@ -81,7 +85,11 @@ function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
           allergies: emergencyData.allergies || "",
           chronicConditions: emergencyData.chronicConditions || "",
           currentMedications: emergencyData.currentMedications || "",
-          previousSurgeries: emergencyData.previousSurgeries || ""
+          previousSurgeries: emergencyData.previousSurgeries || "",
+          height: emergencyData.height || "",
+          weight: emergencyData.weight || "",
+          waistCircumference: emergencyData.waistCircumference || "",
+          lastCheckedDate: emergencyData.lastCheckedDate || ""
         };
 
         setPatientData(data);
@@ -139,6 +147,10 @@ function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
         chronicConditions: editFormData.chronicConditions,
         currentMedications: editFormData.currentMedications,
         previousSurgeries: editFormData.previousSurgeries,
+        height: editFormData.height,
+        weight: editFormData.weight,
+        waistCircumference: editFormData.waistCircumference,
+        lastCheckedDate: editFormData.lastCheckedDate
       };
       
       const emergencyHash = JSON.stringify(emergencyData);
@@ -553,6 +565,71 @@ function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
             </div>
           </div>
 
+          {/* Physical Measurements */}
+          <div className="bg-white dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Activity className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+              <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-50">Physical Measurements</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">Height (cm)</label>
+                {isEditing ? (
+                  <input
+                    type="number"
+                    value={editFormData?.height || ""}
+                    onChange={(e) => handleEditChange("height", e.target.value)}
+                    placeholder="e.g., 170"
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+                  />
+                ) : (
+                  <p className="text-neutral-900 dark:text-neutral-100">{patientData?.height ? `${patientData.height} cm` : <span className="text-neutral-400">Not provided</span>}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">Weight (kg)</label>
+                {isEditing ? (
+                  <input
+                    type="number"
+                    value={editFormData?.weight || ""}
+                    onChange={(e) => handleEditChange("weight", e.target.value)}
+                    placeholder="e.g., 70"
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+                  />
+                ) : (
+                  <p className="text-neutral-900 dark:text-neutral-100">{patientData?.weight ? `${patientData.weight} kg` : <span className="text-neutral-400">Not provided</span>}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">Waist Circumference (cm)</label>
+                {isEditing ? (
+                  <input
+                    type="number"
+                    value={editFormData?.waistCircumference || ""}
+                    onChange={(e) => handleEditChange("waistCircumference", e.target.value)}
+                    placeholder="e.g., 85"
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+                  />
+                ) : (
+                  <p className="text-neutral-900 dark:text-neutral-100">{patientData?.waistCircumference ? `${patientData.waistCircumference} cm` : <span className="text-neutral-400">Not provided</span>}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">Last Checked Date</label>
+                {isEditing ? (
+                  <input
+                    type="date"
+                    value={editFormData?.lastCheckedDate || ""}
+                    onChange={(e) => handleEditChange("lastCheckedDate", e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+                  />
+                ) : (
+                  <p className="text-neutral-900 dark:text-neutral-100">{patientData?.lastCheckedDate || <span className="text-neutral-400">Not provided</span>}</p>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Blockchain Info */}
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-6">
             <div className="flex items-center gap-3 mb-4">
@@ -634,7 +711,13 @@ export default function PatientDashboard() {
     allergies: "",
     chronicConditions: "",
     currentMedications: "",
-    previousSurgeries: ""
+    previousSurgeries: "",
+    
+    // Step 5: Physical Measurements (optional)
+    height: "",
+    weight: "",
+    waistCircumference: "",
+    lastCheckedDate: ""
   });
 
   useEffect(() => {
@@ -740,8 +823,14 @@ export default function PatientDashboard() {
       return;
     }
     
-    // Final step - Submit to blockchain
     if (currentStep === 4) {
+      // Medical information is optional, move to physical measurements
+      setCurrentStep(5);
+      return;
+    }
+    
+    // Final step - Submit to blockchain
+    if (currentStep === 5) {
       try {
         setRegistering(true);
         
@@ -768,7 +857,12 @@ export default function PatientDashboard() {
           allergies: formData.allergies,
           chronicConditions: formData.chronicConditions,
           currentMedications: formData.currentMedications,
-          previousSurgeries: formData.previousSurgeries
+          previousSurgeries: formData.previousSurgeries,
+          // Physical measurements
+          height: formData.height,
+          weight: formData.weight,
+          waistCircumference: formData.waistCircumference,
+          lastCheckedDate: formData.lastCheckedDate
         };
         const emergencyHash = JSON.stringify(emergencyData);
         
@@ -920,7 +1014,7 @@ export default function PatientDashboard() {
                 {/* Progress Indicator */}
                 <div className="mb-8">
                   <div className="flex items-center justify-between mb-4">
-                    {[1, 2, 3, 4].map((step) => (
+                    {[1, 2, 3, 4, 5].map((step) => (
                       <div key={step} className="flex items-center flex-1">
                         <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 font-semibold ${
                           currentStep >= step 
@@ -929,7 +1023,7 @@ export default function PatientDashboard() {
                         }`}>
                           {step}
                         </div>
-                        {step < 4 && (
+                        {step < 5 && (
                           <div className={`flex-1 h-1 mx-2 ${
                             currentStep > step 
                               ? 'bg-neutral-900 dark:bg-neutral-100' 
@@ -944,6 +1038,7 @@ export default function PatientDashboard() {
                     <span>Contact</span>
                     <span>Emergency</span>
                     <span>Medical</span>
+                    <span>Physical</span>
                   </div>
                 </div>
 
@@ -952,12 +1047,14 @@ export default function PatientDashboard() {
                   {currentStep === 2 && "Contact Information"}
                   {currentStep === 3 && "Emergency Contact"}
                   {currentStep === 4 && "Medical Information"}
+                  {currentStep === 5 && "Physical Measurements"}
                 </h2>
                 <p className="text-neutral-600 dark:text-neutral-400 mb-6">
                   {currentStep === 1 && "Let's start with your basic details"}
                   {currentStep === 2 && "How can we reach you?"}
                   {currentStep === 3 && "Who should we contact in case of emergency?"}
                   {currentStep === 4 && "Important medical information for emergencies"}
+                  {currentStep === 5 && "Optional health metrics to track your wellness"}
                 </p>
                 
                 {/* Success message after registration */}
@@ -1224,6 +1321,68 @@ export default function PatientDashboard() {
                     </>
                   )}
 
+                  {/* Step 5: Physical Measurements (Optional) */}
+                  {currentStep === 5 && (
+                    <>
+                      <div className="text-center mb-6">
+                        <h3 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 mb-2">Physical Measurements</h3>
+                        <p className="text-neutral-600 dark:text-neutral-400">Optional - These help track your health metrics</p>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+                            Height (cm)
+                          </label>
+                          <input
+                            type="number"
+                            value={formData.height}
+                            onChange={(e) => setFormData({ ...formData, height: e.target.value })}
+                            placeholder="e.g., 170"
+                            className="w-full px-4 py-2 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100 focus:border-transparent text-neutral-900 dark:text-neutral-100"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+                            Weight (kg)
+                          </label>
+                          <input
+                            type="number"
+                            value={formData.weight}
+                            onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                            placeholder="e.g., 70"
+                            className="w-full px-4 py-2 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100 focus:border-transparent text-neutral-900 dark:text-neutral-100"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+                            Waist Circumference (cm)
+                          </label>
+                          <input
+                            type="number"
+                            value={formData.waistCircumference}
+                            onChange={(e) => setFormData({ ...formData, waistCircumference: e.target.value })}
+                            placeholder="e.g., 85"
+                            className="w-full px-4 py-2 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100 focus:border-transparent text-neutral-900 dark:text-neutral-100"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
+                            Last Checked Date
+                          </label>
+                          <input
+                            type="date"
+                            value={formData.lastCheckedDate}
+                            onChange={(e) => setFormData({ ...formData, lastCheckedDate: e.target.value })}
+                            className="w-full px-4 py-2 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100 focus:border-transparent text-neutral-900 dark:text-neutral-100"
+                          />
+                        </div>
+                      </div>
+                      <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-4">
+                        These measurements are optional. You can skip this step or add them later through the edit profile feature.
+                      </p>
+                    </>
+                  )}
+
                   {/* Navigation Buttons */}
                   <div className="flex gap-3 pt-4">
                     {currentStep > 1 && (
@@ -1240,7 +1399,7 @@ export default function PatientDashboard() {
                       disabled={registering}
                       className="flex-1 px-6 py-3 bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                     >
-                      {registering ? "Submitting to Blockchain..." : currentStep === 4 ? "Complete Registration" : "Next"}
+                      {registering ? "Submitting to Blockchain..." : currentStep === 5 ? "Complete Registration" : "Next"}
                     </button>
                   </div>
                 </div>
