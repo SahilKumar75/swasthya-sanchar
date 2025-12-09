@@ -2,65 +2,50 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { FeatureShowcase } from "@/components/landing/FeatureShowcase";
-import { getCurrentAccount, readContract, connectWallet } from "@/lib/web3";
 
 export default function Home() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
     async function checkAuthAndRedirect() {
-      try {
-        const account = await getCurrentAccount();
-        if (!account) {
-          setChecking(false);
-          return;
-        }
+      console.log("[AUTH CHECK] Starting authentication check...");
+      console.log("[AUTH CHECK] Session status:", status);
+      console.log("[AUTH CHECK] Session data:", session);
+      
+      if (status === "loading") {
+        console.log("[AUTH CHECK] Still loading session...");
+        return;
+      }
 
-        // User has wallet connected, check their role
-        const connection = await connectWallet();
-        
-        if (!connection) {
-          setChecking(false);
-          return;
-        }
-        
-        // Check if patient
-        try {
-          const patient = await readContract(connection, "getPatient", [account]);
-          if (patient && (patient as any).isRegistered) {
-            // Registered patient → redirect to dashboard
-            router.push("/patient");
-            return;
-          }
-        } catch (e) {
-          // Not a patient, check if doctor
-        }
-
-        // Check if doctor
-        try {
-          const isDoctor = await readContract(connection, "authorizedDoctors", [account]);
-          if (isDoctor) {
-            // Authorized doctor → redirect to doctor portal
-            router.push("/doctor");
-            return;
-          }
-        } catch (e) {
-          // Not authorized
-        }
-
-        // Wallet connected but no role → stay on landing
+      if (status === "unauthenticated" || !session?.user) {
+        console.log("[AUTH CHECK] No active session - staying on landing page");
         setChecking(false);
-      } catch (error) {
-        console.error("Auth check error:", error);
+        return;
+      }
+
+      // User is authenticated, redirect based on role
+      const userRole = session.user.role;
+      console.log("[AUTH CHECK] User authenticated with role:", userRole);
+
+      if (userRole === "patient") {
+        console.log("[AUTH CHECK] ✅ Redirecting patient to /patient");
+        router.push("/patient");
+      } else if (userRole === "doctor") {
+        console.log("[AUTH CHECK] ✅ Redirecting doctor to /doctor");
+        router.push("/doctor");
+      } else {
+        console.log("[AUTH CHECK] ⚠️ Unknown role, staying on landing page");
         setChecking(false);
       }
     }
 
     checkAuthAndRedirect();
-  }, [router]);
+  }, [session, status, router]);
 
   if (checking) {
     return (
@@ -109,10 +94,10 @@ export default function Home() {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 pt-4">
               <Link
-                href="/patient"
+                href="/auth/login"
                 className="group inline-flex items-center justify-center gap-2 px-6 py-3 bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 font-medium rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors duration-200"
               >
-                Register as Patient
+                Sign In
                 <svg
                   className="w-4 h-4 group-hover:translate-x-0.5 transition-transform"
                   fill="none"
@@ -129,10 +114,10 @@ export default function Home() {
               </Link>
               
               <Link
-                href="/doctor"
+                href="/auth/signup"
                 className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 font-medium rounded-lg border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors duration-200"
               >
-                I'm a Doctor
+                Create Account
               </Link>
             </div>
           </div>
@@ -153,7 +138,6 @@ export default function Home() {
         
         <FeatureShowcase />
       </div>
-
       {/* Key Benefits Section */}
       <div className="max-w-5xl mx-auto px-6 lg:px-8 py-20 md:py-28 border-b border-neutral-200 dark:border-neutral-800">
         <div className="mb-12">
