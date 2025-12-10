@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { AuthProvider } from "@/components/AuthProvider";
 
 export const metadata: Metadata = {
@@ -19,7 +18,6 @@ export default function RootLayout({
       <body className="antialiased bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 transition-colors duration-200">
         <AuthProvider>
           <ThemeProvider>
-            <ThemeToggle />
             {children}
           </ThemeProvider>
         </AuthProvider>

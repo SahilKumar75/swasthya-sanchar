@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { FeatureShowcase } from "@/components/landing/FeatureShowcase";
+import { Navbar } from "@/components/Navbar";
 import {
   ExpandableScreen,
   ExpandableScreenContent,
@@ -155,6 +156,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-white dark:bg-neutral-900">
+      <Navbar />
       {/* Hero Section */}
       <div className="relative overflow-hidden border-b border-neutral-200 dark:border-neutral-800">
         <div className="max-w-5xl mx-auto px-6 lg:px-8 py-24 md:py-32">

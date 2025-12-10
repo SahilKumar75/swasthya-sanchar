@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { connectWallet, readContract, type WalletConnection } from "@/lib/web3";
-import { PatientHeader } from "@/components/ui/patient-header";
+import { Navbar } from "@/components/Navbar";
 import { Edit2, User, Calendar, Phone, Mail, MapPin, AlertCircle, Heart, Activity, FileText } from "lucide-react";
 
 interface PatientData {
@@ -127,7 +127,7 @@ export default function PatientHome() {
   if (!connection) {
     return (
       <div className="min-h-screen bg-white dark:bg-neutral-900">
-        <PatientHeader connection={connection} />
+        <Navbar connection={connection} />
         <main className="max-w-5xl mx-auto px-6 lg:px-8 py-12 pt-24">
           <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-8 text-center">
             <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50 mb-4">
@@ -184,7 +184,7 @@ export default function PatientHome() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-neutral-900">
-      <PatientHeader connection={connection} />
+      <Navbar connection={connection} />
 
       <main className="max-w-6xl mx-auto px-6 lg:px-8 py-12 pt-24">
         {/* Welcome Header */}

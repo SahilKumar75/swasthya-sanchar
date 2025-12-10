@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { connectWallet, onAccountsChanged, readContract, writeContract, type WalletConnection } from "@/lib/web3";
-import { PatientHeader } from "@/components/ui/patient-header";
+import { Navbar } from "@/components/Navbar";
 import { Edit2, User, Calendar, Phone, Mail, MapPin, AlertCircle, Heart, Activity, FileText, QrCode, Save, X, Lock, Unlock, Eye, EyeOff, Shield, RefreshCw, ArrowUpRight } from "lucide-react";
 import QRCode from "qrcode";
 import { CardFlip, CardFlipFront, CardFlipBack } from "@/components/ui/card-flip";
@@ -1162,7 +1162,7 @@ export default function PatientDashboard() {
   return (
     <div className="min-h-screen bg-white dark:bg-neutral-900">
       {/* Header */}
-      <PatientHeader connection={connection} />
+      <Navbar connection={connection} />
 
       {/* Main Content */}
       <main className="max-w-5xl mx-auto px-6 lg:px-8 py-12 pt-24">{/* pt-24 for fixed header */}
