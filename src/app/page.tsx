@@ -4,12 +4,107 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { signIn } from "next-auth/react";
 import { FeatureShowcase } from "@/components/landing/FeatureShowcase";
+import {
+  ExpandableScreen,
+  ExpandableScreenContent,
+  ExpandableScreenTrigger,
+} from "@/components/ui/expandable-screen";
 
 export default function Home() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [checking, setChecking] = useState(true);
+  
+  // Auth form states for login
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+  
+  // Auth form states for signup
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
+  const [signupRole, setSignupRole] = useState<"patient" | "doctor">("patient");
+  const [signupError, setSignupError] = useState("");
+  const [signupLoading, setSignupLoading] = useState(false);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError("");
+    setLoginLoading(true);
+
+    try {
+      const result = await signIn("credentials", {
+        email: loginEmail,
+        password: loginPassword,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setLoginError("Invalid email or password");
+      } else {
+        router.push("/");
+        router.refresh();
+      }
+    } catch (err: any) {
+      setLoginError("An error occurred. Please try again.");
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSignupError("");
+
+    if (signupPassword !== signupConfirmPassword) {
+      setSignupError("Passwords do not match");
+      return;
+    }
+
+    if (signupPassword.length < 8) {
+      setSignupError("Password must be at least 8 characters");
+      return;
+    }
+
+    setSignupLoading(true);
+
+    try {
+      const signupRes = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: signupEmail, password: signupPassword, role: signupRole }),
+      });
+
+      const data = await signupRes.json();
+
+      if (!signupRes.ok) {
+        setSignupError(data.error || "Failed to create account");
+        setSignupLoading(false);
+        return;
+      }
+
+      const result = await signIn("credentials", {
+        email: signupEmail,
+        password: signupPassword,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setSignupError("Account created but failed to sign in. Please try logging in.");
+        setSignupLoading(false);
+      } else {
+        router.push("/");
+        router.refresh();
+      }
+    } catch (err: any) {
+      setSignupError("An error occurred. Please try again.");
+      setSignupLoading(false);
+    }
+  };
 
   useEffect(() => {
     async function checkAuthAndRedirect() {
@@ -91,34 +186,248 @@ export default function Home() {
               </p>
             </div>
 
-            {/* CTA Buttons */}
+            {/* CTA Buttons with Expandable Screens */}
             <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              <Link
-                href="/auth/login"
-                className="group inline-flex items-center justify-center gap-2 px-6 py-3 bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 font-medium rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors duration-200"
+              {/* Login Expandable Screen */}
+              <ExpandableScreen
+                layoutId="login-card"
+                triggerRadius="8px"
+                contentRadius="0px"
+                animationDuration={0.5}
               >
-                Sign In
-                <svg
-                  className="w-4 h-4 group-hover:translate-x-0.5 transition-transform"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 7l5 5m0 0l-5 5m5-5H6"
-                  />
-                </svg>
-              </Link>
-              
-              <Link
-                href="/auth/signup"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 font-medium rounded-lg border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors duration-200"
+                <div>
+                  <ExpandableScreenTrigger>
+                    <button className="group inline-flex items-center justify-center gap-2 px-6 py-3 bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 font-medium rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors duration-200">
+                      Sign In
+                      <svg
+                        className="w-4 h-4 group-hover:translate-x-0.5 transition-transform"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 7l5 5m0 0l-5 5m5-5H6"
+                        />
+                      </svg>
+                    </button>
+                  </ExpandableScreenTrigger>
+
+                  <ExpandableScreenContent className="bg-neutral-900 dark:bg-neutral-950">
+                    <div className="min-h-screen flex items-center justify-center px-4 py-12">
+                      <div className="w-full max-w-2xl">
+                        <div className="text-center mb-12">
+                          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+                            Welcome Back
+                          </h2>
+                          <p className="text-lg text-neutral-400">
+                            Sign in to access your medical records
+                          </p>
+                        </div>
+
+                        <form onSubmit={handleLogin} className="space-y-6">
+                          <div>
+                            <label htmlFor="login-email" className="block text-sm font-medium text-neutral-300 mb-2 uppercase tracking-wide">
+                              Email *
+                            </label>
+                            <input
+                              id="login-email"
+                              name="email"
+                              type="email"
+                              autoComplete="email"
+                              required
+                              value={loginEmail}
+                              onChange={(e) => setLoginEmail(e.target.value)}
+                              className="w-full px-4 py-3 bg-white dark:bg-neutral-800 border-0 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-white/20"
+                              placeholder=""
+                            />
+                          </div>
+
+                          <div>
+                            <label htmlFor="login-password" className="block text-sm font-medium text-neutral-300 mb-2 uppercase tracking-wide">
+                              Password *
+                            </label>
+                            <input
+                              id="login-password"
+                              name="password"
+                              type="password"
+                              autoComplete="current-password"
+                              required
+                              value={loginPassword}
+                              onChange={(e) => setLoginPassword(e.target.value)}
+                              className="w-full px-4 py-3 bg-white dark:bg-neutral-800 border-0 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-white/20"
+                              placeholder=""
+                            />
+                          </div>
+
+                          {loginError && (
+                            <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg text-sm">
+                              {loginError}
+                            </div>
+                          )}
+
+                          <button
+                            type="submit"
+                            disabled={loginLoading}
+                            className="w-full py-4 px-6 bg-white hover:bg-neutral-100 text-neutral-900 font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-base"
+                          >
+                            {loginLoading ? "Signing in..." : "Sign in"}
+                          </button>
+
+                          <div className="text-center text-sm text-neutral-400 pt-4">
+                            Don&apos;t have an account?{" "}
+                            <Link href="/auth/signup" className="text-white hover:underline font-medium">
+                              Create one
+                            </Link>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </ExpandableScreenContent>
+                </div>
+              </ExpandableScreen>
+
+              {/* Signup Expandable Screen */}
+              <ExpandableScreen
+                layoutId="signup-card"
+                triggerRadius="8px"
+                contentRadius="0px"
+                animationDuration={0.5}
               >
-                Create Account
-              </Link>
+                <div>
+                  <ExpandableScreenTrigger>
+                    <button className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 font-medium rounded-lg border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors duration-200">
+                      Create Account
+                    </button>
+                  </ExpandableScreenTrigger>
+
+                  <ExpandableScreenContent className="bg-neutral-900 dark:bg-neutral-950">
+                    <div className="min-h-screen flex items-center justify-center px-4 py-12">
+                      <div className="w-full max-w-2xl">
+                        <div className="text-center mb-12">
+                          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+                            Join Swasthya Sanchar
+                          </h2>
+                          <p className="text-lg text-neutral-400">
+                            Create your account and take control of your health data
+                          </p>
+                        </div>
+
+                        <form onSubmit={handleSignup} className="space-y-6">
+                          <div>
+                            <label htmlFor="signup-email" className="block text-sm font-medium text-neutral-300 mb-2 uppercase tracking-wide">
+                              Email *
+                            </label>
+                            <input
+                              id="signup-email"
+                              name="email"
+                              type="email"
+                              autoComplete="email"
+                              required
+                              value={signupEmail}
+                              onChange={(e) => setSignupEmail(e.target.value)}
+                              className="w-full px-4 py-3 bg-white dark:bg-neutral-800 border-0 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-white/20"
+                              placeholder=""
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                              <label htmlFor="signup-password" className="block text-sm font-medium text-neutral-300 mb-2 uppercase tracking-wide">
+                                Password *
+                              </label>
+                              <input
+                                id="signup-password"
+                                name="password"
+                                type="password"
+                                autoComplete="new-password"
+                                required
+                                value={signupPassword}
+                                onChange={(e) => setSignupPassword(e.target.value)}
+                                className="w-full px-4 py-3 bg-white dark:bg-neutral-800 border-0 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-white/20"
+                                placeholder=""
+                              />
+                              <p className="mt-2 text-xs text-neutral-500">
+                                Must be at least 8 characters
+                              </p>
+                            </div>
+
+                            <div>
+                              <label htmlFor="signup-confirm-password" className="block text-sm font-medium text-neutral-300 mb-2 uppercase tracking-wide">
+                                Confirm Password *
+                              </label>
+                              <input
+                                id="signup-confirm-password"
+                                name="confirmPassword"
+                                type="password"
+                                autoComplete="new-password"
+                                required
+                                value={signupConfirmPassword}
+                                onChange={(e) => setSignupConfirmPassword(e.target.value)}
+                                className="w-full px-4 py-3 bg-white dark:bg-neutral-800 border-0 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-white/20"
+                                placeholder=""
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-neutral-300 mb-3 uppercase tracking-wide">
+                              Account Type *
+                            </label>
+                            <div className="grid grid-cols-2 gap-4">
+                              <button
+                                type="button"
+                                onClick={() => setSignupRole("patient")}
+                                className={`px-6 py-4 rounded-lg border-2 transition-all font-medium ${
+                                  signupRole === "patient"
+                                    ? "border-white bg-white/10 text-white"
+                                    : "border-neutral-700 text-neutral-400 hover:border-neutral-600"
+                                }`}
+                              >
+                                Patient
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setSignupRole("doctor")}
+                                className={`px-6 py-4 rounded-lg border-2 transition-all font-medium ${
+                                  signupRole === "doctor"
+                                    ? "border-white bg-white/10 text-white"
+                                    : "border-neutral-700 text-neutral-400 hover:border-neutral-600"
+                                }`}
+                              >
+                                Doctor
+                              </button>
+                            </div>
+                          </div>
+
+                          {signupError && (
+                            <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg text-sm">
+                              {signupError}
+                            </div>
+                          )}
+
+                          <button
+                            type="submit"
+                            disabled={signupLoading}
+                            className="w-full py-4 px-6 bg-white hover:bg-neutral-100 text-neutral-900 font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-base"
+                          >
+                            {signupLoading ? "Creating account..." : "Create account"}
+                          </button>
+
+                          <div className="text-center text-sm text-neutral-400 pt-4">
+                            Already have an account?{" "}
+                            <Link href="/auth/login" className="text-white hover:underline font-medium">
+                              Sign in
+                            </Link>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </ExpandableScreenContent>
+                </div>
+              </ExpandableScreen>
             </div>
           </div>
         </div>

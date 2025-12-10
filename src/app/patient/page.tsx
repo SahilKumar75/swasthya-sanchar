@@ -6,8 +6,9 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { connectWallet, onAccountsChanged, readContract, writeContract, type WalletConnection } from "@/lib/web3";
 import { PatientHeader } from "@/components/ui/patient-header";
-import { Edit2, User, Calendar, Phone, Mail, MapPin, AlertCircle, Heart, Activity, FileText, QrCode, Save, X, Lock, Unlock, Eye, EyeOff, Shield } from "lucide-react";
+import { Edit2, User, Calendar, Phone, Mail, MapPin, AlertCircle, Heart, Activity, FileText, QrCode, Save, X, Lock, Unlock, Eye, EyeOff, Shield, RefreshCw, ArrowUpRight } from "lucide-react";
 import QRCode from "qrcode";
+import { CardFlip, CardFlipFront, CardFlipBack } from "@/components/ui/card-flip";
 
 interface PatientData {
   name: string;
@@ -776,28 +777,84 @@ function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
 
         {/* Sidebar with QR Code */}
         <div className="space-y-6">
-          {/* Emergency QR Code */}
-          <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-lg border-2 border-red-200 dark:border-red-800 p-6 sticky top-24">
-            <div className="flex items-center gap-3 mb-4">
-              <QrCode className="w-6 h-6 text-red-600 dark:text-red-400" />
-              <h3 className="text-xl font-bold text-red-900 dark:text-red-100">Emergency QR</h3>
-            </div>
-            <p className="text-sm text-red-700 dark:text-red-200 mb-4">
-              First responders can scan this code to access your vital medical information instantly
-            </p>
-            {qrCode && (
-              <div className="bg-white p-4 rounded-lg mb-4">
-                <img src={qrCode} alt="Emergency QR Code" className="w-full" />
-              </div>
-            )}
-            <Link
-              href={`/emergency/${connection.account}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-full text-center px-4 py-3 bg-red-600 dark:bg-red-700 text-white rounded-lg hover:bg-red-700 dark:hover:bg-red-800 transition font-medium"
-            >
-              View Emergency Page
-            </Link>
+          {/* Emergency QR Code - Card Flip */}
+          <div className="sticky top-24">
+            <CardFlip width="100%" className="h-auto">
+              <CardFlipFront>
+                {({ onFlip }: any) => (
+                  <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-8 shadow-lg hover:shadow-xl transition-shadow relative">
+                    <Link
+                      href={`/emergency/${connection.account}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="absolute top-6 right-6 p-2 rounded-lg bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white hover:shadow-lg transition-shadow group z-10"
+                    >
+                      <ArrowUpRight className="w-5 h-5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                    </Link>
+                    
+                    <div className="text-center mb-6 pr-12">
+                      <h3 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 mb-2">Emergency QR Code</h3>
+                      <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                        First responders can scan this for instant access to your vital medical information
+                      </p>
+                    </div>
+                    
+                    {qrCode && (
+                      <div className="bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-800 dark:to-neutral-900 p-8 rounded-xl flex items-center justify-center border border-neutral-200 dark:border-neutral-700">
+                        <img src={qrCode} alt="Emergency QR Code" className="w-48 h-48" />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardFlipFront>
+              
+              <CardFlipBack>
+                {({ onFlip }: any) => (
+                  <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-8 shadow-lg hover:shadow-xl transition-shadow relative">
+                    <Link
+                      href={`/emergency/${connection.account}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="absolute top-6 right-6 p-2 rounded-lg bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white hover:shadow-lg transition-shadow group"
+                    >
+                      <ArrowUpRight className="w-5 h-5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                    </Link>
+                    
+                    <div className="text-center mb-6">
+                      <h3 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 mb-2">Emergency Information</h3>
+                      <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                        Critical medical data for first responders
+                      </p>
+                    </div>
+                    
+                    <div className="bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-800 dark:to-neutral-900 rounded-xl p-6 border border-neutral-200 dark:border-neutral-700">
+                      <h4 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-4 flex items-center gap-2">
+                        <Shield className="w-4 h-4" />
+                        Quick Access Includes
+                      </h4>
+                      <ul className="space-y-3 text-sm text-neutral-700 dark:text-neutral-300">
+                        <li className="flex items-center gap-3">
+                          <div className="w-2 h-2 rounded-full bg-gradient-to-r from-orange-500 to-pink-500"></div>
+                          <span>Blood type & allergies</span>
+                        </li>
+                        <li className="flex items-center gap-3">
+                          <div className="w-2 h-2 rounded-full bg-gradient-to-r from-orange-500 to-pink-500"></div>
+                          <span>Current medications</span>
+                        </li>
+                        <li className="flex items-center gap-3">
+                          <div className="w-2 h-2 rounded-full bg-gradient-to-r from-orange-500 to-pink-500"></div>
+                          <span>Emergency contacts</span>
+                        </li>
+                        <li className="flex items-center gap-3">
+                          <div className="w-2 h-2 rounded-full bg-gradient-to-r from-orange-500 to-pink-500"></div>
+                          <span>Medical conditions</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </CardFlipBack>
+            </CardFlip>
           </div>
         </div>
       </div>

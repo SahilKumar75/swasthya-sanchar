@@ -460,7 +460,7 @@ export const HEALTH_RECORDS_ABI = [
 
 // Contract address - will be updated after deployment
 // For development, this will be the localhost deployed address
-export const HEALTH_RECORDS_ADDRESS = "0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0" as `0x${string}`;
+export const HEALTH_RECORDS_ADDRESS = "0x5fbdb2315678afecb367f032d93f642f64180aa3" as `0x${string}`;
 
 // Chain configuration
 export const LOCALHOST_CHAIN_ID = 31337; // Hardhat local network

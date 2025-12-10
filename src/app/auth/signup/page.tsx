@@ -70,39 +70,46 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4 py-12">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
-        <div>
-          <h2 className="text-3xl font-bold text-center text-gray-900">
-            Create Account
+    <div className="min-h-screen flex items-center justify-center bg-neutral-900 px-4 py-12">
+      <div className="w-full max-w-2xl">
+        <Link href="/" className="inline-flex items-center text-sm text-neutral-400 hover:text-white mb-8 transition-colors">
+          <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Home
+        </Link>
+        
+        <div className="text-center mb-12">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            Join Swasthya Sanchar
           </h2>
-          <p className="mt-2 text-center text-gray-600">
-            Join Swasthya Sanchar - Secure Healthcare Records
+          <p className="text-lg text-neutral-400">
+            Create your account and take control of your health data
           </p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
-                placeholder="you@example.com"
-              />
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-neutral-300 mb-2 uppercase tracking-wide">
+              Email *
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-3 bg-white dark:bg-neutral-800 border-0 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-white/20"
+              placeholder=""
+            />
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
+              <label htmlFor="password" className="block text-sm font-medium text-neutral-300 mb-2 uppercase tracking-wide">
+                Password *
               </label>
               <input
                 id="password"
@@ -112,17 +119,17 @@ export default function SignupPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
-                placeholder="••••••••"
+                className="w-full px-4 py-3 bg-white dark:bg-neutral-800 border-0 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-white/20"
+                placeholder=""
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-2 text-xs text-neutral-500">
                 Must be at least 8 characters
               </p>
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Confirm Password
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-neutral-300 mb-2 uppercase tracking-wide">
+                Confirm Password *
               </label>
               <input
                 id="confirmPassword"
@@ -132,44 +139,44 @@ export default function SignupPage() {
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
-                placeholder="••••••••"
+                className="w-full px-4 py-3 bg-white dark:bg-neutral-800 border-0 rounded-lg text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-white/20"
+                placeholder=""
               />
             </div>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                I am registering as a
-              </label>
-              <div className="grid grid-cols-2 gap-4">
-                <button
-                  type="button"
-                  onClick={() => setRole("patient")}
-                  className={`px-4 py-3 rounded-md border-2 transition-all ${
-                    role === "patient"
-                      ? "border-indigo-600 bg-indigo-50 text-indigo-700 font-medium"
-                      : "border-gray-300 text-gray-700 hover:border-gray-400"
-                  }`}
-                >
-                  Patient
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRole("doctor")}
-                  className={`px-4 py-3 rounded-md border-2 transition-all ${
-                    role === "doctor"
-                      ? "border-indigo-600 bg-indigo-50 text-indigo-700 font-medium"
-                      : "border-gray-300 text-gray-700 hover:border-gray-400"
-                  }`}
-                >
-                  Doctor
-                </button>
-              </div>
+          <div>
+            <label className="block text-sm font-medium text-neutral-300 mb-3 uppercase tracking-wide">
+              Account Type *
+            </label>
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => setRole("patient")}
+                className={`px-6 py-4 rounded-lg border-2 transition-all font-medium ${
+                  role === "patient"
+                    ? "border-white bg-white/10 text-white"
+                    : "border-neutral-700 text-neutral-400 hover:border-neutral-600"
+                }`}
+              >
+                Patient
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole("doctor")}
+                className={`px-6 py-4 rounded-lg border-2 transition-all font-medium ${
+                  role === "doctor"
+                    ? "border-white bg-white/10 text-white"
+                    : "border-neutral-700 text-neutral-400 hover:border-neutral-600"
+                }`}
+              >
+                Doctor
+              </button>
             </div>
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+            <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg text-sm">
               {error}
             </div>
           )}
@@ -177,14 +184,14 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full py-4 px-6 bg-white hover:bg-neutral-100 text-neutral-900 font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-base"
           >
             {loading ? "Creating account..." : "Create account"}
           </button>
 
-          <div className="text-center text-sm text-gray-600">
+          <div className="text-center text-sm text-neutral-400 pt-4">
             Already have an account?{" "}
-            <Link href="/auth/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+            <Link href="/auth/login" className="text-white hover:underline font-medium">
               Sign in
             </Link>
           </div>

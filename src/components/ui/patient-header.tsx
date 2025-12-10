@@ -9,6 +9,7 @@ import {
     NavigationMenuList,
     NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
+import { ProfileDropdown } from "@/components/ui/profile-dropdown";
 import { Menu, MoveRight, X, Activity, User, LogOut, LayoutDashboard, Sun, Moon } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -24,7 +25,6 @@ function PatientHeader({ connection }: PatientHeaderProps) {
     const { data: session } = useSession();
     const router = useRouter();
     const [isOpen, setOpen] = useState(false);
-    const [avatarOpen, setAvatarOpen] = useState(false);
     const [theme, setTheme] = useState<"light" | "dark">("light");
 
     // Initialize theme from localStorage or system preference
@@ -74,14 +74,6 @@ function PatientHeader({ connection }: PatientHeaderProps) {
     const handleLogout = async () => {
         await disconnectWallet();
         await signOut({ callbackUrl: "/" });
-    };
-
-    const handleAvatarClick = () => {
-        router.push("/patient");
-    };
-
-    const getInitials = (email: string) => {
-        return email.charAt(0).toUpperCase();
     };
 
     return (
@@ -149,7 +141,7 @@ function PatientHeader({ connection }: PatientHeaderProps) {
                     </NavigationMenu>
                 </div>
 
-                {/* Right: Wallet + Avatar */}
+                {/* Right: Wallet + Profile Dropdown */}
                 <div className="flex justify-end gap-3 items-center">
                     {connection && (
                         <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700">
@@ -158,72 +150,15 @@ function PatientHeader({ connection }: PatientHeaderProps) {
                         </div>
                     )}
                     {session?.user && (
-                        <div className="relative">
-                            <button
-                                onClick={() => setAvatarOpen(!avatarOpen)}
-                                className="flex items-center justify-center w-10 h-10 bg-blue-600 dark:bg-blue-500 text-white rounded-full font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
-                            >
-                                {getInitials(session.user.email || "U")}
-                            </button>
-                            {avatarOpen && (
-                                <>
-                                    <div 
-                                        className="fixed inset-0 z-10" 
-                                        onClick={() => setAvatarOpen(false)}
-                                    />
-                                    <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 py-2 z-20">
-                                        {/* User Info */}
-                                        <div className="px-4 py-3 border-b border-neutral-200 dark:border-neutral-700">
-                                            <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100\">
-                                                {session.user.email?.split('@')[0] || "User"}
-                                            </p>
-                                            <p className="text-xs text-neutral-600 dark:text-neutral-400">
-                                                {session.user.email}
-                                            </p>
-                                        </div>
-                                        
-                                        {/* Dashboard */}
-                                        <button
-                                            onClick={() => {
-                                                handleAvatarClick();
-                                                setAvatarOpen(false);
-                                            }}
-                                            className="w-full flex items-center gap-3 px-4 py-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors text-left"
-                                        >
-                                            <LayoutDashboard className="w-4 h-4 text-neutral-600 dark:text-neutral-400" />
-                                            <span className="text-sm text-neutral-900 dark:text-neutral-100">Dashboard</span>
-                                        </button>
-
-                                        {/* Theme Toggle */}
-                                        <button
-                                            onClick={toggleTheme}
-                                            className="w-full flex items-center gap-3 px-4 py-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors text-left"
-                                        >
-                                            {theme === "light" ? (
-                                                <Moon className="w-4 h-4 text-neutral-600 dark:text-neutral-400" />
-                                            ) : (
-                                                <Sun className="w-4 h-4 text-neutral-600 dark:text-neutral-400" />
-                                            )}
-                                            <span className="text-sm text-neutral-900 dark:text-neutral-100">
-                                                {theme === "light" ? "Dark" : "Light"} Mode
-                                            </span>
-                                        </button>
-
-                                        {/* Logout */}
-                                        <button
-                                            onClick={() => {
-                                                handleLogout();
-                                                setAvatarOpen(false);
-                                            }}
-                                            className="w-full flex items-center gap-3 px-4 py-2 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-left border-t border-neutral-200 dark:border-neutral-700 mt-2 pt-2"
-                                        >
-                                            <LogOut className="w-4 h-4 text-red-600 dark:text-red-400" />
-                                            <span className="text-sm text-red-600 dark:text-red-400">Logout</span>
-                                        </button>
-                                    </div>
-                                </>
-                            )}
-                        </div>
+                        <ProfileDropdown 
+                            user={{
+                                name: session.user.email?.split('@')[0],
+                                email: session.user.email,
+                                image: null
+                            }}
+                            theme={theme}
+                            onThemeToggle={toggleTheme}
+                        />
                     )}
                 </div>
 
