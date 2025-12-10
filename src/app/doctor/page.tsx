@@ -1,326 +1,436 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { connectWallet, getCurrentAccount, formatAddress, onAccountsChanged, readContract, disconnectWallet, type WalletConnection } from "@/lib/web3";
-import { HEALTH_RECORDS_ABI, HEALTH_RECORDS_ADDRESS } from "@/lib/contracts";
-import { mockMedicalRecords, type MedicalRecord } from "@/lib/mockRecords";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
+import { connectWallet, onAccountsChanged, readContract, type WalletConnection } from "@/lib/web3";
+import { Navbar } from "@/components/Navbar";
+import { 
+  User, Mail, Phone, Calendar, MapPin, Award, Building, 
+  FileText, Shield, CheckCircle, AlertCircle, ArrowRight
+} from "lucide-react";
 
-export default function DoctorPortal() {
+interface DoctorData {
+  name: string;
+  email: string;
+  phone: string;
+  licenseNumber: string;
+  specialization: string;
+  qualification: string;
+  experience: string;
+  hospital: string;
+  city: string;
+  state: string;
+  walletAddress: string;
+  isAuthorized: boolean;
+}
+
+export default function DoctorProfile() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [connection, setConnection] = useState<WalletConnection | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAuthorized, setIsAuthorized] = useState(false);
-  const [checkingAuthorization, setCheckingAuthorization] = useState(false);
-  const [patientAddress, setPatientAddress] = useState("");
-  const [checkingAccess, setCheckingAccess] = useState(false);
-  const [patientRecords, setPatientRecords] = useState<MedicalRecord[] | null>(null);
-  const [accessError, setAccessError] = useState<string | null>(null);
+  const [doctorData, setDoctorData] = useState<DoctorData | null>(null);
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    licenseNumber: "",
+    specialization: "",
+    qualification: "",
+    experience: "",
+    hospital: "",
+    city: "",
+    state: ""
+  });
+
+  async function linkWalletToAccount(walletAddress: string) {
+    try {
+      const response = await fetch("/api/user/link-wallet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ walletAddress }),
+      });
+      
+      if (!response.ok) {
+        const data = await response.json();
+        console.error("Failed to link wallet:", data.error);
+      }
+    } catch (error) {
+      console.error("Error linking wallet:", error);
+    }
+  }
 
   useEffect(() => {
-    // AUTH GUARD: Check wallet connection on mount
-    async function checkConnection() {
-      const account = await getCurrentAccount();
-      if (!account) {
-        // No wallet connected - redirect to landing
-        router.push("/");
+    async function checkAuth() {
+      if (status === "loading") return;
+
+      if (status === "unauthenticated" || !session?.user) {
+        router.push("/auth/login");
         return;
       }
-      
-      const conn = await connectWallet();
-      setConnection(conn);
-      if (conn) {
-        await checkAuthorizationStatus(conn);
+
+      if (session.user.role !== "doctor") {
+        router.push(session.user.role === "patient" ? "/patient" : "/");
+        return;
       }
+
+      try {
+        const conn = await connectWallet();
+        if (conn) {
+          setConnection(conn);
+          await linkWalletToAccount(conn.account);
+          await loadDoctorData(conn);
+        }
+      } catch (error) {
+        console.log("No wallet connected yet");
+      }
+      
       setLoading(false);
     }
 
-    checkConnection();
+    checkAuth();
 
     // Listen for account changes
     const handleAccountsChanged = async (accounts: string[]) => {
       if (accounts.length === 0) {
-        // Wallet disconnected - redirect to landing
         setConnection(null);
-        setIsAuthorized(false);
-        router.push("/");
+        setIsRegistered(false);
       } else {
         const conn = await connectWallet();
         setConnection(conn);
         if (conn) {
-          await checkAuthorizationStatus(conn);
+          await linkWalletToAccount(conn.account);
+          await loadDoctorData(conn);
         }
       }
     };
 
     onAccountsChanged(handleAccountsChanged);
-  }, [router]);
+  }, [session, status, router]);
 
-  async function checkAuthorizationStatus(conn: WalletConnection) {
+  async function loadDoctorData(conn: WalletConnection) {
     try {
-      setCheckingAuthorization(true);
-      const result = await readContract(conn, "authorizedDoctors", [conn.account]);
-      setIsAuthorized(Boolean(result));
+      // Check if doctor is authorized on blockchain
+      const isAuthorized = await readContract(conn, "authorizedDoctors", [conn.account]);
+      
+      // Mock data - in production, fetch from database
+      const mockData: DoctorData = {
+        name: session?.user?.email?.split("@")[0] || "Dr. Smith",
+        email: session?.user?.email || "",
+        phone: "+91 98765 43210",
+        licenseNumber: "MCI-" + Math.random().toString(36).substring(7).toUpperCase(),
+        specialization: "General Physician",
+        qualification: "MBBS, MD",
+        experience: "5 years",
+        hospital: "City General Hospital",
+        city: "Mumbai",
+        state: "Maharashtra",
+        walletAddress: conn.account,
+        isAuthorized: Boolean(isAuthorized)
+      };
+
+      setDoctorData(mockData);
+      setIsRegistered(Boolean(isAuthorized));
+      setFormData({
+        name: mockData.name,
+        email: mockData.email,
+        phone: mockData.phone,
+        licenseNumber: mockData.licenseNumber,
+        specialization: mockData.specialization,
+        qualification: mockData.qualification,
+        experience: mockData.experience,
+        hospital: mockData.hospital,
+        city: mockData.city,
+        state: mockData.state
+      });
     } catch (error) {
-      console.error("Error checking authorization:", error);
-      setIsAuthorized(false);
-    } finally {
-      setCheckingAuthorization(false);
+      console.error("Error loading doctor data:", error);
+      setIsRegistered(false);
     }
   }
 
-  const handleConnect = async () => {
-    setLoading(true);
-    const conn = await connectWallet();
-    setConnection(conn);
-    setLoading(false);
-  };
+  if (status === "loading" || loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-neutral-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neutral-900 dark:border-neutral-100"></div>
+      </div>
+    );
+  }
 
-  const handleLogout = () => {
-    // Set logout flag and clear connection state
-    disconnectWallet();
-    setConnection(null);
-    setIsAuthorized(false);
-    setPatientRecords(null);
-    setAccessError(null);
-    router.push("/");
-  };
-
-  async function handleCheckAccess() {
-    if (!connection || !isAuthorized) return;
-    if (!patientAddress || !patientAddress.startsWith("0x")) {
-      setAccessError("Please enter a valid Ethereum address");
-      return;
-    }
-
-    try {
-      setCheckingAccess(true);
-      setAccessError(null);
-      setPatientRecords(null);
-
-      // Check if patient is registered
-      const patientData = await readContract(connection, "getPatient", [patientAddress as `0x${string}`]);
-      const patient = patientData as any;
-      
-      if (!patient.name || patient.name === "") {
-        setAccessError("Patient not registered in the system");
-        return;
-      }
-
-      // In a real system, we'd check if this doctor has access to this patient's records
-      // For now, if doctor is authorized and patient exists, grant access
-      setPatientRecords(mockMedicalRecords);
-      
-    } catch (error: any) {
-      if (error?.message?.includes("Patient not registered")) {
-        setAccessError("Patient not registered in the system");
-      } else {
-        console.error("Error checking access:", error);
-        setAccessError("Failed to check access. Please try again.");
-      }
-    } finally {
-      setCheckingAccess(false);
-    }
+  if (!connection) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-neutral-900">
+        <Navbar connection={connection} />
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mt-16">
+          <div className="text-center">
+            <Shield className="w-16 h-16 text-neutral-400 dark:text-neutral-600 mx-auto mb-6" />
+            <h1 className="text-3xl font-bold text-neutral-900 dark:text-neutral-50 mb-4">
+              Connect Your Wallet
+            </h1>
+            <p className="text-neutral-600 dark:text-neutral-400 mb-8">
+              Connect your MetaMask wallet to access the doctor portal and manage patient records securely.
+            </p>
+            <button
+              onClick={async () => {
+                const conn = await connectWallet();
+                if (conn) {
+                  setConnection(conn);
+                  await linkWalletToAccount(conn.account);
+                  await loadDoctorData(conn);
+                }
+              }}
+              className="px-6 py-3 bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition font-medium"
+            >
+              Connect Wallet
+            </button>
+          </div>
+        </main>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-neutral-900">
-      {/* Header */}
-      <header className="border-b border-neutral-200 dark:border-neutral-800">
-        <div className="max-w-5xl mx-auto px-6 lg:px-8 py-4 flex justify-between items-center">
-          <Link href="/" className="text-xl font-bold text-neutral-900 dark:text-neutral-50">
-            Swasthya Sanchar
-          </Link>
-          <div>
-            {connection ? (
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-neutral-600 dark:text-neutral-400">Connected:</span>
-                <span className="px-3 py-1.5 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 rounded-lg font-mono text-sm border border-neutral-200 dark:border-neutral-700">
-                  {formatAddress(connection.account)}
-                </span>
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition border border-neutral-200 dark:border-neutral-700"
-                >
-                  Logout
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={handleConnect}
-                disabled={loading}
-                className="px-4 py-2 bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition disabled:opacity-50"
-              >
-                {loading ? "Connecting..." : "Connect Wallet"}
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900">
+      <Navbar connection={connection} />
 
-      {/* Main Content */}
-      <main className="max-w-5xl mx-auto px-6 lg:px-8 py-12">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-16">
+        {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-neutral-900 dark:text-neutral-50 mb-2">Doctor Portal</h1>
+          <h1 className="text-4xl font-bold text-neutral-900 dark:text-neutral-50 mb-2">
+            Doctor Profile
+          </h1>
           <p className="text-lg text-neutral-600 dark:text-neutral-400">
-            Access patient records with consent—authorized, transparent, secure
+            Manage your professional information and credentials
           </p>
         </div>
 
-        {!connection ? (
-          <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-8 text-center">
-            <div className="mb-6">
-              <svg
-                className="mx-auto h-16 w-16 text-neutral-400 dark:text-neutral-500"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                />
-              </svg>
+        {/* Authorization Status */}
+        <div className={`mb-6 rounded-xl p-4 border ${
+          doctorData?.isAuthorized 
+            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+            : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
+        }`}>
+          <div className="flex items-center gap-3">
+            {doctorData?.isAuthorized ? (
+              <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+            ) : (
+              <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+            )}
+            <div>
+              <p className={`font-semibold ${
+                doctorData?.isAuthorized 
+                  ? 'text-green-900 dark:text-green-100'
+                  : 'text-yellow-900 dark:text-yellow-100'
+              }`}>
+                {doctorData?.isAuthorized ? 'Authorized Doctor' : 'Authorization Pending'}
+              </p>
+              <p className={`text-sm ${
+                doctorData?.isAuthorized 
+                  ? 'text-green-800 dark:text-green-200'
+                  : 'text-yellow-800 dark:text-yellow-200'
+              }`}>
+                {doctorData?.isAuthorized 
+                  ? 'You can access patient records with consent'
+                  : 'Contact the system administrator to authorize your wallet address'}
+              </p>
             </div>
-            <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50 mb-4">
-              Connect Your Wallet
+          </div>
+        </div>
+
+        {/* Profile Information */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Main Profile Card */}
+          <div className="lg:col-span-2 bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6">
+            <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 mb-6">
+              Professional Information
             </h2>
-            <p className="text-neutral-600 dark:text-neutral-400 mb-6">
-              Connect MetaMask to access your authorized doctor dashboard
-            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                  <User className="w-4 h-4" />
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100"
+                />
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                  <Award className="w-4 h-4" />
+                  License Number
+                </label>
+                <input
+                  type="text"
+                  value={formData.licenseNumber}
+                  onChange={(e) => setFormData({...formData, licenseNumber: e.target.value})}
+                  className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100"
+                />
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                  <FileText className="w-4 h-4" />
+                  Specialization
+                </label>
+                <input
+                  type="text"
+                  value={formData.specialization}
+                  onChange={(e) => setFormData({...formData, specialization: e.target.value})}
+                  className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100"
+                />
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                  <Award className="w-4 h-4" />
+                  Qualification
+                </label>
+                <input
+                  type="text"
+                  value={formData.qualification}
+                  onChange={(e) => setFormData({...formData, qualification: e.target.value})}
+                  className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100"
+                />
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                  <Calendar className="w-4 h-4" />
+                  Experience
+                </label>
+                <input
+                  type="text"
+                  value={formData.experience}
+                  onChange={(e) => setFormData({...formData, experience: e.target.value})}
+                  className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100"
+                />
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                  <Building className="w-4 h-4" />
+                  Hospital/Clinic
+                </label>
+                <input
+                  type="text"
+                  value={formData.hospital}
+                  onChange={(e) => setFormData({...formData, hospital: e.target.value})}
+                  className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100"
+                />
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                  <Mail className="w-4 h-4" />
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100"
+                />
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                  <Phone className="w-4 h-4" />
+                  Phone
+                </label>
+                <input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100"
+                />
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                  <MapPin className="w-4 h-4" />
+                  City
+                </label>
+                <input
+                  type="text"
+                  value={formData.city}
+                  onChange={(e) => setFormData({...formData, city: e.target.value})}
+                  className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100"
+                />
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                  <MapPin className="w-4 h-4" />
+                  State
+                </label>
+                <input
+                  type="text"
+                  value={formData.state}
+                  onChange={(e) => setFormData({...formData, state: e.target.value})}
+                  className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100"
+                />
+              </div>
+            </div>
+
             <button
-              onClick={handleConnect}
-              disabled={loading}
-              className="px-6 py-3 bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition disabled:opacity-50 font-medium"
-              aria-label="Connect MetaMask wallet to access doctor portal"
+              className="mt-6 w-full px-6 py-3 bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition font-medium"
             >
-              {loading ? "Connecting..." : "Connect Wallet"}
+              Save Profile
             </button>
           </div>
-        ) : (
+
+          {/* Blockchain Info Card */}
           <div className="space-y-6">
-            {/* Authorization Check Status */}
-            {checkingAuthorization ? (
-              <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6 text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-900 dark:border-neutral-100 mx-auto mb-4"></div>
-                <p className="text-neutral-600 dark:text-neutral-400">Checking authorization status...</p>
-              </div>
-            ) : (
-              <>
-                {/* Connected Dashboard */}
-                <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-2 h-2 rounded-full bg-neutral-900 dark:bg-neutral-100"></div>
-                    <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50">
-                      Your Dashboard
-                    </h2>
-                  </div>
-                  <p className="text-neutral-600 dark:text-neutral-400 mb-2">
-                    Connected as: <span className="font-mono text-sm bg-neutral-200 dark:bg-neutral-700 px-2 py-1 rounded">{connection.account}</span>
+            <div className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6">
+              <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-50 mb-4">
+                Blockchain Identity
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-2">Wallet Address</p>
+                  <p className="text-xs font-mono bg-neutral-100 dark:bg-neutral-900 p-2 rounded break-all text-neutral-900 dark:text-neutral-100">
+                    {connection.account}
                   </p>
-                  {isAuthorized ? (
-                    <div className="mb-4">
-                      <p className="text-neutral-700 dark:text-neutral-300 font-medium mb-4">
-                        ✓ Authorized Doctor
-                      </p>
-                      
-                      {/* Patient Access Form */}
-                      <div className="bg-neutral-100 dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6 mb-6">
-                        <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50 mb-4">Access Patient Records (Consent-Based)</h3>
-                        <div className="flex gap-3">
-                          <input
-                            type="text"
-                            value={patientAddress}
-                            onChange={(e) => setPatientAddress(e.target.value)}
-                            placeholder="Enter patient address (0x...)"
-                            className="flex-1 px-4 py-2 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100 focus:border-transparent text-neutral-900 dark:text-neutral-100"
-                            disabled={checkingAccess}
-                            aria-label="Enter patient blockchain address to check access"
-                            aria-describedby="access-error"
-                          />
-                          <button
-                            onClick={handleCheckAccess}
-                            disabled={checkingAccess || !patientAddress}
-                            className="px-6 py-2 bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-                          >
-                            {checkingAccess ? "Checking..." : "Check Access"}
-                          </button>
-                        </div>
-                        
-                        {accessError && (
-                          <div className="mt-4 bg-neutral-200 dark:bg-neutral-700 border border-neutral-300 dark:border-neutral-600 rounded-lg p-4">
-                            <p className="text-neutral-900 dark:text-neutral-100 text-sm">{accessError}</p>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Medical Records Display */}
-                      {patientRecords && (
-                        <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg p-6">
-                          <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50 mb-4">
-                            Medical Records for {formatAddress(patientAddress as `0x${string}`)}
-                          </h3>
-                          <div className="space-y-4">
-                            {patientRecords.map((record) => (
-                              <div key={record.id} className="border border-neutral-200 dark:border-neutral-700 rounded-lg p-4">
-                                <div className="flex justify-between items-start mb-2">
-                                  <div>
-                                    <p className="font-semibold text-neutral-900 dark:text-neutral-50">{record.type}</p>
-                                    <p className="text-sm text-neutral-500 dark:text-neutral-400">ID: {record.id}</p>
-                                  </div>
-                                  <p className="text-sm text-neutral-600 dark:text-neutral-400">{record.date}</p>
-                                </div>
-                                <div className="space-y-2 text-sm">
-                                  <p><span className="font-medium text-neutral-700 dark:text-neutral-300">Diagnosis:</span> <span className="text-neutral-600 dark:text-neutral-400">{record.diagnosis}</span></p>
-                                  <p><span className="font-medium text-neutral-700 dark:text-neutral-300">Prescription:</span> <span className="text-neutral-600 dark:text-neutral-400">{record.prescription}</span></p>
-                                  <p><span className="font-medium text-neutral-700 dark:text-neutral-300">Doctor:</span> <span className="text-neutral-600 dark:text-neutral-400">{record.doctor}</span></p>
-                                  <p><span className="font-medium text-neutral-700 dark:text-neutral-300">Notes:</span> <span className="text-neutral-600 dark:text-neutral-400">{record.notes}</span></p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg p-4 mb-4">
-                      <div className="flex items-start gap-3">
-                        <svg className="w-6 h-6 text-neutral-700 dark:text-neutral-300 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                        <div>
-                          <p className="text-neutral-900 dark:text-neutral-50 font-medium">Not Authorized</p>
-                          <p className="text-neutral-700 dark:text-neutral-300 text-sm mt-1">
-                            Your wallet address is not authorized as a doctor. Please contact the system administrator to request authorization.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
-
-                {/* Future Features Preview */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className={`bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-4 ${!isAuthorized && 'opacity-50'}`}>
-                    <h3 className="font-semibold text-neutral-900 dark:text-neutral-50 mb-2">👨‍⚕️ Authorization</h3>
-                    <p className="text-sm text-neutral-600 dark:text-neutral-400">{isAuthorized ? 'Authorized' : 'Not authorized'}</p>
-                  </div>
-                  <div className={`bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-4 ${!isAuthorized && 'opacity-50'}`}>
-                    <h3 className="font-semibold text-neutral-900 dark:text-neutral-50 mb-2">📋 Create Records</h3>
-                    <p className="text-sm text-neutral-600 dark:text-neutral-400">Add new medical records</p>
-                  </div>
-                  <div className={`bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-4 ${!isAuthorized && 'opacity-50'}`}>
-                    <h3 className="font-semibold text-neutral-900 dark:text-neutral-50 mb-2">👥 Patients</h3>
-                    <p className="text-sm text-neutral-600 dark:text-neutral-400">View patient records</p>
+                <div>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-2">Status</p>
+                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
+                    doctorData?.isAuthorized 
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+                      : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400'
+                  }`}>
+                    {doctorData?.isAuthorized ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                    {doctorData?.isAuthorized ? 'Authorized' : 'Pending'}
                   </div>
                 </div>
-              </>
-            )}
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6">
+              <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-50 mb-4">
+                Quick Actions
+              </h3>
+              <div className="space-y-3">
+                <Link
+                  href="/doctor/home"
+                  className="flex items-center justify-between w-full px-4 py-3 bg-neutral-50 dark:bg-neutral-900 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 transition"
+                >
+                  <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Go to Dashboard</span>
+                  <ArrowRight className="w-4 h-4 text-neutral-600 dark:text-neutral-400" />
+                </Link>
+              </div>
+            </div>
           </div>
-        )}
+        </div>
       </main>
     </div>
   );

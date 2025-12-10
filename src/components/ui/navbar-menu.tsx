@@ -18,17 +18,23 @@ export const MenuItem = ({
   active,
   item,
   children,
+  isActive = false,
 }: {
   setActive: (item: string) => void;
   active: string | null;
   item: string;
   children?: React.ReactNode;
+  isActive?: boolean;
 }) => {
   return (
     <div onMouseEnter={() => setActive(item)} className="relative">
       <motion.p
         transition={{ duration: 0.3 }}
-        className="cursor-pointer text-sm font-medium text-neutral-900 hover:text-neutral-600 dark:text-neutral-100 dark:hover:text-neutral-300"
+        className={`cursor-pointer text-sm font-medium px-5 py-2 rounded-full transition-all h-[36px] flex items-center ${
+          isActive
+            ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
+            : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
+        }`}
       >
         {item}
       </motion.p>

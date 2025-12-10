@@ -905,6 +905,23 @@ export default function PatientDashboard() {
     lastCheckedDate: ""
   });
 
+  async function linkWalletToAccount(walletAddress: string) {
+    try {
+      const response = await fetch("/api/user/link-wallet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ walletAddress }),
+      });
+      
+      if (!response.ok) {
+        const data = await response.json();
+        console.error("Failed to link wallet:", data.error);
+      }
+    } catch (error) {
+      console.error("Error linking wallet:", error);
+    }
+  }
+
   useEffect(() => {
     // AUTH GUARD: Check session first
     async function checkAuth() {
@@ -929,6 +946,7 @@ export default function PatientDashboard() {
         const conn = await connectWallet();
         if (conn) {
           setConnection(conn);
+          await linkWalletToAccount(conn.account);
           await checkRegistrationStatus(conn);
         }
       } catch (error) {
@@ -951,6 +969,7 @@ export default function PatientDashboard() {
         const conn = await connectWallet();
         setConnection(conn);
         if (conn) {
+          await linkWalletToAccount(conn.account);
           await checkRegistrationStatus(conn);
         }
       }

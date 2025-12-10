@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { signOut } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { 
   User, 
   Settings, 
@@ -12,7 +12,8 @@ import {
   Moon,
   Sun,
   LayoutDashboard,
-  ChevronDown
+  ChevronDown,
+  Stethoscope
 } from "lucide-react"
 
 interface ProfileDropdownProps {
@@ -21,13 +22,15 @@ interface ProfileDropdownProps {
     email?: string | null
     image?: string | null
   }
+  role?: string
   theme?: "light" | "dark"
   onThemeToggle?: () => void
 }
 
-export function ProfileDropdown({ user, theme, onThemeToggle }: ProfileDropdownProps) {
+export function ProfileDropdown({ user, role, theme, onThemeToggle }: ProfileDropdownProps) {
   const [isOpen, setIsOpen] = React.useState(false)
   const router = useRouter()
+  const pathname = usePathname()
   const dropdownRef = React.useRef<HTMLDivElement>(null)
 
   // Close dropdown when clicking outside
@@ -74,9 +77,26 @@ export function ProfileDropdown({ user, theme, onThemeToggle }: ProfileDropdownP
     router.refresh()
   }
 
-  const menuItems = [
+  const menuItems = role === "doctor" ? [
     {
-      label: "Patient Portal",
+      label: "Doctor Profile",
+      icon: Stethoscope,
+      onClick: () => {
+        setIsOpen(false)
+        router.push("/doctor")
+      },
+    },
+    {
+      label: "Settings",
+      icon: Settings,
+      onClick: () => {
+        setIsOpen(false)
+        router.push("/doctor/settings")
+      },
+    },
+  ] : [
+    {
+      label: "Patient Profile",
       icon: LayoutDashboard,
       onClick: () => {
         setIsOpen(false)
@@ -93,13 +113,22 @@ export function ProfileDropdown({ user, theme, onThemeToggle }: ProfileDropdownP
     },
   ]
 
+  // Check if any menu item route matches current path
+  const isProfileActive = role === "doctor" 
+    ? pathname === "/doctor" || pathname === "/doctor/settings"
+    : pathname === "/patient" || pathname === "/patient/settings"
+
   return (
     <div ref={dropdownRef} className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+        className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all ${
+          isOpen || isProfileActive
+            ? "bg-neutral-900 dark:bg-white shadow-sm"
+            : "hover:bg-neutral-100 dark:hover:bg-neutral-700"
+        }`}
       >
-        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-semibold text-sm">
+        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-semibold text-xs">
           {user.image ? (
             <img
               src={user.image}
@@ -111,16 +140,28 @@ export function ProfileDropdown({ user, theme, onThemeToggle }: ProfileDropdownP
           )}
         </div>
         <div className="hidden md:flex flex-col items-start">
-          <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+          <span className={`text-sm font-medium transition-colors ${
+            isOpen || isProfileActive
+              ? "text-white dark:text-neutral-900"
+              : "text-neutral-900 dark:text-neutral-100"
+          }`}>
             {user.name || user.email?.split("@")[0] || "User"}
           </span>
-          <span className="text-xs text-neutral-600 dark:text-neutral-400">
+          <span className={`text-xs transition-colors ${
+            isOpen || isProfileActive
+              ? "text-neutral-300 dark:text-neutral-600"
+              : "text-neutral-600 dark:text-neutral-400"
+          }`}>
             {user.email}
           </span>
         </div>
         <ChevronDown
-          className={`w-4 h-4 text-neutral-600 dark:text-neutral-400 transition-transform ${
+          className={`w-4 h-4 transition-all ${
             isOpen ? "rotate-180" : ""
+          } ${
+            isOpen || isProfileActive
+              ? "text-white dark:text-neutral-900"
+              : "text-neutral-600 dark:text-neutral-400"
           }`}
         />
       </button>

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { FeatureShowcase } from "@/components/landing/FeatureShowcase";
 import { Navbar } from "@/components/Navbar";
+import { FooterSection } from "@/components/ui/footer-section";
 import {
   ExpandableScreen,
   ExpandableScreenContent,
@@ -567,6 +568,9 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <FooterSection />
     </main>
   );
 }

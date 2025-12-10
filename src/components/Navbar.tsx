@@ -2,8 +2,11 @@
 import React, { useState, useEffect } from "react";
 import { HoveredLink, Menu, MenuItem } from "@/components/ui/navbar-menu";
 import { ProfileDropdown } from "@/components/ui/profile-dropdown";
+import { Magnetic } from "@/components/core/magnetic";
+import { StarOfLife } from "@/components/icons/StarOfLife";
 import { Moon, Sun, Activity } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { formatAddress } from "@/lib/web3";
 
@@ -15,6 +18,7 @@ export function Navbar({ connection }: NavbarProps) {
   const [active, setActive] = useState<string | null>(null);
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const { data: session } = useSession();
+  const pathname = usePathname();
 
   // Initialize theme from localStorage or system preference
   useEffect(() => {
@@ -54,38 +58,84 @@ export function Navbar({ connection }: NavbarProps) {
     <header className="w-full z-40 fixed top-0 left-0 bg-transparent">
       <div className="w-full px-6 py-4">
         <div className="flex items-center justify-between gap-4">
-          {/* Left: Logo + Title (Capsule) - Leftmost position */}
-          <Link
-            href={session.user.role === "patient" ? "/patient" : "/doctor"}
-            className="flex items-center gap-2 h-[44px] px-4 bg-white dark:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 shadow-sm hover:shadow-md transition-shadow"
+          {/* Left: Logo + Title (Capsule) - Non-clickable with Magnetic effect */}
+          <Magnetic
+            intensity={0.2}
+            springOptions={{ bounce: 0.1 }}
+            actionArea="global"
+            range={200}
           >
-            <Activity className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-            <span className="font-medium text-sm text-neutral-900 dark:text-neutral-100 whitespace-nowrap">Swasthya Sanchar</span>
-          </Link>
+            <div className="flex items-center gap-2 h-[44px] px-4 bg-white dark:bg-neutral-800 rounded-full shadow-sm cursor-default">
+              <Magnetic
+                intensity={0.1}
+                springOptions={{ bounce: 0.1 }}
+                actionArea="global"
+                range={200}
+              >
+                <StarOfLife className="w-8 h-8 text-red-600 dark:text-red-500 flex-shrink-0" />
+              </Magnetic>
+              <Magnetic
+                intensity={0.1}
+                springOptions={{ bounce: 0.1 }}
+                actionArea="global"
+                range={200}
+              >
+                <span className="text-sm text-neutral-900 dark:text-neutral-100 whitespace-nowrap tracking-wide" style={{ fontFamily: 'Helvetica, Arial, sans-serif', fontWeight: 'bold' }}>Swasthya Sanchar</span>
+              </Magnetic>
+            </div>
+          </Magnetic>
 
           {/* Center: Home, Features, Emergency (Capsule with animated menu) - Centered */}
           <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2">
-            <div className="bg-white dark:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 shadow-sm px-2 h-[44px] flex items-center">
+            <div className="bg-white dark:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 shadow-sm px-1 h-[44px] flex items-center gap-1">
               <Menu setActive={setActive}>
                 <Link
-                  href={session.user.role === "patient" ? "/patient/home" : "/doctor"}
-                  className="px-4 py-2 text-sm font-medium text-neutral-900 hover:text-neutral-600 dark:text-neutral-100 dark:hover:text-neutral-300 transition-colors"
+                  href={session.user.role === "patient" ? "/patient/home" : "/doctor/home"}
+                  className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${
+                    pathname === "/patient/home" || pathname === "/doctor/home"
+                      ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
+                      : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
+                  }`}
                 >
                   Home
                 </Link>
 
-                <MenuItem setActive={setActive} active={active} item="Features">
-                  <div className="flex flex-col space-y-4 text-sm">
-                    <HoveredLink href="/patient/records">Medical Records</HoveredLink>
-                    <HoveredLink href="/patient/emergency">Emergency QR</HoveredLink>
-                    <HoveredLink href="/patient/access">Doctor Access</HoveredLink>
-                    <HoveredLink href="#blockchain-security">Blockchain Security</HoveredLink>
-                  </div>
-                </MenuItem>
+                {session.user.role === "patient" ? (
+                  <MenuItem 
+                    setActive={setActive} 
+                    active={active} 
+                    item="Features"
+                    isActive={pathname?.includes("/records") || pathname?.includes("/access")}
+                  >
+                    <div className="flex flex-col space-y-4 text-sm">
+                      <HoveredLink href="/patient/records">Medical Records</HoveredLink>
+                      <HoveredLink href="/patient/emergency">Emergency QR</HoveredLink>
+                      <HoveredLink href="/patient/access">Doctor Access</HoveredLink>
+                      <HoveredLink href="#blockchain-security">Blockchain Security</HoveredLink>
+                    </div>
+                  </MenuItem>
+                ) : (
+                  <MenuItem 
+                    setActive={setActive} 
+                    active={active} 
+                    item="Features"
+                    isActive={pathname?.includes("/patients") || pathname?.includes("/records")}
+                  >
+                    <div className="flex flex-col space-y-4 text-sm">
+                      <HoveredLink href="/doctor/patients">Patient Records</HoveredLink>
+                      <HoveredLink href="/doctor/records">Create Records</HoveredLink>
+                      <HoveredLink href="/doctor/authorization">Authorization Status</HoveredLink>
+                    </div>
+                  </MenuItem>
+                )}
 
                 <Link
                   href="/emergency"
-                  className="px-4 py-2 text-sm font-medium text-neutral-900 hover:text-neutral-600 dark:text-neutral-100 dark:hover:text-neutral-300 transition-colors"
+                  className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${
+                    pathname === "/emergency"
+                      ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
+                      : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
+                  }`}
                 >
                   Emergency
                 </Link>
@@ -112,6 +162,7 @@ export function Navbar({ connection }: NavbarProps) {
                     email: session.user.email,
                     image: null,
                   }}
+                  role={session.user.role}
                   theme={theme}
                   onThemeToggle={toggleTheme}
                 />
