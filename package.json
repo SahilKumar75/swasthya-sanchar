@@ -14,7 +14,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "node": "hardhat node",
-    "deploy": "hardhat run contracts/scripts/deploy.ts --network localhost"
+    "deploy": "hardhat run contracts/scripts/deploy.ts --network localhost",
+    "reset-doctor-profile": "npx tsx scripts/reset-doctor-profile.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.1",

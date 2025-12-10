@@ -8,6 +8,13 @@
       "when": 1765346909725,
       "tag": "0000_petite_miracleman",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1765383153848,
+      "tag": "0001_light_vindicator",
+      "breakpoints": true
     }
   ]
 }

@@ -146,17 +146,8 @@ export function Navbar({ connection }: NavbarProps) {
             </div>
           </div>
 
-          {/* Right: Wallet + Language + Avatar + Theme Toggle (Capsule) - Rightmost position */}
+          {/* Right: Language + Avatar + Theme Toggle (Capsule) - Rightmost position */}
           <div className="flex items-center gap-2 h-[44px] px-3 bg-white dark:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 shadow-sm">
-            {connection && (
-              <div className="hidden md:flex items-center gap-2 px-3 h-[28px] bg-neutral-100 dark:bg-neutral-700 rounded-full">
-                <span className="text-xs text-neutral-600 dark:text-neutral-400">Wallet:</span>
-                <span className="font-mono text-xs text-neutral-900 dark:text-neutral-100">
-                  {formatAddress(connection.account)}
-                </span>
-              </div>
-            )}
-
             <LanguageSelector />
 
             {session?.user && (
