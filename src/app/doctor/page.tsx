@@ -10,6 +10,8 @@ import {
   User, Mail, Phone, Calendar, MapPin, Award, Building, 
   FileText, Shield, CheckCircle, AlertCircle, ArrowRight
 } from "lucide-react";
+import { INDIAN_STATES, getCitiesForState } from "@/lib/indianPostal";
+import { CustomSelect } from "@/components/ui/custom-select";
 
 interface DoctorData {
   name: string;
@@ -33,6 +35,7 @@ export default function DoctorProfile() {
   const [loading, setLoading] = useState(true);
   const [doctorData, setDoctorData] = useState<DoctorData | null>(null);
   const [isRegistered, setIsRegistered] = useState(false);
+  const [availableCities, setAvailableCities] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -45,6 +48,12 @@ export default function DoctorProfile() {
     city: "",
     state: ""
   });
+
+  // Handle state change and update available cities
+  function handleStateChange(state: string) {
+    setFormData({ ...formData, state, city: "" });
+    setAvailableCities(getCitiesForState(state));
+  }
 
   async function linkWalletToAccount(walletAddress: string) {
     try {
@@ -356,27 +365,54 @@ export default function DoctorProfile() {
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                   <MapPin className="w-4 h-4" />
-                  City
+                  State
                 </label>
-                <input
-                  type="text"
-                  value={formData.city}
-                  onChange={(e) => setFormData({...formData, city: e.target.value})}
-                  className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100"
+                <CustomSelect
+                  value={formData.state}
+                  onChange={handleStateChange}
+                  options={[
+                    { value: "", label: "Select State" },
+                    ...INDIAN_STATES.map(state => ({ value: state, label: state }))
+                  ]}
+                  placeholder="Select State"
                 />
               </div>
 
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                   <MapPin className="w-4 h-4" />
-                  State
+                  City
                 </label>
-                <input
-                  type="text"
-                  value={formData.state}
-                  onChange={(e) => setFormData({...formData, state: e.target.value})}
-                  className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100"
-                />
+                {availableCities.length > 0 ? (
+                  <>
+                    <CustomSelect
+                      value={formData.city}
+                      onChange={(value) => setFormData({ ...formData, city: value })}
+                      options={[
+                        { value: "", label: "Select City" },
+                        ...availableCities.map(city => ({ value: city, label: city })),
+                        { value: "other", label: "Other (Type below)" }
+                      ]}
+                      placeholder="Select City"
+                    />
+                    {formData.city === "other" && (
+                      <input
+                        type="text"
+                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                        placeholder="Type your city name"
+                        className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100 mt-2"
+                      />
+                    )}
+                  </>
+                ) : (
+                  <input
+                    type="text"
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    placeholder="Enter city name"
+                    className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100"
+                  />
+                )}
               </div>
             </div>
 

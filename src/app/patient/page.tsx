@@ -9,6 +9,8 @@ import { Navbar } from "@/components/Navbar";
 import { Edit2, User, Calendar, Phone, Mail, MapPin, AlertCircle, Heart, Activity, FileText, QrCode, Save, X, Lock, Unlock, Eye, EyeOff, Shield, RefreshCw, ArrowUpRight } from "lucide-react";
 import QRCode from "qrcode";
 import { CardFlip, CardFlipFront, CardFlipBack } from "@/components/ui/card-flip";
+import { fetchLocationFromPincode, INDIAN_STATES, getCitiesForState, isValidPincode } from "@/lib/indianPostal";
+import { CustomSelect } from "@/components/ui/custom-select";
 
 interface PatientData {
   name: string;
@@ -342,16 +344,18 @@ function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
               <div>
                 <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">Gender</label>
                 {isEditing ? (
-                  <select
+                  <CustomSelect
                     value={editFormData?.gender || ""}
-                    onChange={(e) => handleEditChange("gender", e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
-                  >
-                    <option value="">Select Gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                  </select>
+                    onChange={(value) => handleEditChange("gender", value)}
+                    options={[
+                      { value: "", label: "Select Gender" },
+                      { value: "male", label: "Male" },
+                      { value: "female", label: "Female" },
+                      { value: "other", label: "Other" }
+                    ]}
+                    placeholder="Select Gender"
+                    className="w-full"
+                  />
                 ) : (
                   <p className="text-lg text-neutral-900 dark:text-neutral-100 font-medium capitalize">{patientData?.gender || <span className="text-neutral-400">Not provided</span>}</p>
                 )}
@@ -359,21 +363,23 @@ function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
               <div>
                 <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">Blood Group</label>
                 {isEditing ? (
-                  <select
+                  <CustomSelect
                     value={editFormData?.bloodGroup || ""}
-                    onChange={(e) => handleEditChange("bloodGroup", e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
-                  >
-                    <option value="">Select Blood Group</option>
-                    <option value="A+">A+</option>
-                    <option value="A-">A-</option>
-                    <option value="B+">B+</option>
-                    <option value="B-">B-</option>
-                    <option value="AB+">AB+</option>
-                    <option value="AB-">AB-</option>
-                    <option value="O+">O+</option>
-                    <option value="O-">O-</option>
-                  </select>
+                    onChange={(value) => handleEditChange("bloodGroup", value)}
+                    options={[
+                      { value: "", label: "Select Blood Group" },
+                      { value: "A+", label: "A+" },
+                      { value: "A-", label: "A-" },
+                      { value: "B+", label: "B+" },
+                      { value: "B-", label: "B-" },
+                      { value: "AB+", label: "AB+" },
+                      { value: "AB-", label: "AB-" },
+                      { value: "O+", label: "O+" },
+                      { value: "O-", label: "O-" }
+                    ]}
+                    placeholder="Select Blood Group"
+                    className="w-full"
+                  />
                 ) : (
                   <div className="flex items-center gap-2">
                     <Activity className="w-4 h-4 text-red-500" />
@@ -872,6 +878,8 @@ export default function PatientDashboard() {
   const [checkingRegistration, setCheckingRegistration] = useState(false);
   const [registering, setRegistering] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [fetchingLocation, setFetchingLocation] = useState(false);
+  const [availableCities, setAvailableCities] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     // Step 1: Personal Information
     name: "",
@@ -904,6 +912,39 @@ export default function PatientDashboard() {
     waistCircumference: "",
     lastCheckedDate: ""
   });
+
+  // Handle pincode change and auto-populate city and state
+  async function handlePincodeChange(pincode: string) {
+    const formattedPincode = pincode.replace(/\D/g, '').slice(0, 6);
+    setFormData({ ...formData, pincode: formattedPincode });
+
+    if (formattedPincode.length === 6 && isValidPincode(formattedPincode)) {
+      setFetchingLocation(true);
+      try {
+        const locationData = await fetchLocationFromPincode(formattedPincode);
+        if (locationData) {
+          setFormData({
+            ...formData,
+            pincode: formattedPincode,
+            city: locationData.city,
+            state: locationData.state
+          });
+          // Update available cities for the state
+          setAvailableCities(getCitiesForState(locationData.state));
+        }
+      } catch (error) {
+        console.error("Error fetching location from pincode:", error);
+      } finally {
+        setFetchingLocation(false);
+      }
+    }
+  }
+
+  // Handle state change and update available cities
+  function handleStateChange(state: string) {
+    setFormData({ ...formData, state, city: "" });
+    setAvailableCities(getCitiesForState(state));
+  }
 
   async function linkWalletToAccount(walletAddress: string) {
     try {
@@ -1322,36 +1363,38 @@ export default function PatientDashboard() {
                           <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                             Gender *
                           </label>
-                          <select
+                          <CustomSelect
                             value={formData.gender}
-                            onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                            className="w-full px-4 py-2 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100 focus:border-transparent text-neutral-900 dark:text-neutral-100"
-                          >
-                            <option value="">Select gender</option>
-                            <option value="male">Male</option>
-                            <option value="female">Female</option>
-                            <option value="other">Other</option>
-                          </select>
+                            onChange={(value) => setFormData({ ...formData, gender: value })}
+                            options={[
+                              { value: "", label: "Select gender" },
+                              { value: "male", label: "Male" },
+                              { value: "female", label: "Female" },
+                              { value: "other", label: "Other" }
+                            ]}
+                            placeholder="Select gender"
+                          />
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                             Blood Group *
                           </label>
-                          <select
+                          <CustomSelect
                             value={formData.bloodGroup}
-                            onChange={(e) => setFormData({ ...formData, bloodGroup: e.target.value })}
-                            className="w-full px-4 py-2 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100 focus:border-transparent text-neutral-900 dark:text-neutral-100"
-                          >
-                            <option value="">Select blood group</option>
-                            <option value="A+">A+</option>
-                            <option value="A-">A-</option>
-                            <option value="B+">B+</option>
-                            <option value="B-">B-</option>
-                            <option value="AB+">AB+</option>
-                            <option value="AB-">AB-</option>
-                            <option value="O+">O+</option>
-                            <option value="O-">O-</option>
-                          </select>
+                            onChange={(value) => setFormData({ ...formData, bloodGroup: value })}
+                            options={[
+                              { value: "", label: "Select blood group" },
+                              { value: "A+", label: "A+" },
+                              { value: "A-", label: "A-" },
+                              { value: "B+", label: "B+" },
+                              { value: "B-", label: "B-" },
+                              { value: "AB+", label: "AB+" },
+                              { value: "AB-", label: "AB-" },
+                              { value: "O+", label: "O+" },
+                              { value: "O-", label: "O-" }
+                            ]}
+                            placeholder="Select blood group"
+                          />
                         </div>
                       </div>
                     </>
@@ -1401,39 +1444,73 @@ export default function PatientDashboard() {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
-                            City
+                            PIN Code *
                           </label>
-                          <input
-                            type="text"
-                            value={formData.city}
-                            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                            placeholder="City"
-                            className="w-full px-4 py-2 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100 focus:border-transparent text-neutral-900 dark:text-neutral-100"
-                          />
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={formData.pincode}
+                              onChange={(e) => handlePincodeChange(e.target.value)}
+                              placeholder="Enter 6-digit PIN"
+                              maxLength={6}
+                              className="w-full px-4 py-2 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100 focus:border-transparent text-neutral-900 dark:text-neutral-100"
+                            />
+                            {fetchingLocation && (
+                              <div className="absolute right-3 top-3">
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-neutral-900 dark:border-neutral-100"></div>
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                            City & State will auto-fill
+                          </p>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
-                            State
+                            State *
                           </label>
-                          <input
-                            type="text"
+                          <CustomSelect
                             value={formData.state}
-                            onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                            placeholder="State"
-                            className="w-full px-4 py-2 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100 focus:border-transparent text-neutral-900 dark:text-neutral-100"
+                            onChange={handleStateChange}
+                            options={[
+                              { value: "", label: "Select State" },
+                              ...INDIAN_STATES.map(state => ({ value: state, label: state }))
+                            ]}
+                            placeholder="Select State"
                           />
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
-                            PIN Code
+                            City *
                           </label>
-                          <input
-                            type="text"
-                            value={formData.pincode}
-                            onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
-                            placeholder="PIN"
-                            className="w-full px-4 py-2 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100 focus:border-transparent text-neutral-900 dark:text-neutral-100"
-                          />
+                          {availableCities.length > 0 ? (
+                            <CustomSelect
+                              value={formData.city}
+                              onChange={(value) => setFormData({ ...formData, city: value })}
+                              options={[
+                                { value: "", label: "Select City" },
+                                ...availableCities.map(city => ({ value: city, label: city })),
+                                { value: "other", label: "Other (Type below)" }
+                              ]}
+                              placeholder="Select City"
+                            />
+                          ) : (
+                            <input
+                              type="text"
+                              value={formData.city}
+                              onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                              placeholder="Enter city name"
+                              className="w-full px-4 py-2 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100 focus:border-transparent text-neutral-900 dark:text-neutral-100"
+                            />
+                          )}
+                          {formData.city === "other" && (
+                            <input
+                              type="text"
+                              onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                              placeholder="Type your city name"
+                              className="w-full px-4 py-2 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100 focus:border-transparent text-neutral-900 dark:text-neutral-100 mt-2"
+                            />
+                          )}
                         </div>
                       </div>
                     </>
@@ -1459,19 +1536,20 @@ export default function PatientDashboard() {
                           <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">
                             Relationship *
                           </label>
-                          <select
+                          <CustomSelect
                             value={formData.emergencyRelation}
-                            onChange={(e) => setFormData({ ...formData, emergencyRelation: e.target.value })}
-                            className="w-full px-4 py-2 bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100 focus:border-transparent text-neutral-900 dark:text-neutral-100"
-                          >
-                            <option value="">Select relationship</option>
-                            <option value="spouse">Spouse</option>
-                            <option value="parent">Parent</option>
-                            <option value="sibling">Sibling</option>
-                            <option value="child">Child</option>
-                            <option value="friend">Friend</option>
-                            <option value="other">Other</option>
-                          </select>
+                            onChange={(value) => setFormData({ ...formData, emergencyRelation: value })}
+                            options={[
+                              { value: "", label: "Select relationship" },
+                              { value: "spouse", label: "Spouse" },
+                              { value: "parent", label: "Parent" },
+                              { value: "sibling", label: "Sibling" },
+                              { value: "child", label: "Child" },
+                              { value: "friend", label: "Friend" },
+                              { value: "other", label: "Other" }
+                            ]}
+                            placeholder="Select relationship"
+                          />
                         </div>
                       </div>
                       <div>

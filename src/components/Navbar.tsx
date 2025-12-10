@@ -4,6 +4,8 @@ import { HoveredLink, Menu, MenuItem } from "@/components/ui/navbar-menu";
 import { ProfileDropdown } from "@/components/ui/profile-dropdown";
 import { Magnetic } from "@/components/core/magnetic";
 import { StarOfLife } from "@/components/icons/StarOfLife";
+import { LanguageSelector } from "@/components/LanguageSelector";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Moon, Sun, Activity } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
@@ -19,6 +21,7 @@ export function Navbar({ connection }: NavbarProps) {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const { data: session } = useSession();
   const pathname = usePathname();
+  const { t } = useLanguage();
 
   // Initialize theme from localStorage or system preference
   useEffect(() => {
@@ -97,14 +100,14 @@ export function Navbar({ connection }: NavbarProps) {
                       : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
                   }`}
                 >
-                  Home
+                  {t.nav.home}
                 </Link>
 
                 {session.user.role === "patient" ? (
                   <MenuItem 
                     setActive={setActive} 
                     active={active} 
-                    item="Features"
+                    item={t.nav.features}
                     isActive={pathname?.includes("/records") || pathname?.includes("/access")}
                   >
                     <div className="flex flex-col space-y-4 text-sm">
@@ -118,7 +121,7 @@ export function Navbar({ connection }: NavbarProps) {
                   <MenuItem 
                     setActive={setActive} 
                     active={active} 
-                    item="Features"
+                    item={t.nav.features}
                     isActive={pathname?.includes("/patients") || pathname?.includes("/records")}
                   >
                     <div className="flex flex-col space-y-4 text-sm">
@@ -143,7 +146,7 @@ export function Navbar({ connection }: NavbarProps) {
             </div>
           </div>
 
-          {/* Right: Wallet + Avatar + Theme Toggle (Capsule) - Rightmost position */}
+          {/* Right: Wallet + Language + Avatar + Theme Toggle (Capsule) - Rightmost position */}
           <div className="flex items-center gap-2 h-[44px] px-3 bg-white dark:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 shadow-sm">
             {connection && (
               <div className="hidden md:flex items-center gap-2 px-3 h-[28px] bg-neutral-100 dark:bg-neutral-700 rounded-full">
@@ -153,6 +156,8 @@ export function Navbar({ connection }: NavbarProps) {
                 </span>
               </div>
             )}
+
+            <LanguageSelector />
 
             {session?.user && (
               <div className="flex items-center h-full">

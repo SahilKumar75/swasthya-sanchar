@@ -3,6 +3,7 @@
 import * as React from "react"
 import { signOut } from "next-auth/react"
 import { useRouter, usePathname } from "next/navigation"
+import { useLanguage } from "@/contexts/LanguageContext"
 import { 
   User, 
   Settings, 
@@ -32,6 +33,7 @@ export function ProfileDropdown({ user, role, theme, onThemeToggle }: ProfileDro
   const router = useRouter()
   const pathname = usePathname()
   const dropdownRef = React.useRef<HTMLDivElement>(null)
+  const { t } = useLanguage()
 
   // Close dropdown when clicking outside
   React.useEffect(() => {
@@ -79,7 +81,7 @@ export function ProfileDropdown({ user, role, theme, onThemeToggle }: ProfileDro
 
   const menuItems = role === "doctor" ? [
     {
-      label: "Doctor Profile",
+      label: t.nav.doctorPortal,
       icon: Stethoscope,
       onClick: () => {
         setIsOpen(false)
@@ -87,7 +89,7 @@ export function ProfileDropdown({ user, role, theme, onThemeToggle }: ProfileDro
       },
     },
     {
-      label: "Settings",
+      label: t.nav.settings,
       icon: Settings,
       onClick: () => {
         setIsOpen(false)
@@ -96,7 +98,7 @@ export function ProfileDropdown({ user, role, theme, onThemeToggle }: ProfileDro
     },
   ] : [
     {
-      label: "Patient Profile",
+      label: t.nav.patientPortal,
       icon: LayoutDashboard,
       onClick: () => {
         setIsOpen(false)
@@ -104,7 +106,7 @@ export function ProfileDropdown({ user, role, theme, onThemeToggle }: ProfileDro
       },
     },
     {
-      label: "Settings",
+      label: t.nav.settings,
       icon: Settings,
       onClick: () => {
         setIsOpen(false)
@@ -223,7 +225,7 @@ export function ProfileDropdown({ user, role, theme, onThemeToggle }: ProfileDro
                   <Sun className="w-4 h-4 text-neutral-600 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-neutral-100 transition-colors" />
                 )}
                 <span className="text-sm text-neutral-700 dark:text-neutral-300 group-hover:text-neutral-900 dark:group-hover:text-neutral-100 transition-colors">
-                  {theme === "light" ? "Dark" : "Light"} Mode
+                  {theme === "light" ? t.nav.darkMode : t.nav.lightMode}
                 </span>
               </button>
             )}
@@ -235,7 +237,7 @@ export function ProfileDropdown({ user, role, theme, onThemeToggle }: ProfileDro
             >
               <HelpCircle className="w-4 h-4 text-neutral-600 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-neutral-100 transition-colors" />
               <span className="text-sm text-neutral-700 dark:text-neutral-300 group-hover:text-neutral-900 dark:group-hover:text-neutral-100 transition-colors">
-                Help & Support
+                {t.nav.helpSupport}
               </span>
             </button>
           </div>
@@ -248,7 +250,7 @@ export function ProfileDropdown({ user, role, theme, onThemeToggle }: ProfileDro
             >
               <LogOut className="w-4 h-4 text-red-600 dark:text-red-400" />
               <span className="text-sm text-red-600 dark:text-red-400 font-medium">
-                Log out
+                {t.nav.logout}
               </span>
             </button>
           </div>

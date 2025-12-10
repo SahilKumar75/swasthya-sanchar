@@ -7,6 +7,7 @@ import Link from "next/link";
 import { connectWallet, readContract, type WalletConnection } from "@/lib/web3";
 import { Navbar } from "@/components/Navbar";
 import { FooterSection } from "@/components/ui/footer-section";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { 
   Stethoscope, Users, FileCheck, Clock, TrendingUp, Calendar, 
   Activity, UserCheck, Shield, ClipboardList, Bell, ArrowUpRight
@@ -24,6 +25,7 @@ interface DoctorStats {
 export default function DoctorHome() {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const { t } = useLanguage();
   const [connection, setConnection] = useState<WalletConnection | null>(null);
   const [stats, setStats] = useState<DoctorStats>({
     totalPatients: 0,
@@ -103,6 +105,7 @@ export default function DoctorHome() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white dark:bg-neutral-900">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neutral-900 dark:border-neutral-100"></div>
+        <span className="ml-3 text-neutral-900 dark:text-neutral-100">{t.common.loading}</span>
       </div>
     );
   }
@@ -115,10 +118,10 @@ export default function DoctorHome() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-neutral-900 dark:text-neutral-50 mb-2">
-            Doctor Dashboard
+            {t.dashboard.doctorDashboard}
           </h1>
           <p className="text-lg text-neutral-600 dark:text-neutral-400">
-            Welcome back, Dr. {session?.user?.email?.split("@")[0]}
+            {t.dashboard.welcome}, Dr. {session?.user?.email?.split("@")[0]}
           </p>
         </div>
 
@@ -127,7 +130,7 @@ export default function DoctorHome() {
           <div className="mb-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4 flex items-start gap-3">
             <Shield className="w-5 h-5 text-yellow-600 dark:text-yellow-500 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold text-yellow-900 dark:text-yellow-100">Authorization Pending</p>
+              <p className="font-semibold text-yellow-900 dark:text-yellow-100">{t.doctorReg.pendingAuth}</p>
               <p className="text-sm text-yellow-800 dark:text-yellow-200">
                 Your wallet address is not authorized as a doctor. Please contact the system administrator.
               </p>
@@ -144,12 +147,12 @@ export default function DoctorHome() {
                 <div className="bg-white/20 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
                   <Users className="w-6 h-6" />
                 </div>
-                <h3 className="text-lg font-medium mb-2">Total Patients</h3>
+                <h3 className="text-lg font-medium mb-2">{t.dashboard.totalPatients}</h3>
                 <p className="text-5xl font-bold mb-2">{stats.totalPatients}</p>
-                <p className="text-blue-100 text-sm">Under your care</p>
+                <p className="text-blue-100 text-sm">{t.dashboard.underYourCare}</p>
               </div>
               <Link href="/doctor#patients" className="flex items-center gap-2 text-sm font-medium hover:gap-3 transition-all">
-                View all patients <ArrowUpRight className="w-4 h-4" />
+                {t.dashboard.viewRecords} <ArrowUpRight className="w-4 h-4" />
               </Link>
             </div>
           </div>
@@ -157,17 +160,17 @@ export default function DoctorHome() {
           {/* Today's Appointments */}
           <div className="col-span-6 md:col-span-3 lg:col-span-2 bg-white dark:bg-neutral-800 rounded-xl p-6 border border-neutral-200 dark:border-neutral-700 hover:shadow-lg transition-shadow">
             <Calendar className="w-8 h-8 text-green-600 dark:text-green-400 mb-3" />
-            <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-1">Today</p>
+            <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-1">{t.dashboard.today}</p>
             <p className="text-3xl font-bold text-neutral-900 dark:text-neutral-50">{stats.todayAppointments}</p>
-            <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-1">Appointments</p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-1">{t.dashboard.upcomingAppointments}</p>
           </div>
 
           {/* Active Consultations */}
           <div className="col-span-6 md:col-span-3 lg:col-span-2 bg-white dark:bg-neutral-800 rounded-xl p-6 border border-neutral-200 dark:border-neutral-700 hover:shadow-lg transition-shadow">
             <Activity className="w-8 h-8 text-purple-600 dark:text-purple-400 mb-3" />
-            <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-1">Active</p>
+            <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-1">{t.dashboard.active}</p>
             <p className="text-3xl font-bold text-neutral-900 dark:text-neutral-50">{stats.activeConsultations}</p>
-            <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-1">Consultations</p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-1">{t.dashboard.consultations}</p>
           </div>
 
           {/* Authorization Status */}
@@ -179,39 +182,39 @@ export default function DoctorHome() {
                   ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
                   : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400'
               }`}>
-                {stats.authorizedStatus ? 'Authorized' : 'Pending'}
+                {stats.authorizedStatus ? t.doctorReg.authorized : t.doctorReg.pendingAuth}
               </div>
             </div>
             <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50 mb-1">
-              Blockchain Status
+              {t.doctorReg.blockchainIdentity}
             </h3>
             <p className="text-sm text-neutral-600 dark:text-neutral-400">
               {stats.authorizedStatus 
-                ? 'You are authorized to access patient records'
-                : 'Authorization required for full access'}
+                ? t.doctorReg.authorized
+                : t.doctorReg.pendingAuth}
             </p>
           </div>
 
           {/* Pending Records */}
           <div className="col-span-6 md:col-span-3 lg:col-span-2 bg-white dark:bg-neutral-800 rounded-xl p-6 border border-neutral-200 dark:border-neutral-700 hover:shadow-lg transition-shadow">
             <FileCheck className="w-8 h-8 text-orange-600 dark:text-orange-400 mb-3" />
-            <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-1">Pending</p>
+            <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-1">{t.dashboard.pending}</p>
             <p className="text-3xl font-bold text-neutral-900 dark:text-neutral-50">{stats.pendingRecords}</p>
-            <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-1">Records</p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-1">{t.dashboard.records}</p>
           </div>
 
           {/* Access Requests */}
           <div className="col-span-6 md:col-span-3 lg:col-span-2 bg-white dark:bg-neutral-800 rounded-xl p-6 border border-neutral-200 dark:border-neutral-700 hover:shadow-lg transition-shadow">
             <Bell className="w-8 h-8 text-red-600 dark:text-red-400 mb-3" />
-            <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-1">New</p>
+            <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-1">{t.dashboard.new}</p>
             <p className="text-3xl font-bold text-neutral-900 dark:text-neutral-50">{stats.recentAccessRequests}</p>
-            <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-1">Requests</p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-1">{t.dashboard.requests}</p>
           </div>
         </div>
 
         {/* Quick Actions */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 mb-4">Quick Actions</h2>
+          <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 mb-4">{t.dashboard.quickActions}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Link 
               href="/doctor#patients"
@@ -222,8 +225,8 @@ export default function DoctorHome() {
                   <UserCheck className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-neutral-900 dark:text-neutral-50">View Patients</h3>
-                  <p className="text-sm text-neutral-600 dark:text-neutral-400">Access patient records</p>
+                  <h3 className="font-semibold text-neutral-900 dark:text-neutral-50">{t.dashboard.viewPatients}</h3>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">{t.dashboard.accessRecords}</p>
                 </div>
               </div>
             </Link>
@@ -237,8 +240,8 @@ export default function DoctorHome() {
                   <ClipboardList className="w-6 h-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-neutral-900 dark:text-neutral-50">Create Record</h3>
-                  <p className="text-sm text-neutral-600 dark:text-neutral-400">Add new medical record</p>
+                  <h3 className="font-semibold text-neutral-900 dark:text-neutral-50">{t.dashboard.createRecord}</h3>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">{t.dashboard.addRecord}</p>
                 </div>
               </div>
             </Link>
@@ -252,8 +255,8 @@ export default function DoctorHome() {
                   <Shield className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-neutral-900 dark:text-neutral-50">Authorization</h3>
-                  <p className="text-sm text-neutral-600 dark:text-neutral-400">Check status</p>
+                  <h3 className="font-semibold text-neutral-900 dark:text-neutral-50">{t.dashboard.authorization}</h3>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">{t.doctorReg.status}</p>
                 </div>
               </div>
             </Link>
@@ -262,7 +265,7 @@ export default function DoctorHome() {
 
         {/* Recent Activity */}
         <div>
-          <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 mb-4">Recent Activity</h2>
+          <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 mb-4">{t.dashboard.recentActivity}</h2>
           <div className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6">
             <div className="space-y-4">
               <div className="flex items-center gap-4 pb-4 border-b border-neutral-200 dark:border-neutral-700">
@@ -270,10 +273,10 @@ export default function DoctorHome() {
                   <UserCheck className="w-5 h-5 text-green-600 dark:text-green-400" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-neutral-900 dark:text-neutral-50">New patient access granted</p>
-                  <p className="text-sm text-neutral-600 dark:text-neutral-400">Patient 0xf39f...2266 granted access</p>
+                  <p className="font-medium text-neutral-900 dark:text-neutral-50">{t.dashboard.newPatientAccess}</p>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">{t.dashboard.patientGrantedAccess} 0xf39f...2266</p>
                 </div>
-                <p className="text-xs text-neutral-500 dark:text-neutral-500">2 hours ago</p>
+                <p className="text-xs text-neutral-500 dark:text-neutral-500">2 {t.dashboard.hoursAgo}</p>
               </div>
               
               <div className="flex items-center gap-4 pb-4 border-b border-neutral-200 dark:border-neutral-700">
@@ -281,10 +284,10 @@ export default function DoctorHome() {
                   <FileCheck className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-neutral-900 dark:text-neutral-50">Medical record created</p>
-                  <p className="text-sm text-neutral-600 dark:text-neutral-400">Record #1247 for consultation</p>
+                  <p className="font-medium text-neutral-900 dark:text-neutral-50">{t.dashboard.recordCreated}</p>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">{t.dashboard.recordForConsultation} #1247</p>
                 </div>
-                <p className="text-xs text-neutral-500 dark:text-neutral-500">5 hours ago</p>
+                <p className="text-xs text-neutral-500 dark:text-neutral-500">5 {t.dashboard.hoursAgo}</p>
               </div>
               
               <div className="flex items-center gap-4">
@@ -292,10 +295,10 @@ export default function DoctorHome() {
                   <Bell className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-neutral-900 dark:text-neutral-50">Access request received</p>
-                  <p className="text-sm text-neutral-600 dark:text-neutral-400">New patient requested access</p>
+                  <p className="font-medium text-neutral-900 dark:text-neutral-50">{t.dashboard.accessRequestReceived}</p>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">{t.dashboard.newPatientRequested}</p>
                 </div>
-                <p className="text-xs text-neutral-500 dark:text-neutral-500">1 day ago</p>
+                <p className="text-xs text-neutral-500 dark:text-neutral-500">1 {t.dashboard.dayAgo}</p>
               </div>
             </div>
           </div>
