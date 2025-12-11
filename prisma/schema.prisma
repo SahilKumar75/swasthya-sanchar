@@ -1,0 +1,114 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model - stores authentication and wallet info
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String   // Hashed password
+  name      String?
+  role      String   // "patient" or "doctor"
+  
+  // Blockchain wallet (encrypted)
+  walletAddress    String   @unique
+  encryptedPrivateKey String // Encrypted with WALLET_ENCRYPTION_KEY
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  patientProfile PatientProfile?
+  doctorProfile  DoctorProfile?
+  
+  @@index([email])
+  @@index([walletAddress])
+}
+
+// Patient-specific data
+model PatientProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Personal info
+  dateOfBirth DateTime?
+  gender      String?
+  bloodGroup  String?
+  phone       String?
+  address     String?
+  city        String?
+  state       String?
+  pincode     String?
+  
+  // Medical info
+  allergies          String?
+  chronicConditions  String?
+  currentMedications String?
+  previousSurgeries  String?
+  height             String?
+  weight             String?
+  
+  // Emergency contact
+  emergencyName     String?
+  emergencyRelation String?
+  emergencyPhone    String?
+  
+  // Blockchain registration status
+  isRegisteredOnChain Boolean @default(false)
+  registeredAt        DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Doctor-specific data
+model DoctorProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Professional info
+  medicalLicense String?
+  specialization String?
+  hospital       String?
+  phone          String?
+  
+  // Blockchain registration status
+  isRegisteredOnChain Boolean @default(false)
+  registeredAt        DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Transaction log for audit trail
+model TransactionLog {
+  id String @id @default(cuid())
+  
+  // Transaction details
+  transactionHash String   @unique
+  transactionType String   // "register", "grantAccess", "revokeAccess", "createRecord"
+  fromAddress     String
+  toAddress       String?
+  status          String   // "pending", "success", "failed"
+  errorMessage    String?
+  
+  // Metadata
+  metadata Json?
+  
+  createdAt DateTime @default(now())
+  
+  @@index([transactionHash])
+  @@index([fromAddress])
+  @@index([transactionType])
+}
