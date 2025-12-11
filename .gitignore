@@ -45,3 +45,5 @@ local.db-journal
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/src/generated/prisma

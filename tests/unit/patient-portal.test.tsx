@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import PatientPortal from '@/app/patient/page';
+import { render, screen } from "@testing-library/react";
+import "@testing-library/jest-dom";
+import PatientPortal from "@/app/patient-portal/page";
 
 // Mock Next.js Link component
 vi.mock('next/link', () => ({
