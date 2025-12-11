@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma, writeToBlockchain } from '@/lib/wallet-service';
-import { healthRecordsABI } from '@/lib/contracts';
+import { HEALTH_RECORDS_ABI } from '@/lib/contracts';
 
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '';
 const PINATA_JWT = process.env.NEXT_PUBLIC_PINATA_JWT || '';
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
         const txHash = await writeToBlockchain(
             user.id,
             CONTRACT_ADDRESS,
-            healthRecordsABI,
+            HEALTH_RECORDS_ABI,
             'createRecord',
             [patientAddress, ipfsHash]
         );

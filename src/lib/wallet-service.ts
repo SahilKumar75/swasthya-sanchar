@@ -83,7 +83,7 @@ export async function signTransaction(
  */
 export async function readFromBlockchain(
     contractAddress: string,
-    abi: any[],
+    abi: readonly any[],
     functionName: string,
     args: any[]
 ): Promise<any> {
@@ -91,7 +91,7 @@ export async function readFromBlockchain(
         process.env.NEXT_PUBLIC_RPC_URL || 'http://127.0.0.1:8545'
     );
 
-    const contract = new ethers.Contract(contractAddress, abi, provider);
+    const contract = new ethers.Contract(contractAddress, abi as any[], provider);
     return await contract[functionName](...args);
 }
 
@@ -101,7 +101,7 @@ export async function readFromBlockchain(
 export async function writeToBlockchain(
     userId: string,
     contractAddress: string,
-    abi: any[],
+    abi: readonly any[],
     functionName: string,
     args: any[]
 ): Promise<string> {
@@ -112,7 +112,7 @@ export async function writeToBlockchain(
     );
 
     const wallet = new ethers.Wallet(privateKey, provider);
-    const contract = new ethers.Contract(contractAddress, abi, wallet);
+    const contract = new ethers.Contract(contractAddress, abi as any[], wallet);
 
     const tx = await contract[functionName](...args);
     await tx.wait();

@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { readFromBlockchain } from '@/lib/wallet-service';
-import { healthRecordsABI } from '@/lib/contracts';
+import { HEALTH_RECORDS_ABI } from '@/lib/contracts';
 
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '';
 
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
         // Get patient record IDs from blockchain
         const recordIds = await readFromBlockchain(
             CONTRACT_ADDRESS,
-            healthRecordsABI,
+            HEALTH_RECORDS_ABI,
             'getPatientRecords',
             [patientAddress]
         ) as bigint[];
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
             recordIds.map(async (id) => {
                 const record = await readFromBlockchain(
                     CONTRACT_ADDRESS,
-                    healthRecordsABI,
+                    HEALTH_RECORDS_ABI,
                     'medicalRecords',
                     [id]
                 ) as any;
