@@ -26,9 +26,14 @@ contract HealthRecords {
 
     // State variables
     mapping(address => Patient) public patients;
-    mapping(address => bool) public authorizedDoctors;
+    mapping(address => bool) public authorizedDoctors; // Global doctor authorization (admin-controlled)
     mapping(uint256 => MedicalRecord) public medicalRecords;
     mapping(address => uint256[]) public patientRecords;
+    
+    // Patient-controlled access permissions
+    mapping(address => mapping(address => bool)) public patientAuthorizedDoctors; // patient => doctor => authorized
+    mapping(address => mapping(address => uint256)) public accessGrantedAt; // patient => doctor => timestamp
+    mapping(address => address[]) private patientDoctorList; // patient => list of authorized doctors
     
     uint256 public recordCounter;
     address public admin;
@@ -37,6 +42,8 @@ contract HealthRecords {
     event PatientRegistered(address indexed patient, string name, uint256 timestamp);
     event PatientUpdated(address indexed patient, string name, uint256 timestamp);
     event DoctorAuthorized(address indexed doctor, uint256 timestamp);
+    event DoctorAccessGranted(address indexed patient, address indexed doctor, uint256 timestamp);
+    event DoctorAccessRevoked(address indexed patient, address indexed doctor, uint256 timestamp);
     event RecordCreated(uint256 indexed recordId, address indexed patient, address indexed doctor);
     event RecordUpdated(uint256 indexed recordId, string newRecordHash);
 
@@ -109,13 +116,53 @@ contract HealthRecords {
     }
 
     /**
-     * @dev Create a new medical record (authorized doctors only)
+     * @dev Grant access to a doctor (patient-controlled)
+     */
+    function grantDoctorAccess(address _doctor) external onlyPatient {
+        require(_doctor != address(0), "Invalid doctor address");
+        require(!patientAuthorizedDoctors[msg.sender][_doctor], "Doctor already authorized");
+        
+        patientAuthorizedDoctors[msg.sender][_doctor] = true;
+        accessGrantedAt[msg.sender][_doctor] = block.timestamp;
+        patientDoctorList[msg.sender].push(_doctor);
+        
+        emit DoctorAccessGranted(msg.sender, _doctor, block.timestamp);
+    }
+
+    /**
+     * @dev Revoke access from a doctor (patient-controlled)
+     */
+    function revokeDoctorAccess(address _doctor) external onlyPatient {
+        require(patientAuthorizedDoctors[msg.sender][_doctor], "Doctor not authorized");
+        
+        patientAuthorizedDoctors[msg.sender][_doctor] = false;
+        
+        emit DoctorAccessRevoked(msg.sender, _doctor, block.timestamp);
+    }
+
+    /**
+     * @dev Check if a doctor is authorized by a specific patient
+     */
+    function isDoctorAuthorized(address _patient, address _doctor) public view returns (bool) {
+        return patientAuthorizedDoctors[_patient][_doctor];
+    }
+
+    /**
+     * @dev Get list of doctors authorized by a patient
+     */
+    function getAuthorizedDoctors(address _patient) external view returns (address[] memory) {
+        return patientDoctorList[_patient];
+    }
+
+    /**
+     * @dev Create a new medical record (requires patient-specific authorization)
      */
     function createRecord(
         address _patient,
         string memory _recordHash
-    ) external onlyAuthorizedDoctor returns (uint256) {
+    ) external returns (uint256) {
         require(patients[_patient].isRegistered, "Patient not registered");
+        require(patientAuthorizedDoctors[_patient][msg.sender], "Not authorized by patient");
         
         recordCounter++;
         

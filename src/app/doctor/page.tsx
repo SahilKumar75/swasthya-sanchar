@@ -6,8 +6,8 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { connectWallet, onAccountsChanged, readContract, type WalletConnection } from "@/lib/web3";
 import { Navbar } from "@/components/Navbar";
-import { 
-  User, Mail, Phone, Calendar, MapPin, Award, Building, 
+import {
+  User, Mail, Phone, Calendar, MapPin, Award, Building,
   FileText, Shield, CheckCircle, AlertCircle, ArrowRight, Edit2, X, Save, BadgeCheck
 } from "lucide-react";
 import { INDIAN_STATES, getCitiesForState } from "@/lib/indianPostal";
@@ -46,13 +46,13 @@ export default function DoctorProfile() {
     email: "",
     phone: "",
     licenseNumber: "",
-    
+
     // Step 2: Professional Details
     specialization: "",
     qualification: "",
     experience: "",
     hospital: "",
-    
+
     // Step 3: Location Information
     city: "",
     state: ""
@@ -71,7 +71,7 @@ export default function DoctorProfile() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ walletAddress }),
       });
-      
+
       if (!response.ok) {
         const data = await response.json();
         console.error("Failed to link wallet:", data.error);
@@ -91,7 +91,7 @@ export default function DoctorProfile() {
       }
 
       if (session.user.role !== "doctor") {
-        router.push(session.user.role === "patient" ? "/patient" : "/");
+        router.push(session.user.role === "patient" ? "/patient-portal" : "/");
         return;
       }
 
@@ -105,7 +105,7 @@ export default function DoctorProfile() {
       } catch (error) {
         console.log("No wallet connected yet");
       }
-      
+
       setLoading(false);
     }
 
@@ -133,11 +133,11 @@ export default function DoctorProfile() {
     try {
       // Check if doctor is authorized on blockchain
       const isAuthorized = await readContract(conn, "authorizedDoctors", [conn.account]);
-      
+
       // Fetch doctor profile from database
       const response = await fetch("/api/doctor/profile");
       const data = await response.json();
-      
+
       if (data.doctor) {
         // Load existing doctor data
         const dbData: DoctorData = {
@@ -208,7 +208,7 @@ export default function DoctorProfile() {
 
   async function handleRegister() {
     if (!connection) return;
-    
+
     // Validate current step
     if (currentStep === 1) {
       if (!formData.name || !formData.email || !formData.phone || !formData.licenseNumber) {
@@ -218,7 +218,7 @@ export default function DoctorProfile() {
       setCurrentStep(2);
       return;
     }
-    
+
     if (currentStep === 2) {
       if (!formData.specialization || !formData.qualification || !formData.experience) {
         alert("Please fill in all professional details");
@@ -227,17 +227,17 @@ export default function DoctorProfile() {
       setCurrentStep(3);
       return;
     }
-    
+
     // Final step - Submit to database
     if (currentStep === 3) {
       if (!formData.city || !formData.state) {
         alert("Please fill in your location information");
         return;
       }
-      
+
       try {
         setRegistering(true);
-        
+
         const response = await fetch("/api/doctor/profile", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -252,11 +252,11 @@ export default function DoctorProfile() {
 
         const data = await response.json();
         alert(data.message || "Profile created successfully! Redirecting to dashboard...");
-        
+
         setTimeout(() => {
           router.push("/doctor/home");
         }, 1500);
-        
+
       } catch (error) {
         console.error("Registration error:", error);
         alert("Failed to save profile. Please try again.");
@@ -269,7 +269,7 @@ export default function DoctorProfile() {
   async function handleUpdateProfile() {
     try {
       setLoading(true);
-      
+
       const response = await fetch("/api/doctor/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -284,7 +284,7 @@ export default function DoctorProfile() {
 
       const data = await response.json();
       alert(data.message || "Profile updated successfully!");
-      
+
       setIsEditing(false);
       // Reload doctor data
       if (connection) {
@@ -361,7 +361,7 @@ export default function DoctorProfile() {
             )}
           </div>
           <p className="text-lg text-neutral-600 dark:text-neutral-400">
-            {isRegistered 
+            {isRegistered
               ? "Manage your professional information and credentials"
               : "Let's set up your professional profile to get started"
             }
@@ -376,19 +376,17 @@ export default function DoctorProfile() {
               <div className="flex items-center justify-between mb-4">
                 {[1, 2, 3].map((step) => (
                   <div key={step} className="flex items-center flex-1">
-                    <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 font-semibold ${
-                      currentStep >= step 
+                    <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 font-semibold ${currentStep >= step
                         ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 border-neutral-900 dark:border-neutral-100'
                         : 'bg-white dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600 border-neutral-300 dark:border-neutral-700'
-                    }`}>
+                      }`}>
                       {step}
                     </div>
                     {step < 3 && (
-                      <div className={`flex-1 h-1 mx-2 ${
-                        currentStep > step 
-                          ? 'bg-neutral-900 dark:bg-neutral-100' 
+                      <div className={`flex-1 h-1 mx-2 ${currentStep > step
+                          ? 'bg-neutral-900 dark:bg-neutral-100'
                           : 'bg-neutral-300 dark:bg-neutral-700'
-                      }`} />
+                        }`} />
                     )}
                   </div>
                 ))}
@@ -433,7 +431,7 @@ export default function DoctorProfile() {
                       <input
                         type="text"
                         value={formData.name}
-                        onChange={(e) => setFormData({...formData, name: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         placeholder="Dr. John Doe"
                         className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100 focus:border-transparent text-neutral-900 dark:text-neutral-100"
                       />
@@ -446,7 +444,7 @@ export default function DoctorProfile() {
                       <input
                         type="text"
                         value={formData.licenseNumber}
-                        onChange={(e) => setFormData({...formData, licenseNumber: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, licenseNumber: e.target.value })}
                         placeholder="e.g., MCI-123456"
                         className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100 focus:border-transparent text-neutral-900 dark:text-neutral-100"
                       />
@@ -461,7 +459,7 @@ export default function DoctorProfile() {
                       <input
                         type="email"
                         value={formData.email}
-                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         placeholder="doctor@hospital.com"
                         className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100 focus:border-transparent text-neutral-900 dark:text-neutral-100"
                       />
@@ -474,7 +472,7 @@ export default function DoctorProfile() {
                       <input
                         type="tel"
                         value={formData.phone}
-                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                         placeholder="+91 98765 43210"
                         className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100 focus:border-transparent text-neutral-900 dark:text-neutral-100"
                       />
@@ -494,7 +492,7 @@ export default function DoctorProfile() {
                       </label>
                       <CustomSelect
                         value={formData.specialization}
-                        onChange={(value) => setFormData({...formData, specialization: value})}
+                        onChange={(value) => setFormData({ ...formData, specialization: value })}
                         options={[
                           { value: "", label: "Select Specialization" },
                           { value: "General Physician", label: "General Physician" },
@@ -524,7 +522,7 @@ export default function DoctorProfile() {
                       </label>
                       <CustomSelect
                         value={formData.qualification}
-                        onChange={(value) => setFormData({...formData, qualification: value})}
+                        onChange={(value) => setFormData({ ...formData, qualification: value })}
                         options={[
                           { value: "", label: "Select Qualification" },
                           { value: "MBBS", label: "MBBS" },
@@ -552,7 +550,7 @@ export default function DoctorProfile() {
                       </label>
                       <CustomSelect
                         value={formData.experience}
-                        onChange={(value) => setFormData({...formData, experience: value})}
+                        onChange={(value) => setFormData({ ...formData, experience: value })}
                         options={[
                           { value: "", label: "Select Experience" },
                           { value: "Less than 1 year", label: "Less than 1 year" },
@@ -574,7 +572,7 @@ export default function DoctorProfile() {
                       <input
                         type="text"
                         value={formData.hospital}
-                        onChange={(e) => setFormData({...formData, hospital: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, hospital: e.target.value })}
                         placeholder="e.g., City General Hospital"
                         className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-100 focus:border-transparent text-neutral-900 dark:text-neutral-100"
                       />
@@ -676,7 +674,7 @@ export default function DoctorProfile() {
                 <div className="flex gap-2">
                   {isEditing ? (
                     <>
-                      <button 
+                      <button
                         onClick={() => {
                           setIsEditing(false);
                           setEditFormData(formData);
@@ -687,7 +685,7 @@ export default function DoctorProfile() {
                         <X className="w-4 h-4" />
                         Cancel
                       </button>
-                      <button 
+                      <button
                         onClick={handleUpdateProfile}
                         disabled={loading}
                         className="flex items-center gap-2 px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition disabled:opacity-50"
@@ -697,7 +695,7 @@ export default function DoctorProfile() {
                       </button>
                     </>
                   ) : (
-                    <button 
+                    <button
                       onClick={() => setIsEditing(true)}
                       className="flex items-center gap-2 px-4 py-2 bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition"
                     >
@@ -707,322 +705,321 @@ export default function DoctorProfile() {
                   )}
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                  <User className="w-4 h-4" />
-                  Full Name
-                </label>
-                {isEditing ? (
-                <input
-                  type="text"
-                  value={editFormData?.name}
-                  onChange={(e) => setEditFormData(editFormData ? {...editFormData, name: e.target.value} : null)}
-                  className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100"
-                />
-                ) : (
-                  <p className="px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-neutral-100">
-                    {formData.name || "—"}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                  <Award className="w-4 h-4" />
-                  License Number
-                </label>
-                {isEditing ? (
-                <input
-                  type="text"
-                  value={editFormData?.licenseNumber}
-                  onChange={(e) => setEditFormData(editFormData ? {...editFormData, licenseNumber: e.target.value} : null)}
-                  className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100"
-                />
-                ) : (
-                  <p className="px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-neutral-100">
-                    {formData.licenseNumber || "—"}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                  <FileText className="w-4 h-4" />
-                  Specialization
-                </label>
-                {isEditing ? (
-                <CustomSelect
-                  value={editFormData?.specialization || ""}
-                  onChange={(value) => setEditFormData(editFormData ? {...editFormData, specialization: value} : null)}
-                  options={[
-                    { value: "", label: "Select Specialization" },
-                    { value: "General Physician", label: "General Physician" },
-                    { value: "Cardiologist", label: "Cardiologist" },
-                    { value: "Dermatologist", label: "Dermatologist" },
-                    { value: "ENT Specialist", label: "ENT Specialist" },
-                    { value: "Gastroenterologist", label: "Gastroenterologist" },
-                    { value: "Gynecologist", label: "Gynecologist" },
-                    { value: "Neurologist", label: "Neurologist" },
-                    { value: "Oncologist", label: "Oncologist" },
-                    { value: "Ophthalmologist", label: "Ophthalmologist" },
-                    { value: "Orthopedic", label: "Orthopedic" },
-                    { value: "Pediatrician", label: "Pediatrician" },
-                    { value: "Psychiatrist", label: "Psychiatrist" },
-                    { value: "Pulmonologist", label: "Pulmonologist" },
-                    { value: "Radiologist", label: "Radiologist" },
-                    { value: "Urologist", label: "Urologist" },
-                    { value: "Other", label: "Other" }
-                  ]}
-                  placeholder="Select Specialization"
-                />
-                ) : (
-                  <p className="px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-neutral-100">
-                    {formData.specialization || "—"}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                  <Award className="w-4 h-4" />
-                  Qualification
-                </label>
-                {isEditing ? (
-                <CustomSelect
-                  value={editFormData?.qualification || ""}
-                  onChange={(value) => setEditFormData(editFormData ? {...editFormData, qualification: value} : null)}
-                  options={[
-                    { value: "", label: "Select Qualification" },
-                    { value: "MBBS", label: "MBBS" },
-                    { value: "MBBS, MD", label: "MBBS, MD" },
-                    { value: "MBBS, MS", label: "MBBS, MS" },
-                    { value: "MBBS, DNB", label: "MBBS, DNB" },
-                    { value: "MBBS, DM", label: "MBBS, DM" },
-                    { value: "MBBS, MCh", label: "MBBS, MCh" },
-                    { value: "BDS", label: "BDS" },
-                    { value: "BDS, MDS", label: "BDS, MDS" },
-                    { value: "BAMS", label: "BAMS" },
-                    { value: "BHMS", label: "BHMS" },
-                    { value: "BUMS", label: "BUMS" },
-                    { value: "Other", label: "Other" }
-                  ]}
-                  placeholder="Select Qualification"
-                />
-                ) : (
-                  <p className="px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-neutral-100">
-                    {formData.qualification || "—"}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                  <Calendar className="w-4 h-4" />
-                  Experience (Years)
-                </label>
-                {isEditing ? (
-                <CustomSelect
-                  value={editFormData?.experience || ""}
-                  onChange={(value) => setEditFormData(editFormData ? {...editFormData, experience: value} : null)}
-                  options={[
-                    { value: "", label: "Select Experience" },
-                    { value: "Less than 1 year", label: "Less than 1 year" },
-                    { value: "1-2 years", label: "1-2 years" },
-                    { value: "3-5 years", label: "3-5 years" },
-                    { value: "6-10 years", label: "6-10 years" },
-                    { value: "11-15 years", label: "11-15 years" },
-                    { value: "16-20 years", label: "16-20 years" },
-                    { value: "20+ years", label: "20+ years" }
-                  ]}
-                  placeholder="Select Experience"
-                />
-                ) : (
-                  <p className="px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-neutral-100">
-                    {formData.experience || "—"}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                  <Building className="w-4 h-4" />
-                  Hospital/Clinic
-                </label>
-                {isEditing ? (
-                <input
-                  type="text"
-                  value={editFormData?.hospital}
-                  onChange={(e) => setEditFormData(editFormData ? {...editFormData, hospital: e.target.value} : null)}
-                  className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100"
-                />
-                ) : (
-                  <p className="px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-neutral-100">
-                    {formData.hospital || "—"}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                  <Mail className="w-4 h-4" />
-                  Email
-                </label>
-                {isEditing ? (
-                <input
-                  type="email"
-                  value={editFormData?.email}
-                  onChange={(e) => setEditFormData(editFormData ? {...editFormData, email: e.target.value} : null)}
-                  className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100"
-                />
-                ) : (
-                  <p className="px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-neutral-100">
-                    {formData.email || "—"}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                  <Phone className="w-4 h-4" />
-                  Phone
-                </label>
-                {isEditing ? (
-                <input
-                  type="tel"
-                  value={editFormData?.phone}
-                  onChange={(e) => setEditFormData(editFormData ? {...editFormData, phone: e.target.value} : null)}
-                  className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100"
-                />
-                ) : (
-                  <p className="px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-neutral-100">
-                    {formData.phone || "—"}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                  <MapPin className="w-4 h-4" />
-                  State
-                </label>
-                {isEditing ? (
-                <CustomSelect
-                  value={editFormData?.state || ""}
-                  onChange={(value) => {
-                    if (editFormData) {
-                      setEditFormData({...editFormData, state: value, city: ""});
-                      setAvailableCities(getCitiesForState(value));
-                    }
-                  }}
-                  options={[
-                    { value: "", label: "Select State" },
-                    ...INDIAN_STATES.map(state => ({ value: state, label: state }))
-                  ]}
-                  placeholder="Select State"
-                />
-                ) : (
-                  <p className="px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-neutral-100">
-                    {formData.state || "—"}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                  <MapPin className="w-4 h-4" />
-                  City
-                </label>
-                {isEditing ? (
-                  <>
-                {availableCities.length > 0 ? (
-                  <>
-                    <CustomSelect
-                      value={editFormData?.city || ""}
-                      onChange={(value) => setEditFormData(editFormData ? { ...editFormData, city: value } : null)}
-                      options={[
-                        { value: "", label: "Select City" },
-                        ...availableCities.map(city => ({ value: city, label: city })),
-                        { value: "other", label: "Other (Type below)" }
-                      ]}
-                      placeholder="Select City"
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                    <User className="w-4 h-4" />
+                    Full Name
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editFormData?.name}
+                      onChange={(e) => setEditFormData(editFormData ? { ...editFormData, name: e.target.value } : null)}
+                      className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100"
                     />
-                    {editFormData?.city === "other" && (
-                      <input
-                        type="text"
-                        onChange={(e) => setEditFormData(editFormData ? { ...editFormData, city: e.target.value } : null)}
-                        placeholder="Type your city name"
-                        className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100 mt-2"
-                      />
-                    )}
-                  </>
-                ) : (
-                  <input
-                    type="text"
-                    value={editFormData?.city}
-                    onChange={(e) => setEditFormData(editFormData ? { ...editFormData, city: e.target.value } : null)}
-                    placeholder="Enter city name"
-                    className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100"
-                  />
-                )}
-                  </>
-                ) : (
-                  <p className="px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-neutral-100">
-                    {formData.city || "—"}
-                  </p>
-                )}
+                  ) : (
+                    <p className="px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-neutral-100">
+                      {formData.name || "—"}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                    <Award className="w-4 h-4" />
+                    License Number
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editFormData?.licenseNumber}
+                      onChange={(e) => setEditFormData(editFormData ? { ...editFormData, licenseNumber: e.target.value } : null)}
+                      className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100"
+                    />
+                  ) : (
+                    <p className="px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-neutral-100">
+                      {formData.licenseNumber || "—"}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                    <FileText className="w-4 h-4" />
+                    Specialization
+                  </label>
+                  {isEditing ? (
+                    <CustomSelect
+                      value={editFormData?.specialization || ""}
+                      onChange={(value) => setEditFormData(editFormData ? { ...editFormData, specialization: value } : null)}
+                      options={[
+                        { value: "", label: "Select Specialization" },
+                        { value: "General Physician", label: "General Physician" },
+                        { value: "Cardiologist", label: "Cardiologist" },
+                        { value: "Dermatologist", label: "Dermatologist" },
+                        { value: "ENT Specialist", label: "ENT Specialist" },
+                        { value: "Gastroenterologist", label: "Gastroenterologist" },
+                        { value: "Gynecologist", label: "Gynecologist" },
+                        { value: "Neurologist", label: "Neurologist" },
+                        { value: "Oncologist", label: "Oncologist" },
+                        { value: "Ophthalmologist", label: "Ophthalmologist" },
+                        { value: "Orthopedic", label: "Orthopedic" },
+                        { value: "Pediatrician", label: "Pediatrician" },
+                        { value: "Psychiatrist", label: "Psychiatrist" },
+                        { value: "Pulmonologist", label: "Pulmonologist" },
+                        { value: "Radiologist", label: "Radiologist" },
+                        { value: "Urologist", label: "Urologist" },
+                        { value: "Other", label: "Other" }
+                      ]}
+                      placeholder="Select Specialization"
+                    />
+                  ) : (
+                    <p className="px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-neutral-100">
+                      {formData.specialization || "—"}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                    <Award className="w-4 h-4" />
+                    Qualification
+                  </label>
+                  {isEditing ? (
+                    <CustomSelect
+                      value={editFormData?.qualification || ""}
+                      onChange={(value) => setEditFormData(editFormData ? { ...editFormData, qualification: value } : null)}
+                      options={[
+                        { value: "", label: "Select Qualification" },
+                        { value: "MBBS", label: "MBBS" },
+                        { value: "MBBS, MD", label: "MBBS, MD" },
+                        { value: "MBBS, MS", label: "MBBS, MS" },
+                        { value: "MBBS, DNB", label: "MBBS, DNB" },
+                        { value: "MBBS, DM", label: "MBBS, DM" },
+                        { value: "MBBS, MCh", label: "MBBS, MCh" },
+                        { value: "BDS", label: "BDS" },
+                        { value: "BDS, MDS", label: "BDS, MDS" },
+                        { value: "BAMS", label: "BAMS" },
+                        { value: "BHMS", label: "BHMS" },
+                        { value: "BUMS", label: "BUMS" },
+                        { value: "Other", label: "Other" }
+                      ]}
+                      placeholder="Select Qualification"
+                    />
+                  ) : (
+                    <p className="px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-neutral-100">
+                      {formData.qualification || "—"}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                    <Calendar className="w-4 h-4" />
+                    Experience (Years)
+                  </label>
+                  {isEditing ? (
+                    <CustomSelect
+                      value={editFormData?.experience || ""}
+                      onChange={(value) => setEditFormData(editFormData ? { ...editFormData, experience: value } : null)}
+                      options={[
+                        { value: "", label: "Select Experience" },
+                        { value: "Less than 1 year", label: "Less than 1 year" },
+                        { value: "1-2 years", label: "1-2 years" },
+                        { value: "3-5 years", label: "3-5 years" },
+                        { value: "6-10 years", label: "6-10 years" },
+                        { value: "11-15 years", label: "11-15 years" },
+                        { value: "16-20 years", label: "16-20 years" },
+                        { value: "20+ years", label: "20+ years" }
+                      ]}
+                      placeholder="Select Experience"
+                    />
+                  ) : (
+                    <p className="px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-neutral-100">
+                      {formData.experience || "—"}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                    <Building className="w-4 h-4" />
+                    Hospital/Clinic
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editFormData?.hospital}
+                      onChange={(e) => setEditFormData(editFormData ? { ...editFormData, hospital: e.target.value } : null)}
+                      className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100"
+                    />
+                  ) : (
+                    <p className="px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-neutral-100">
+                      {formData.hospital || "—"}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                    <Mail className="w-4 h-4" />
+                    Email
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="email"
+                      value={editFormData?.email}
+                      onChange={(e) => setEditFormData(editFormData ? { ...editFormData, email: e.target.value } : null)}
+                      className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100"
+                    />
+                  ) : (
+                    <p className="px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-neutral-100">
+                      {formData.email || "—"}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                    <Phone className="w-4 h-4" />
+                    Phone
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="tel"
+                      value={editFormData?.phone}
+                      onChange={(e) => setEditFormData(editFormData ? { ...editFormData, phone: e.target.value } : null)}
+                      className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100"
+                    />
+                  ) : (
+                    <p className="px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-neutral-100">
+                      {formData.phone || "—"}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                    <MapPin className="w-4 h-4" />
+                    State
+                  </label>
+                  {isEditing ? (
+                    <CustomSelect
+                      value={editFormData?.state || ""}
+                      onChange={(value) => {
+                        if (editFormData) {
+                          setEditFormData({ ...editFormData, state: value, city: "" });
+                          setAvailableCities(getCitiesForState(value));
+                        }
+                      }}
+                      options={[
+                        { value: "", label: "Select State" },
+                        ...INDIAN_STATES.map(state => ({ value: state, label: state }))
+                      ]}
+                      placeholder="Select State"
+                    />
+                  ) : (
+                    <p className="px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-neutral-100">
+                      {formData.state || "—"}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                    <MapPin className="w-4 h-4" />
+                    City
+                  </label>
+                  {isEditing ? (
+                    <>
+                      {availableCities.length > 0 ? (
+                        <>
+                          <CustomSelect
+                            value={editFormData?.city || ""}
+                            onChange={(value) => setEditFormData(editFormData ? { ...editFormData, city: value } : null)}
+                            options={[
+                              { value: "", label: "Select City" },
+                              ...availableCities.map(city => ({ value: city, label: city })),
+                              { value: "other", label: "Other (Type below)" }
+                            ]}
+                            placeholder="Select City"
+                          />
+                          {editFormData?.city === "other" && (
+                            <input
+                              type="text"
+                              onChange={(e) => setEditFormData(editFormData ? { ...editFormData, city: e.target.value } : null)}
+                              placeholder="Type your city name"
+                              className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100 mt-2"
+                            />
+                          )}
+                        </>
+                      ) : (
+                        <input
+                          type="text"
+                          value={editFormData?.city}
+                          onChange={(e) => setEditFormData(editFormData ? { ...editFormData, city: e.target.value } : null)}
+                          placeholder="Enter city name"
+                          className="w-full px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-neutral-900 dark:text-neutral-100"
+                        />
+                      )}
+                    </>
+                  ) : (
+                    <p className="px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg text-neutral-900 dark:text-neutral-100">
+                      {formData.city || "—"}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Blockchain Info Card */}
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6">
-              <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-50 mb-4">
-                Blockchain Identity
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-2">Wallet Address</p>
-                  <p className="text-xs font-mono bg-neutral-100 dark:bg-neutral-900 p-2 rounded break-all text-neutral-900 dark:text-neutral-100">
-                    {connection.account}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-2">Status</p>
-                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
-                    doctorData?.isAuthorized 
-                      ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
-                      : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400'
-                  }`}>
-                    {doctorData?.isAuthorized ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-                    {doctorData?.isAuthorized ? 'Authorized' : 'Pending'}
+            {/* Blockchain Info Card */}
+            <div className="space-y-6">
+              <div className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6">
+                <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-50 mb-4">
+                  Blockchain Identity
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-2">Wallet Address</p>
+                    <p className="text-xs font-mono bg-neutral-100 dark:bg-neutral-900 p-2 rounded break-all text-neutral-900 dark:text-neutral-100">
+                      {connection.account}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-2">Status</p>
+                    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${doctorData?.isAuthorized
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+                        : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400'
+                      }`}>
+                      {doctorData?.isAuthorized ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                      {doctorData?.isAuthorized ? 'Authorized' : 'Pending'}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Share Profile QR Code */}
-            <div className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6">
-              <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-50 mb-4">
-                Share Profile
-              </h3>
-              <div className="flex flex-col items-center">
-                <div className="bg-white p-4 rounded-lg mb-3">
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(typeof window !== 'undefined' ? `${window.location.origin}/doctor/profile/${connection.account}` : '')}`}
-                    alt="Doctor Profile QR Code"
-                    className="w-36 h-36"
-                  />
+              {/* Share Profile QR Code */}
+              <div className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6">
+                <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-50 mb-4">
+                  Share Profile
+                </h3>
+                <div className="flex flex-col items-center">
+                  <div className="bg-white p-4 rounded-lg mb-3">
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(typeof window !== 'undefined' ? `${window.location.origin}/doctor/profile/${connection.account}` : '')}`}
+                      alt="Doctor Profile QR Code"
+                      className="w-36 h-36"
+                    />
+                  </div>
+                  <p className="text-sm text-center text-neutral-600 dark:text-neutral-400">
+                    Scan to view doctor profile
+                  </p>
                 </div>
-                <p className="text-sm text-center text-neutral-600 dark:text-neutral-400">
-                  Scan to view doctor profile
-                </p>
               </div>
             </div>
           </div>
-        </div>
         )}
       </main>
     </div>

@@ -46,7 +46,7 @@ function PatientHeader({ connection }: PatientHeaderProps) {
     const navigationItems = [
         {
             title: "Home",
-            href: "/patient/home",
+            href: "/patient-home",
         },
         {
             title: "Features",
@@ -150,7 +150,7 @@ function PatientHeader({ connection }: PatientHeaderProps) {
                         </div>
                     )}
                     {session?.user && (
-                        <ProfileDropdown 
+                        <ProfileDropdown
                             user={{
                                 name: session.user.email?.split('@')[0],
                                 email: session.user.email,

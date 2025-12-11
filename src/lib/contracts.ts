@@ -13,6 +13,56 @@ export const HEALTH_RECORDS_ABI = [
       {
         "indexed": true,
         "internalType": "address",
+        "name": "patient",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "doctor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "DoctorAccessGranted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "patient",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "doctor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "DoctorAccessRevoked",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
         "name": "doctor",
         "type": "address"
       },
@@ -49,6 +99,31 @@ export const HEALTH_RECORDS_ABI = [
       }
     ],
     "name": "PatientRegistered",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "patient",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "PatientUpdated",
     "type": "event"
   },
   {
@@ -94,6 +169,30 @@ export const HEALTH_RECORDS_ABI = [
     ],
     "name": "RecordUpdated",
     "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "accessGrantedAt",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "inputs": [],
@@ -162,6 +261,25 @@ export const HEALTH_RECORDS_ABI = [
       }
     ],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_patient",
+        "type": "address"
+      }
+    ],
+    "name": "getAuthorizedDoctors",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -288,6 +406,43 @@ export const HEALTH_RECORDS_ABI = [
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "_doctor",
+        "type": "address"
+      }
+    ],
+    "name": "grantDoctorAccess",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_patient",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_doctor",
+        "type": "address"
+      }
+    ],
+    "name": "isDoctorAuthorized",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
@@ -323,6 +478,30 @@ export const HEALTH_RECORDS_ABI = [
       {
         "internalType": "bool",
         "name": "isActive",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "patientAuthorizedDoctors",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
         "type": "bool"
       }
     ],
@@ -429,6 +608,19 @@ export const HEALTH_RECORDS_ABI = [
       }
     ],
     "name": "registerPatient",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_doctor",
+        "type": "address"
+      }
+    ],
+    "name": "revokeDoctorAccess",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

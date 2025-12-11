@@ -9,7 +9,7 @@ import { useLanguage } from "@/contexts/LanguageContext"
 
 function FooterSection() {
   const { t } = useLanguage()
-  
+
   return (
     <footer className="relative border-t bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 transition-colors duration-300">
       <div className="container mx-auto px-4 py-12 md:px-6 lg:px-8">
@@ -33,7 +33,7 @@ function FooterSection() {
               <Link href="/" className="block transition-colors hover:text-blue-600 dark:hover:text-blue-400">
                 {t.footer.home}
               </Link>
-              <Link href="/patient" className="block transition-colors hover:text-blue-600 dark:hover:text-blue-400">
+              <Link href="/patient-portal" className="block transition-colors hover:text-blue-600 dark:hover:text-blue-400">
                 {t.footer.patientPortal}
               </Link>
               <Link href="/doctor" className="block transition-colors hover:text-blue-600 dark:hover:text-blue-400">

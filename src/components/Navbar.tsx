@@ -93,20 +93,19 @@ export function Navbar({ connection }: NavbarProps) {
             <div className="bg-white dark:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 shadow-sm px-1 h-[44px] flex items-center gap-1">
               <Menu setActive={setActive}>
                 <Link
-                  href={session.user.role === "patient" ? "/patient/home" : "/doctor/home"}
-                  className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${
-                    pathname === "/patient/home" || pathname === "/doctor/home"
+                  href={session.user.role === "patient" ? "/patient-home" : "/doctor/home"}
+                  className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient-home" || pathname === "/doctor/home"
                       ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
                       : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
-                  }`}
+                    }`}
                 >
                   {t.nav.home}
                 </Link>
 
                 {session.user.role === "patient" ? (
-                  <MenuItem 
-                    setActive={setActive} 
-                    active={active} 
+                  <MenuItem
+                    setActive={setActive}
+                    active={active}
                     item={t.nav.features}
                     isActive={pathname?.includes("/records") || pathname?.includes("/access")}
                   >
@@ -118,9 +117,9 @@ export function Navbar({ connection }: NavbarProps) {
                     </div>
                   </MenuItem>
                 ) : (
-                  <MenuItem 
-                    setActive={setActive} 
-                    active={active} 
+                  <MenuItem
+                    setActive={setActive}
+                    active={active}
                     item={t.nav.features}
                     isActive={pathname?.includes("/patients") || pathname?.includes("/records")}
                   >
@@ -134,11 +133,10 @@ export function Navbar({ connection }: NavbarProps) {
 
                 <Link
                   href="/emergency"
-                  className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${
-                    pathname === "/emergency"
+                  className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/emergency"
                       ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
                       : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
-                  }`}
+                    }`}
                 >
                   Emergency
                 </Link>

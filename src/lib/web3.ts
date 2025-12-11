@@ -52,67 +52,138 @@ export function isWalletDisconnected(): boolean {
   return localStorage.getItem("wallet_disconnected") === "true";
 }
 
+// Connection lock to prevent duplicate requests
+let isConnecting = false;
+let connectionPromise: Promise<WalletConnection | null> | null = null;
+
 // Connect to MetaMask and get the current account
 export async function connectWallet(): Promise<WalletConnection | null> {
+  console.log("[connectWallet] Starting connection process...");
+
+  // If already connecting, return the existing promise
+  if (isConnecting && connectionPromise) {
+    console.log("[connectWallet] Connection already in progress, waiting...");
+    return connectionPromise;
+  }
+
+  // Set lock and create new connection promise
+  isConnecting = true;
+  connectionPromise = performConnection();
+
+  try {
+    const result = await connectionPromise;
+    return result;
+  } finally {
+    isConnecting = false;
+    connectionPromise = null;
+  }
+}
+
+// Actual connection logic
+async function performConnection(): Promise<WalletConnection | null> {
+
   if (!isMetaMaskInstalled()) {
     alert("Please install MetaMask to use this application");
     return null;
   }
 
+  // Check if user has explicitly disconnected
+  if (isWalletDisconnected()) {
+    console.log("[connectWallet] User has disconnected wallet, skipping auto-connect");
+    return null;
+  }
+
   try {
-    // Request to switch to localhost network
+    const ethereum = (window as any).ethereum;
+    let accounts: string[] = [];
+
+    // First, try to get current accounts without requesting (silent check)
     try {
-      await (window as any).ethereum.request({
-        method: "wallet_switchEthereumChain",
-        params: [{ chainId: "0x7a69" }], // 31337 in hex
-      });
-    } catch (switchError: any) {
-      // If the chain hasn't been added to MetaMask
-      if (switchError.code === 4902) {
-        try {
-          await (window as any).ethereum.request({
-            method: "wallet_addEthereumChain",
-            params: [
-              {
-                chainId: "0x7a69",
-                chainName: "Localhost 8545",
-                rpcUrls: ["http://127.0.0.1:8545"],
-                nativeCurrency: {
-                  name: "ETH",
-                  symbol: "ETH",
-                  decimals: 18,
-                },
-              },
-            ],
-          });
-        } catch (addError) {
-          console.error("Failed to add network:", addError);
-          alert("Please manually add Hardhat Local network (Chain ID: 31337, RPC: http://127.0.0.1:8545) to MetaMask");
-          return null;
+      console.log("[connectWallet] Checking for existing accounts...");
+      accounts = await ethereum.request({ method: 'eth_accounts' });
+      console.log("[connectWallet] Found accounts:", accounts.length);
+    } catch (err) {
+      console.log("[connectWallet] Could not get current accounts:", err);
+    }
+
+    // If no accounts, request connection
+    if (accounts.length === 0) {
+      console.log("[connectWallet] No accounts found, requesting connection...");
+      try {
+        accounts = await ethereum.request({ method: "eth_requestAccounts" });
+        console.log("[connectWallet] User approved connection, accounts:", accounts.length);
+      } catch (error: any) {
+        if (error.code === 4001) {
+          console.log("[connectWallet] User rejected the connection request");
+        } else {
+          console.error("[connectWallet] Error requesting accounts:", error);
         }
-      } else if (switchError.code === 4001) {
-        // User rejected the request
-        alert("Please switch to Hardhat Local network in MetaMask to continue");
-        return null;
-      } else {
-        console.error("Failed to switch network:", switchError);
-        alert("Failed to switch network. Please manually select Hardhat Local (Chain ID: 31337) in MetaMask");
         return null;
       }
     }
 
-    // Clear logout flag when user explicitly connects
-    clearDisconnectFlag();
-    
-    // Request account access
-    const accounts = await (window as any).ethereum.request({
-      method: "eth_requestAccounts",
-    });
-
-    if (!accounts || accounts.length === 0) {
-      throw new Error("No accounts found");
+    if (accounts.length === 0) {
+      console.log("[connectWallet] No accounts available");
+      return null;
     }
 
+    // Check and switch network if needed (non-blocking)
+    try {
+      console.log("[connectWallet] Checking network...");
+      const chainId = await ethereum.request({ method: 'eth_chainId' });
+      console.log("[connectWallet] Current chainId:", chainId);
+
+      // Only switch if not already on Hardhat network
+      if (chainId !== '0x7a69') {
+        console.log("[connectWallet] Switching to Hardhat network...");
+        try {
+          await ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: "0x7a69" }],
+          });
+          console.log("[connectWallet] Network switched successfully");
+        } catch (switchError: any) {
+          // If the chain hasn't been added to MetaMask
+          if (switchError.code === 4902) {
+            console.log("[connectWallet] Network not found, adding Hardhat network...");
+            try {
+              await ethereum.request({
+                method: "wallet_addEthereumChain",
+                params: [
+                  {
+                    chainId: "0x7a69",
+                    chainName: "Localhost 8545",
+                    rpcUrls: ["http://127.0.0.1:8545"],
+                    nativeCurrency: {
+                      name: "ETH",
+                      symbol: "ETH",
+                      decimals: 18,
+                    },
+                  },
+                ],
+              });
+              console.log("[connectWallet] Network added successfully");
+            } catch (addError) {
+              console.error("[connectWallet] Failed to add network:", addError);
+            }
+          } else if (switchError.code === 4001) {
+            console.log("[connectWallet] User rejected network switch");
+          } else {
+            console.error("[connectWallet] Network switch error:", switchError);
+          }
+        }
+      } else {
+        console.log("[connectWallet] Already on Hardhat network");
+      }
+    } catch (networkError) {
+      console.error("[connectWallet] Network check failed:", networkError);
+      // Continue anyway - network issues shouldn't block connection
+    }
+
+    // Clear logout flag when user explicitly connects
+    clearDisconnectFlag();
+
+    // Use the accounts we already fetched earlier
     const account = accounts[0] as `0x${string}`;
 
     // Create public client for reading blockchain data
@@ -142,7 +213,7 @@ export async function connectWallet(): Promise<WalletConnection | null> {
 // Get the current connected account without requesting connection
 export async function getCurrentAccount(): Promise<`0x${string}` | null> {
   if (!isMetaMaskInstalled()) return null;
-  
+
   // Check if user has logged out
   if (isWalletDisconnected()) return null;
 
@@ -150,7 +221,7 @@ export async function getCurrentAccount(): Promise<`0x${string}` | null> {
     const accounts = await (window as any).ethereum.request({
       method: "eth_accounts",
     });
-    
+
     return accounts && accounts.length > 0 ? accounts[0] : null;
   } catch (error) {
     console.error("Failed to get current account:", error);
@@ -186,7 +257,7 @@ export async function writeContract(
 ) {
   try {
     console.log("Writing contract:", { functionName, args, account: connection.account });
-    
+
     // Simulate the contract call first to check for errors
     const { request } = await connection.publicClient.simulateContract({
       address: HEALTH_RECORDS_ADDRESS,

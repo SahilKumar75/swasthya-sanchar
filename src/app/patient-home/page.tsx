@@ -7,9 +7,9 @@ import Link from "next/link";
 import { connectWallet, readContract, type WalletConnection } from "@/lib/web3";
 import { Navbar } from "@/components/Navbar";
 import { FooterSection } from "@/components/ui/footer-section";
-import { 
-  Edit2, User, Calendar, Phone, Mail, MapPin, AlertCircle, Heart, Activity, 
-  FileText, TrendingUp, Droplet, Stethoscope, Clock, Pill, FileCheck, 
+import {
+  Edit2, User, Calendar, Phone, Mail, MapPin, AlertCircle, Heart, Activity,
+  FileText, TrendingUp, Droplet, Stethoscope, Clock, Pill, FileCheck,
   ArrowUpRight, ArrowDownRight, Scale, Users
 } from "lucide-react";
 
@@ -62,7 +62,7 @@ export default function PatientHome() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ walletAddress }),
       });
-      
+
       if (!response.ok) {
         const data = await response.json();
         console.error("Failed to link wallet:", data.error);
@@ -82,10 +82,11 @@ export default function PatientHome() {
       }
 
       if (session.user.role !== "patient") {
-        router.push(session.user.role === "doctor" ? "/doctor" : "/");
+        router.push(session.user.role === "doctor" ? "/doctor/home" : "/patient-home");
         return;
       }
 
+      // Auto-connect wallet
       try {
         const conn = await connectWallet();
         if (conn) {
@@ -94,7 +95,7 @@ export default function PatientHome() {
           await loadPatientData(conn);
         }
       } catch (error) {
-        console.log("No wallet connected yet");
+        console.log("Wallet connection failed, user can connect manually");
       }
 
       setLoading(false);
@@ -120,7 +121,7 @@ export default function PatientHome() {
         } catch (parseError) {
           console.error("Error parsing emergency data:", parseError);
         }
-        
+
         // Calculate age from timestamp
         const birthDate = new Date(Number(patient.dateOfBirth) * 1000);
         const dateOfBirth = birthDate.toISOString().split('T')[0];
@@ -183,7 +184,7 @@ export default function PatientHome() {
     const height = parseFloat(patientData.height || "170") / 100; // Convert cm to m
     const weight = parseFloat(patientData.weight || "70");
     const bmi = weight / (height * height);
-    
+
     let bmiCategory = "";
     if (bmi < 18.5) bmiCategory = "Underweight";
     else if (bmi < 25) bmiCategory = "Normal";
@@ -203,13 +204,13 @@ export default function PatientHome() {
     };
 
     const bloodInfo = bloodRarityMap[patientData.bloodGroup] || { rarity: "Unknown", percentage: 0 };
-    
+
     // Mock data for last checkup (would come from medical records in production)
     const mockLastCheckup = new Date();
     mockLastCheckup.setDate(mockLastCheckup.getDate() - 45); // 45 days ago
-    
-    const medicationCount = patientData.currentMedications 
-      ? patientData.currentMedications.split(',').length 
+
+    const medicationCount = patientData.currentMedications
+      ? patientData.currentMedications.split(',').length
       : 0;
 
     return {
@@ -261,9 +262,22 @@ export default function PatientHome() {
             <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50 mb-4">
               Connect Your Wallet
             </h2>
-            <p className="text-neutral-600 dark:text-neutral-400">
+            <p className="text-neutral-600 dark:text-neutral-400 mb-6">
               Please connect your MetaMask wallet to view your profile.
             </p>
+            <button
+              onClick={async () => {
+                const conn = await connectWallet();
+                if (conn) {
+                  setConnection(conn);
+                  await linkWalletToAccount(conn.account);
+                  await loadPatientData(conn);
+                }
+              }}
+              className="px-6 py-3 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 rounded-lg font-medium hover:bg-neutral-800 dark:hover:bg-neutral-200 transition"
+            >
+              Connect Wallet
+            </button>
           </div>
         </main>
       </div>
@@ -319,7 +333,7 @@ export default function PatientHome() {
           <div className="space-y-6">
             {/* Bento Grid Layout - Health Dashboard */}
             <div className="grid grid-cols-12 gap-4 auto-rows-[180px]">
-              
+
               {/* BMI Card - Large Feature */}
               <div className="col-span-12 md:col-span-4 row-span-2 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-2xl border-2 border-emerald-200 dark:border-emerald-800 p-6 flex flex-col justify-between">
                 <div>
@@ -406,7 +420,7 @@ export default function PatientHome() {
                       {healthMetrics.bloodPercentage}% of population
                     </p>
                     <div className="w-full bg-white/50 dark:bg-neutral-800/50 rounded-full h-1.5">
-                      <div 
+                      <div
                         className="bg-gradient-to-r from-rose-500 to-red-600 h-1.5 rounded-full"
                         style={{ width: `${Math.min(healthMetrics.bloodPercentage * 2, 100)}%` }}
                       ></div>
@@ -517,7 +531,7 @@ export default function PatientHome() {
                     <span className="text-2xl text-green-700 dark:text-green-300">%</span>
                   </div>
                   <div className="w-full bg-white/50 dark:bg-neutral-800/50 rounded-full h-2 mt-4">
-                    <div 
+                    <div
                       className="bg-gradient-to-r from-green-500 to-emerald-600 h-2 rounded-full transition-all duration-500"
                       style={{ width: `${calculateHealthScore()}%` }}
                     ></div>
@@ -586,7 +600,7 @@ export default function PatientHome() {
 
               {/* Doctor Access */}
               <Link
-                href="/patient/access"
+                href="/patient/permissions"
                 className="col-span-6 md:col-span-3 row-span-1 bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 rounded-2xl border-2 border-cyan-200 dark:border-cyan-800 p-6 flex flex-col justify-between hover:scale-[1.02] transition-transform cursor-pointer group"
               >
                 <div className="p-3 bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm rounded-xl w-fit">
@@ -674,8 +688,8 @@ export default function PatientHome() {
                     <div className="flex-1">
                       <h3 className="font-semibold text-neutral-900 dark:text-neutral-50 mb-1">BMI Status: {healthMetrics.bmiCategory}</h3>
                       <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                        Your BMI is {healthMetrics.bmi}. {healthMetrics.bmiCategory === "Normal" 
-                          ? "Great job maintaining a healthy weight!" 
+                        Your BMI is {healthMetrics.bmi}. {healthMetrics.bmiCategory === "Normal"
+                          ? "Great job maintaining a healthy weight!"
                           : "Consider consulting with a nutritionist for personalized advice."}
                       </p>
                     </div>
@@ -717,7 +731,7 @@ export default function PatientHome() {
                     <div className="flex-1">
                       <h3 className="font-semibold text-neutral-900 dark:text-neutral-50 mb-1">Medication Adherence</h3>
                       <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                        {healthMetrics.medicationCount > 0 
+                        {healthMetrics.medicationCount > 0
                           ? `Take your ${healthMetrics.medicationCount} prescribed medication(s) as directed.`
                           : "No active medications. Keep up with preventive care!"}
                       </p>
@@ -766,7 +780,7 @@ export default function PatientHome() {
               </Link>
 
               <Link
-                href="/patient/access"
+                href="/patient-home/permissions"
                 className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl border-2 border-green-200 dark:border-green-800 p-6 hover:scale-[1.02] transition-all group"
               >
                 <div className="flex items-center justify-between mb-4">
@@ -800,216 +814,216 @@ export default function PatientHome() {
             {isEditing && (
               <div className="space-y-6">
                 {/* Personal Information */}
-            <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <User className="w-6 h-6 text-neutral-900 dark:text-neutral-100" />
-                <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50">
-                  Personal Information
-                </h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">
-                    Full Name
-                  </label>
-                  <p className="text-lg text-neutral-900 dark:text-neutral-100 font-medium">
-                    {patientData.name || "Not provided"}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">
-                    Date of Birth
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-neutral-500" />
-                    <p className="text-lg text-neutral-900 dark:text-neutral-100 font-medium">
-                      {patientData.dateOfBirth || "Not provided"}
-                    </p>
+                <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <User className="w-6 h-6 text-neutral-900 dark:text-neutral-100" />
+                    <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50">
+                      Personal Information
+                    </h2>
                   </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">
-                    Gender
-                  </label>
-                  <p className="text-lg text-neutral-900 dark:text-neutral-100 font-medium capitalize">
-                    {patientData.gender || "Not provided"}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">
-                    Blood Group
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-red-500" />
-                    <p className="text-lg font-bold text-red-600 dark:text-red-400">
-                      {patientData.bloodGroup || "Not provided"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Contact Information */}
-            <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <Phone className="w-6 h-6 text-neutral-900 dark:text-neutral-100" />
-                <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50">
-                  Contact Information
-                </h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">
-                    Phone Number
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-neutral-500" />
-                    <p className="text-lg text-neutral-900 dark:text-neutral-100 font-medium">
-                      {patientData.phone || "Not provided"}
-                    </p>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">
-                    Email
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-neutral-500" />
-                    <p className="text-lg text-neutral-900 dark:text-neutral-100 font-medium">
-                      {patientData.email || session?.user?.email || "Not provided"}
-                    </p>
-                  </div>
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">
-                    Address
-                  </label>
-                  <div className="flex items-start gap-2">
-                    <MapPin className="w-4 h-4 text-neutral-500 mt-1" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
+                      <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">
+                        Full Name
+                      </label>
                       <p className="text-lg text-neutral-900 dark:text-neutral-100 font-medium">
-                        {patientData.address || "Not provided"}
+                        {patientData.name || "Not provided"}
                       </p>
-                      {(patientData.city || patientData.state || patientData.pincode) && (
-                        <p className="text-neutral-600 dark:text-neutral-400">
-                          {[patientData.city, patientData.state, patientData.pincode].filter(Boolean).join(", ")}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">
+                        Date of Birth
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-neutral-500" />
+                        <p className="text-lg text-neutral-900 dark:text-neutral-100 font-medium">
+                          {patientData.dateOfBirth || "Not provided"}
                         </p>
-                      )}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">
+                        Gender
+                      </label>
+                      <p className="text-lg text-neutral-900 dark:text-neutral-100 font-medium capitalize">
+                        {patientData.gender || "Not provided"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">
+                        Blood Group
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <Activity className="w-4 h-4 text-red-500" />
+                        <p className="text-lg font-bold text-red-600 dark:text-red-400">
+                          {patientData.bloodGroup || "Not provided"}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Emergency Contact */}
-            <div className="bg-red-50 dark:bg-red-900/20 rounded-lg border-2 border-red-200 dark:border-red-800 p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
-                <h2 className="text-2xl font-semibold text-red-900 dark:text-red-100">
-                  Emergency Contact
-                </h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-red-700 dark:text-red-300 mb-1">
-                    Contact Name
-                  </label>
-                  <p className="text-lg text-red-900 dark:text-red-100 font-medium">
-                    {patientData.emergencyName || "Not provided"}
-                  </p>
+                {/* Contact Information */}
+                <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Phone className="w-6 h-6 text-neutral-900 dark:text-neutral-100" />
+                    <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50">
+                      Contact Information
+                    </h2>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">
+                        Phone Number
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <Phone className="w-4 h-4 text-neutral-500" />
+                        <p className="text-lg text-neutral-900 dark:text-neutral-100 font-medium">
+                          {patientData.phone || "Not provided"}
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">
+                        Email
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <Mail className="w-4 h-4 text-neutral-500" />
+                        <p className="text-lg text-neutral-900 dark:text-neutral-100 font-medium">
+                          {patientData.email || session?.user?.email || "Not provided"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">
+                        Address
+                      </label>
+                      <div className="flex items-start gap-2">
+                        <MapPin className="w-4 h-4 text-neutral-500 mt-1" />
+                        <div>
+                          <p className="text-lg text-neutral-900 dark:text-neutral-100 font-medium">
+                            {patientData.address || "Not provided"}
+                          </p>
+                          {(patientData.city || patientData.state || patientData.pincode) && (
+                            <p className="text-neutral-600 dark:text-neutral-400">
+                              {[patientData.city, patientData.state, patientData.pincode].filter(Boolean).join(", ")}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-red-700 dark:text-red-300 mb-1">
-                    Relationship
-                  </label>
-                  <p className="text-lg text-red-900 dark:text-red-100 font-medium capitalize">
-                    {patientData.emergencyRelation || "Not provided"}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-red-700 dark:text-red-300 mb-1">
-                    Phone Number
-                  </label>
-                  <p className="text-lg text-red-900 dark:text-red-100 font-medium">
-                    {patientData.emergencyPhone || "Not provided"}
-                  </p>
-                </div>
-              </div>
-            </div>
 
-            {/* Medical Information */}
-            <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <Heart className="w-6 h-6 text-neutral-900 dark:text-neutral-100" />
-                <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50">
-                  Medical Information
-                </h2>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">
-                    Known Allergies
-                  </label>
-                  <p className="text-neutral-900 dark:text-neutral-100">
-                    {patientData.allergies || "None reported"}
-                  </p>
+                {/* Emergency Contact */}
+                <div className="bg-red-50 dark:bg-red-900/20 rounded-lg border-2 border-red-200 dark:border-red-800 p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                    <h2 className="text-2xl font-semibold text-red-900 dark:text-red-100">
+                      Emergency Contact
+                    </h2>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-red-700 dark:text-red-300 mb-1">
+                        Contact Name
+                      </label>
+                      <p className="text-lg text-red-900 dark:text-red-100 font-medium">
+                        {patientData.emergencyName || "Not provided"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-red-700 dark:text-red-300 mb-1">
+                        Relationship
+                      </label>
+                      <p className="text-lg text-red-900 dark:text-red-100 font-medium capitalize">
+                        {patientData.emergencyRelation || "Not provided"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-red-700 dark:text-red-300 mb-1">
+                        Phone Number
+                      </label>
+                      <p className="text-lg text-red-900 dark:text-red-100 font-medium">
+                        {patientData.emergencyPhone || "Not provided"}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">
-                    Chronic Conditions
-                  </label>
-                  <p className="text-neutral-900 dark:text-neutral-100">
-                    {patientData.chronicConditions || "None reported"}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">
-                    Current Medications
-                  </label>
-                  <p className="text-neutral-900 dark:text-neutral-100">
-                    {patientData.currentMedications || "None reported"}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">
-                    Previous Surgeries
-                  </label>
-                  <p className="text-neutral-900 dark:text-neutral-100">
-                    {patientData.previousSurgeries || "None reported"}
-                  </p>
-                </div>
-              </div>
-            </div>
 
-            {/* Blockchain Info */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                <h2 className="text-2xl font-semibold text-blue-900 dark:text-blue-100">
-                  Blockchain Information
-                </h2>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-blue-700 dark:text-blue-300 mb-1">
-                  Wallet Address
-                </label>
-                <p className="text-blue-900 dark:text-blue-100 font-mono text-sm bg-blue-100 dark:bg-blue-900/40 px-3 py-2 rounded border border-blue-200 dark:border-blue-800">
-                  {connection.account}
-                </p>
-                <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-                  ✓ Your medical records are securely stored on the blockchain
-                </p>
-              </div>
-            </div>
+                {/* Medical Information */}
+                <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Heart className="w-6 h-6 text-neutral-900 dark:text-neutral-100" />
+                    <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50">
+                      Medical Information
+                    </h2>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">
+                        Known Allergies
+                      </label>
+                      <p className="text-neutral-900 dark:text-neutral-100">
+                        {patientData.allergies || "None reported"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">
+                        Chronic Conditions
+                      </label>
+                      <p className="text-neutral-900 dark:text-neutral-100">
+                        {patientData.chronicConditions || "None reported"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">
+                        Current Medications
+                      </label>
+                      <p className="text-neutral-900 dark:text-neutral-100">
+                        {patientData.currentMedications || "None reported"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">
+                        Previous Surgeries
+                      </label>
+                      <p className="text-neutral-900 dark:text-neutral-100">
+                        {patientData.previousSurgeries || "None reported"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
 
-            {/* Edit Mode Notice */}
-            {isEditing && (
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800 p-6">
-                <p className="text-yellow-900 dark:text-yellow-100 font-medium">
-                  🚧 Edit functionality coming soon! You'll be able to update your information through a blockchain transaction.
-                </p>
-              </div>
-            )}
+                {/* Blockchain Info */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    <h2 className="text-2xl font-semibold text-blue-900 dark:text-blue-100">
+                      Blockchain Information
+                    </h2>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-blue-700 dark:text-blue-300 mb-1">
+                      Wallet Address
+                    </label>
+                    <p className="text-blue-900 dark:text-blue-100 font-mono text-sm bg-blue-100 dark:bg-blue-900/40 px-3 py-2 rounded border border-blue-200 dark:border-blue-800">
+                      {connection.account}
+                    </p>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                      ✓ Your medical records are securely stored on the blockchain
+                    </p>
+                  </div>
+                </div>
+
+                {/* Edit Mode Notice */}
+                {isEditing && (
+                  <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800 p-6">
+                    <p className="text-yellow-900 dark:text-yellow-100 font-medium">
+                      🚧 Edit functionality coming soon! You'll be able to update your information through a blockchain transaction.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>

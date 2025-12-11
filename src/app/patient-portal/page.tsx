@@ -40,7 +40,7 @@ interface PatientData {
 interface PrivacySettings {
   // Always public for emergency responders: bloodGroup, allergies, chronicConditions, currentMedications, name, dateOfBirth, emergencyContact
   // These fields are no longer in the privacy settings - they're always visible
-  
+
   // User can control (optional fields)
   gender: boolean;
   phone: boolean;
@@ -83,7 +83,7 @@ function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
         } catch (parseError) {
           console.error("Error parsing emergency data:", parseError);
         }
-        
+
         const birthDate = new Date(Number(patient.dateOfBirth) * 1000);
         const dateOfBirth = birthDate.toISOString().split('T')[0];
 
@@ -124,7 +124,7 @@ function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
 
         setPatientData(data);
         setEditFormData(data); // Initialize edit form with current data
-        
+
         // Sync to database cache
         try {
           await fetch("/api/patient/sync", {
@@ -139,7 +139,7 @@ function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
         } catch (syncError) {
           console.error("Failed to sync dashboard data:", syncError);
         }
-        
+
         // Generate QR code
         const emergencyUrl = `${window.location.origin}/emergency/${connection.account}`;
         const qr = await QRCode.toDataURL(emergencyUrl, { width: 200, margin: 2 });
@@ -154,13 +154,13 @@ function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
 
   async function handleUpdateProfile() {
     if (!editFormData) return;
-    
+
     try {
       setUpdating(true);
 
       // Prepare updated data
       const dateTimestamp = BigInt(Math.floor(new Date(editFormData.dateOfBirth).getTime() / 1000));
-      
+
       const emergencyData = {
         gender: editFormData.gender,
         bloodGroup: editFormData.bloodGroup,
@@ -183,7 +183,7 @@ function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
         lastCheckedDate: editFormData.lastCheckedDate,
         privacySettings: editFormData.privacySettings
       };
-      
+
       const emergencyHash = JSON.stringify(emergencyData);
 
       // Update on blockchain
@@ -262,13 +262,13 @@ function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
       {/* Header with Edit Button */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-neutral-900 dark:text-neutral-50">Your Profile</h2>
-          <p className="text-neutral-600 dark:text-neutral-400 mt-1">Complete health information at a glance</p>
+          <h2 className="text-3xl font-bold text-neutral-900 dark:text-neutral-50">Patient Portal</h2>
+          <p className="text-neutral-600 dark:text-neutral-400 mt-1">Manage your complete health profile</p>
         </div>
         <div className="flex gap-2">
           {isEditing ? (
             <>
-              <button 
+              <button
                 onClick={() => {
                   setIsEditing(false);
                   setEditFormData(patientData);
@@ -279,7 +279,7 @@ function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
                 <X className="w-4 h-4" />
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={handleUpdateProfile}
                 disabled={updating}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition disabled:opacity-50"
@@ -289,7 +289,7 @@ function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
               </button>
             </>
           ) : (
-            <button 
+            <button
               onClick={() => setIsEditing(true)}
               className="flex items-center gap-2 px-4 py-2 bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition"
             >
@@ -687,7 +687,7 @@ function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
               <p className="text-sm text-purple-700 dark:text-purple-300 mb-4">
                 Control what optional information is visible on your emergency QR code. Essential information (name, age, blood group, emergency contact, allergies, conditions, medications) is always public for your safety.
               </p>
-              
+
               <div className="space-y-3">
                 <div className="bg-white dark:bg-purple-900/30 p-4 rounded-lg">
                   <p className="text-xs font-semibold text-purple-700 dark:text-purple-300 mb-3 uppercase">Always Public (Essential Information)</p>
@@ -735,23 +735,20 @@ function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
                           <button
                             type="button"
                             onClick={() => handlePrivacyChange(key, !isPublic)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                              isPublic 
-                                ? 'bg-green-600 dark:bg-green-500' 
-                                : 'bg-gray-300 dark:bg-gray-600'
-                            }`}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${isPublic
+                              ? 'bg-green-600 dark:bg-green-500'
+                              : 'bg-gray-300 dark:bg-gray-600'
+                              }`}
                           >
                             <span
-                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                                isPublic ? 'translate-x-6' : 'translate-x-1'
-                              }`}
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${isPublic ? 'translate-x-6' : 'translate-x-1'
+                                }`}
                             />
                           </button>
-                          <span className={`text-xs font-medium ml-2 w-16 ${
-                            isPublic 
-                              ? 'text-green-600 dark:text-green-400' 
-                              : 'text-gray-600 dark:text-gray-400'
-                          }`}>
+                          <span className={`text-xs font-medium ml-2 w-16 ${isPublic
+                            ? 'text-green-600 dark:text-green-400'
+                            : 'text-gray-600 dark:text-gray-400'
+                            }`}>
                             {isPublic ? 'Public' : 'Private'}
                           </span>
                         </div>
@@ -797,14 +794,14 @@ function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
                     >
                       <ArrowUpRight className="w-5 h-5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                     </Link>
-                    
+
                     <div className="text-center mb-6 pr-12">
                       <h3 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 mb-2">Emergency QR Code</h3>
                       <p className="text-sm text-neutral-600 dark:text-neutral-400">
                         First responders can scan this for instant access to your vital medical information
                       </p>
                     </div>
-                    
+
                     {qrCode && (
                       <div className="bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-800 dark:to-neutral-900 p-8 rounded-xl flex items-center justify-center border border-neutral-200 dark:border-neutral-700">
                         <img src={qrCode} alt="Emergency QR Code" className="w-48 h-48" />
@@ -813,7 +810,7 @@ function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
                   </div>
                 )}
               </CardFlipFront>
-              
+
               <CardFlipBack>
                 {({ onFlip }: any) => (
                   <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-8 shadow-lg hover:shadow-xl transition-shadow relative">
@@ -825,14 +822,14 @@ function RegisteredDashboard({ connection }: { connection: WalletConnection }) {
                     >
                       <ArrowUpRight className="w-5 h-5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                     </Link>
-                    
+
                     <div className="text-center mb-6">
                       <h3 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 mb-2">Emergency Information</h3>
                       <p className="text-sm text-neutral-600 dark:text-neutral-400">
                         Critical medical data for first responders
                       </p>
                     </div>
-                    
+
                     <div className="bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-800 dark:to-neutral-900 rounded-xl p-6 border border-neutral-200 dark:border-neutral-700">
                       <h4 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-4 flex items-center gap-2">
                         <Shield className="w-4 h-4" />
@@ -886,7 +883,7 @@ export default function PatientDashboard() {
     dateOfBirth: "",
     gender: "",
     bloodGroup: "",
-    
+
     // Step 2: Contact Information
     phone: "",
     email: "",
@@ -894,18 +891,18 @@ export default function PatientDashboard() {
     city: "",
     state: "",
     pincode: "",
-    
+
     // Step 3: Emergency Contact
     emergencyName: "",
     emergencyRelation: "",
     emergencyPhone: "",
-    
+
     // Step 4: Medical Information
     allergies: "",
     chronicConditions: "",
     currentMedications: "",
     previousSurgeries: "",
-    
+
     // Step 5: Physical Measurements (optional)
     height: "",
     weight: "",
@@ -953,7 +950,7 @@ export default function PatientDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ walletAddress }),
       });
-      
+
       if (!response.ok) {
         const data = await response.json();
         console.error("Failed to link wallet:", data.error);
@@ -993,7 +990,7 @@ export default function PatientDashboard() {
       } catch (error) {
         console.log("No wallet connected yet");
       }
-      
+
       setLoading(false);
     }
 
@@ -1039,7 +1036,7 @@ export default function PatientDashboard() {
 
   async function handleRegister() {
     if (!connection) return;
-    
+
     // Validate current step
     if (currentStep === 1) {
       if (!formData.name || !formData.dateOfBirth || !formData.gender || !formData.bloodGroup) {
@@ -1049,7 +1046,7 @@ export default function PatientDashboard() {
       setCurrentStep(2);
       return;
     }
-    
+
     if (currentStep === 2) {
       if (!formData.phone || !formData.email || !formData.address) {
         alert("Please fill in all contact information fields");
@@ -1058,7 +1055,7 @@ export default function PatientDashboard() {
       setCurrentStep(3);
       return;
     }
-    
+
     if (currentStep === 3) {
       if (!formData.emergencyName || !formData.emergencyRelation || !formData.emergencyPhone) {
         alert("Please fill in all emergency contact fields");
@@ -1067,21 +1064,21 @@ export default function PatientDashboard() {
       setCurrentStep(4);
       return;
     }
-    
+
     if (currentStep === 4) {
       // Medical information is optional, move to physical measurements
       setCurrentStep(5);
       return;
     }
-    
+
     // Final step - Submit to blockchain
     if (currentStep === 5) {
       try {
         setRegistering(true);
-        
+
         // Convert date string to Unix timestamp (seconds since epoch)
         const dateTimestamp = BigInt(Math.floor(new Date(formData.dateOfBirth).getTime() / 1000));
-        
+
         // Store ALL collected data in emergency contact hash
         const emergencyData = {
           // Personal info
@@ -1128,7 +1125,7 @@ export default function PatientDashboard() {
           }
         };
         const emergencyHash = JSON.stringify(emergencyData);
-        
+
         console.log("=== REGISTRATION DATA ===");
         console.log("Name:", formData.name);
         console.log("Date of Birth:", formData.dateOfBirth);
@@ -1136,7 +1133,7 @@ export default function PatientDashboard() {
         console.log("Emergency Data Object:", emergencyData);
         console.log("Emergency Hash (JSON):", emergencyHash);
         console.log("========================");
-        
+
         await writeContract(
           connection,
           "registerPatient",
@@ -1181,14 +1178,14 @@ export default function PatientDashboard() {
         setTimeout(async () => {
           console.log("First check after 3 seconds...");
           await checkRegistrationStatus(connection);
-          
+
           // If still not registered, try again after another 2 seconds
           setTimeout(async () => {
             console.log("Second check after 5 seconds total...");
             await checkRegistrationStatus(connection);
           }, 2000);
         }, 3000);
-        
+
       } catch (error) {
         console.error("Registration error:", error);
         alert("Registration failed. Please try again.");
@@ -1225,13 +1222,7 @@ export default function PatientDashboard() {
       <Navbar connection={connection} />
 
       {/* Main Content */}
-      <main className="max-w-5xl mx-auto px-6 lg:px-8 py-12 pt-24">{/* pt-24 for fixed header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-neutral-900 dark:text-neutral-50 mb-2">Dashboard</h1>
-          <p className="text-lg text-neutral-600 dark:text-neutral-400">
-            Your medical records, your control—securely stored on blockchain
-          </p>
-        </div>
+      <main className="max-w-5xl mx-auto px-6 lg:px-8 py-12 pt-24">
 
         {!connection ? (
           <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-8 text-center">
@@ -1276,32 +1267,40 @@ export default function PatientDashboard() {
               <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-8">
                 {/* Progress Indicator */}
                 <div className="mb-8">
-                  <div className="flex items-center justify-between mb-4">
-                    {[1, 2, 3, 4, 5].map((step) => (
-                      <div key={step} className="flex items-center flex-1">
-                        <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 font-semibold ${
-                          currentStep >= step 
-                            ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 border-neutral-900 dark:border-neutral-100'
-                            : 'bg-white dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600 border-neutral-300 dark:border-neutral-700'
-                        }`}>
+                  {/* Circles and connecting lines */}
+                  <div className="relative flex justify-between mb-3">
+                    {[1, 2, 3, 4, 5].map((step, index) => (
+                      <div key={step} className="relative flex items-center justify-center" style={{ width: '20%' }}>
+                        <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 font-semibold z-10 ${currentStep >= step
+                          ? 'bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 border-neutral-900 dark:border-neutral-100'
+                          : 'bg-white dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600 border-neutral-300 dark:border-neutral-700'
+                          }`}>
                           {step}
                         </div>
-                        {step < 5 && (
-                          <div className={`flex-1 h-1 mx-2 ${
-                            currentStep > step 
-                              ? 'bg-neutral-900 dark:bg-neutral-100' 
+                        {index < 4 && (
+                          <div
+                            className={`absolute h-1 ${currentStep > step
+                              ? 'bg-neutral-900 dark:bg-neutral-100'
                               : 'bg-neutral-300 dark:bg-neutral-700'
-                          }`} />
+                              }`}
+                            style={{
+                              left: '50%',
+                              right: '-100%',
+                              top: '50%',
+                              transform: 'translateY(-50%)'
+                            }}
+                          />
                         )}
                       </div>
                     ))}
                   </div>
-                  <div className="flex justify-between text-xs text-neutral-600 dark:text-neutral-400">
-                    <span>Personal</span>
-                    <span>Contact</span>
-                    <span>Emergency</span>
-                    <span>Medical</span>
-                    <span>Physical</span>
+                  {/* Labels */}
+                  <div className="flex justify-between text-xs text-neutral-600 dark:text-neutral-400 px-2">
+                    <span className="text-center" style={{ width: '20%' }}>Personal</span>
+                    <span className="text-center" style={{ width: '20%' }}>Contact</span>
+                    <span className="text-center" style={{ width: '20%' }}>Emergency</span>
+                    <span className="text-center" style={{ width: '20%' }}>Medical</span>
+                    <span className="text-center" style={{ width: '20%' }}>Physical</span>
                   </div>
                 </div>
 
@@ -1319,7 +1318,7 @@ export default function PatientDashboard() {
                   {currentStep === 4 && "Important medical information for emergencies"}
                   {currentStep === 5 && "Optional health metrics to track your wellness"}
                 </p>
-                
+
                 {/* Success message after registration */}
                 {registering && (
                   <div className="mb-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
@@ -1328,7 +1327,7 @@ export default function PatientDashboard() {
                     </p>
                   </div>
                 )}
-                
+
                 <div className="space-y-4 max-w-2xl">
                   {/* Step 1: Personal Information */}
                   {currentStep === 1 && (

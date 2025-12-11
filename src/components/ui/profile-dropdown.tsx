@@ -4,11 +4,11 @@ import * as React from "react"
 import { signOut } from "next-auth/react"
 import { useRouter, usePathname } from "next/navigation"
 import { useLanguage } from "@/contexts/LanguageContext"
-import { 
-  User, 
-  Settings, 
-  CreditCard, 
-  HelpCircle, 
+import {
+  User,
+  Settings,
+  CreditCard,
+  HelpCircle,
   LogOut,
   Moon,
   Sun,
@@ -102,7 +102,7 @@ export function ProfileDropdown({ user, role, theme, onThemeToggle }: ProfileDro
       icon: LayoutDashboard,
       onClick: () => {
         setIsOpen(false)
-        router.push("/patient")
+        router.push("/patient-portal")
       },
     },
     {
@@ -116,19 +116,18 @@ export function ProfileDropdown({ user, role, theme, onThemeToggle }: ProfileDro
   ]
 
   // Check if any menu item route matches current path
-  const isProfileActive = role === "doctor" 
+  const isProfileActive = role === "doctor"
     ? pathname === "/doctor" || pathname === "/doctor/settings"
-    : pathname === "/patient" || pathname === "/patient/settings"
+    : pathname === "/patient-portal" || pathname === "/patient/settings"
 
   return (
     <div ref={dropdownRef} className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all ${
-          isOpen || isProfileActive
+        className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all ${isOpen || isProfileActive
             ? "bg-neutral-900 dark:bg-white shadow-sm"
             : "hover:bg-neutral-100 dark:hover:bg-neutral-700"
-        }`}
+          }`}
       >
         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-semibold text-xs">
           {user.image ? (
@@ -142,29 +141,25 @@ export function ProfileDropdown({ user, role, theme, onThemeToggle }: ProfileDro
           )}
         </div>
         <div className="hidden md:flex flex-col items-start">
-          <span className={`text-sm font-medium transition-colors ${
-            isOpen || isProfileActive
+          <span className={`text-sm font-medium transition-colors ${isOpen || isProfileActive
               ? "text-white dark:text-neutral-900"
               : "text-neutral-900 dark:text-neutral-100"
-          }`}>
+            }`}>
             {user.name || user.email?.split("@")[0] || "User"}
           </span>
-          <span className={`text-xs transition-colors ${
-            isOpen || isProfileActive
+          <span className={`text-xs transition-colors ${isOpen || isProfileActive
               ? "text-neutral-300 dark:text-neutral-600"
               : "text-neutral-600 dark:text-neutral-400"
-          }`}>
+            }`}>
             {user.email}
           </span>
         </div>
         <ChevronDown
-          className={`w-4 h-4 transition-all ${
-            isOpen ? "rotate-180" : ""
-          } ${
-            isOpen || isProfileActive
+          className={`w-4 h-4 transition-all ${isOpen ? "rotate-180" : ""
+            } ${isOpen || isProfileActive
               ? "text-white dark:text-neutral-900"
               : "text-neutral-600 dark:text-neutral-400"
-          }`}
+            }`}
         />
       </button>
 

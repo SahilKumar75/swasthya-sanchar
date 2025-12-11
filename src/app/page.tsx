@@ -18,13 +18,13 @@ export default function Home() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [checking, setChecking] = useState(true);
-  
+
   // Auth form states for login
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
-  
+
   // Auth form states for signup
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
@@ -113,7 +113,7 @@ export default function Home() {
       console.log("[AUTH CHECK] Starting authentication check...");
       console.log("[AUTH CHECK] Session status:", status);
       console.log("[AUTH CHECK] Session data:", session);
-      
+
       if (status === "loading") {
         console.log("[AUTH CHECK] Still loading session...");
         return;
@@ -130,8 +130,8 @@ export default function Home() {
       console.log("[AUTH CHECK] User authenticated with role:", userRole);
 
       if (userRole === "patient") {
-        console.log("[AUTH CHECK] ✅ Redirecting patient to /patient");
-        router.push("/patient");
+        console.log("[AUTH CHECK] ✅ Redirecting patient to /patient-home");
+        router.push("/patient-home");
       } else if (userRole === "doctor") {
         console.log("[AUTH CHECK] ✅ Redirecting doctor to /doctor");
         router.push("/doctor");
@@ -176,15 +176,15 @@ export default function Home() {
             </h1>
 
             <p className="max-w-2xl text-xl text-neutral-600 dark:text-neutral-400 leading-relaxed">
-              Swasthya Sanchar puts you in control of your health data. Access your medical records anywhere, 
+              Swasthya Sanchar puts you in control of your health data. Access your medical records anywhere,
               share with doctors securely, and enable first responders to save your life in emergencies.
             </p>
 
             {/* Problem Statement */}
             <div className="max-w-2xl p-5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700">
               <p className="text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                <span className="font-semibold text-neutral-900 dark:text-neutral-100">The Problem:</span> In medical emergencies, 
-                first responders often can't access critical information like blood type, allergies, 
+                <span className="font-semibold text-neutral-900 dark:text-neutral-100">The Problem:</span> In medical emergencies,
+                first responders often can't access critical information like blood type, allergies,
                 or current medications—wasting precious seconds that could mean life or death.
               </p>
             </div>
@@ -383,22 +383,20 @@ export default function Home() {
                               <button
                                 type="button"
                                 onClick={() => setSignupRole("patient")}
-                                className={`px-6 py-4 rounded-lg border-2 transition-all font-medium ${
-                                  signupRole === "patient"
-                                    ? "border-white bg-white/10 text-white"
-                                    : "border-neutral-700 text-neutral-400 hover:border-neutral-600"
-                                }`}
+                                className={`px-6 py-4 rounded-lg border-2 transition-all font-medium ${signupRole === "patient"
+                                  ? "border-white bg-white/10 text-white"
+                                  : "border-neutral-700 text-neutral-400 hover:border-neutral-600"
+                                  }`}
                               >
                                 Patient
                               </button>
                               <button
                                 type="button"
                                 onClick={() => setSignupRole("doctor")}
-                                className={`px-6 py-4 rounded-lg border-2 transition-all font-medium ${
-                                  signupRole === "doctor"
-                                    ? "border-white bg-white/10 text-white"
-                                    : "border-neutral-700 text-neutral-400 hover:border-neutral-600"
-                                }`}
+                                className={`px-6 py-4 rounded-lg border-2 transition-all font-medium ${signupRole === "doctor"
+                                  ? "border-white bg-white/10 text-white"
+                                  : "border-neutral-700 text-neutral-400 hover:border-neutral-600"
+                                  }`}
                               >
                                 Doctor
                               </button>
@@ -443,11 +441,11 @@ export default function Home() {
             How It Works
           </h2>
           <p className="text-lg text-neutral-600 dark:text-neutral-400 max-w-2xl leading-relaxed">
-            Four simple steps from registration to life-saving emergency access. 
+            Four simple steps from registration to life-saving emergency access.
             See how blockchain technology empowers you and protects your privacy.
           </p>
         </div>
-        
+
         <FeatureShowcase />
       </div>
       {/* Key Benefits Section */}
@@ -509,7 +507,7 @@ export default function Home() {
             <p className="text-neutral-700 dark:text-neutral-300 font-medium text-sm">Patient Owned</p>
             <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-1">Complete control over your health data</p>
           </div>
-          
+
           <div className="text-center p-6 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700">
             <div className="text-4xl font-bold text-neutral-900 dark:text-neutral-50 mb-1">
               24/7
@@ -517,7 +515,7 @@ export default function Home() {
             <p className="text-neutral-700 dark:text-neutral-300 font-medium text-sm">Emergency Access</p>
             <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-1">First responders access critical info instantly</p>
           </div>
-          
+
           <div className="text-center p-6 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-700">
             <div className="text-4xl font-bold text-neutral-900 dark:text-neutral-50 mb-1">
               0
@@ -540,7 +538,7 @@ export default function Home() {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
               <Link
-                href="/patient"
+                href="/patient-portal"
                 className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-neutral-50 text-neutral-900 font-medium rounded-lg hover:bg-neutral-100 transition-colors duration-200"
               >
                 Get Started Now
