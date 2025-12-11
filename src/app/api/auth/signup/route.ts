@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hash } from "bcryptjs";
-import { db } from "@/db";
-import { users } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { prisma, createWallet, encryptPrivateKey } from "@/lib/wallet-service";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { email, password, role } = body;
+    const { email, password, role, name } = body;
 
     // Validate input
     if (!email || !password || !role) {
@@ -32,11 +30,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if user already exists
-    const [existingUser] = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
 
     if (existingUser) {
       return NextResponse.json(
@@ -48,23 +44,45 @@ export async function POST(req: NextRequest) {
     // Hash password
     const passwordHash = await hash(password, 12);
 
-    // Create user
-    const [newUser] = await db
-      .insert(users)
-      .values({
+    // 🔑 AUTO-CREATE BLOCKCHAIN WALLET (No MetaMask needed!)
+    const { address, privateKey } = createWallet();
+    const encryptedKey = encryptPrivateKey(privateKey);
+
+    // Create user with wallet
+    const newUser = await prisma.user.create({
+      data: {
         email,
-        passwordHash,
+        password: passwordHash,
+        name: name || null,
         role,
-      })
-      .returning();
+        walletAddress: address,
+        encryptedPrivateKey: encryptedKey,
+      },
+    });
+
+    // Create role-specific profile
+    if (role === "patient") {
+      await prisma.patientProfile.create({
+        data: {
+          userId: newUser.id,
+        },
+      });
+    } else if (role === "doctor") {
+      await prisma.doctorProfile.create({
+        data: {
+          userId: newUser.id,
+        },
+      });
+    }
 
     return NextResponse.json(
       {
-        message: "User created successfully",
+        message: "Account created successfully! Blockchain wallet generated automatically.",
         user: {
           id: newUser.id,
           email: newUser.email,
           role: newUser.role,
+          walletAddress: newUser.walletAddress, // User's blockchain address
         },
       },
       { status: 201 }
