@@ -24,9 +24,8 @@ export async function POST(req: NextRequest) {
                 allergies: body.allergies,
                 chronicConditions: body.chronicConditions,
                 currentMedications: body.currentMedications,
-                emergencyContactName: body.emergencyName,
-                emergencyContactPhone: body.emergencyPhone,
-                // Store additional fields in metadata or extend the schema
+                emergencyName: body.emergencyName,
+                emergencyPhone: body.emergencyPhone,
             },
         });
 
