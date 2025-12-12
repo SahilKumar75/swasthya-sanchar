@@ -115,7 +115,9 @@ export async function readFromBlockchain(
 }
 
 /**
- * Write to blockchain (requires user's wallet)
+ * Write to blockchain (backend pays for gas)
+ * For hackathon: Backend wallet pays for all transactions
+ * User's wallet address is still recorded in the transaction data
  */
 export async function writeToBlockchain(
     userId: string,
@@ -124,17 +126,35 @@ export async function writeToBlockchain(
     functionName: string,
     args: any[]
 ): Promise<string> {
-    const { privateKey } = await getUserWallet(userId);
+    // Get user info (for logging/attribution)
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+    });
+
+    if (!user) {
+        throw new Error('User not found');
+    }
+
+    console.log(`📝 Transaction for user: ${user.email} (${user.walletAddress})`);
 
     const provider = new ethers.JsonRpcProvider(
         process.env.NEXT_PUBLIC_RPC_URL || 'http://127.0.0.1:8545'
     );
 
-    const wallet = new ethers.Wallet(privateKey, provider);
-    const contract = new ethers.Contract(contractAddress, abi as any[], wallet);
+    // Use BACKEND wallet to pay for gas (not user wallet!)
+    const BACKEND_PRIVATE_KEY = process.env.PRIVATE_KEY || '';
+    const backendWallet = new ethers.Wallet(BACKEND_PRIVATE_KEY, provider);
+
+    console.log(`💰 Backend wallet paying for gas: ${backendWallet.address}`);
+
+    const contract = new ethers.Contract(contractAddress, abi as any[], backendWallet);
 
     const tx = await contract[functionName](...args);
+    console.log(`⏳ Transaction sent: ${tx.hash}`);
+
     await tx.wait();
+    console.log(`✅ Transaction confirmed!`);
 
     return tx.hash;
 }
+

@@ -93,10 +93,10 @@ export function Navbar({ connection }: NavbarProps) {
             <div className="bg-white dark:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 shadow-sm px-1 h-[44px] flex items-center gap-1">
               <Menu setActive={setActive}>
                 <Link
-                  href={session.user.role === "patient" ? "/patient-home" : "/doctor/home"}
-                  className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient-home" || pathname === "/doctor/home"
-                      ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
-                      : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
+                  href={session.user.role === "patient" ? "/patient-portal/home" : "/doctor/home"}
+                  className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient-portal/home" || pathname === "/doctor/home"
+                    ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
+                    : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
                     }`}
                 >
                   {t.nav.home}
@@ -110,10 +110,11 @@ export function Navbar({ connection }: NavbarProps) {
                     isActive={pathname?.includes("/records") || pathname?.includes("/access")}
                   >
                     <div className="flex flex-col space-y-4 text-sm">
-                      <HoveredLink href="/patient/records">Medical Records</HoveredLink>
-                      <HoveredLink href="/patient/emergency">Emergency QR</HoveredLink>
-                      <HoveredLink href="/patient/access">Doctor Access</HoveredLink>
-                      <HoveredLink href="#blockchain-security">Blockchain Security</HoveredLink>
+                      <div className="text-gray-500 italic">Coming Soon:</div>
+                      <HoveredLink href="#">Medical Records</HoveredLink>
+                      <HoveredLink href="#">Emergency QR</HoveredLink>
+                      <HoveredLink href="#">Doctor Access</HoveredLink>
+                      <HoveredLink href="#">Blockchain Security</HoveredLink>
                     </div>
                   </MenuItem>
                 ) : (
@@ -134,8 +135,8 @@ export function Navbar({ connection }: NavbarProps) {
                 <Link
                   href="/emergency"
                   className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/emergency"
-                      ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
-                      : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
+                    ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
+                    : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
                     }`}
                 >
                   Emergency

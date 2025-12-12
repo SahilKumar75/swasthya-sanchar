@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { prisma, createWallet, encryptPrivateKey } from "@/lib/wallet-service";
+import { fundNewUserWallet } from "@/lib/wallet-funding";
 
 export async function POST(req: NextRequest) {
   try {
@@ -75,9 +76,25 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // 💰 AUTO-FUND NEW WALLET (Hackathon-ready!)
+    // Send small amount of MATIC for gas fees
+    console.log(`🎉 New user created: ${email}`);
+    console.log(`💼 Wallet address: ${address}`);
+
+    // Fund wallet in background (don't wait for it)
+    fundNewUserWallet(address).then((txHash) => {
+      if (txHash) {
+        console.log(`✅ Wallet funded! TX: ${txHash}`);
+      } else {
+        console.log(`⚠️  Wallet funding skipped (backend wallet may need funds)`);
+      }
+    }).catch((error) => {
+      console.error(`❌ Wallet funding failed:`, error.message);
+    });
+
     return NextResponse.json(
       {
-        message: "Account created successfully! Blockchain wallet generated automatically.",
+        message: "Account created successfully! Blockchain wallet generated and funded automatically.",
         user: {
           id: newUser.id,
           email: newUser.email,
