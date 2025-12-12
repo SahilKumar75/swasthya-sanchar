@@ -19,7 +19,7 @@ export default function PatientEmergencyQR() {
     const qrRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        async function checkAuth() {
+        async function loadWalletAddress() {
             if (status === "loading") return;
 
             if (status === "unauthenticated" || !session?.user) {
@@ -32,14 +32,14 @@ export default function PatientEmergencyQR() {
                 return;
             }
 
-            // Fetch user's wallet address from database
+            // Fetch wallet address from database
             try {
-                const response = await fetch("/api/user/profile");
+                const response = await fetch("/api/user/wallet");
                 if (response.ok) {
                     const data = await response.json();
-                    if (data.walletAddress) {
-                        setWalletAddress(data.walletAddress);
-                    }
+                    setWalletAddress(data.walletAddress);
+                } else {
+                    console.error("Failed to fetch wallet address");
                 }
             } catch (error) {
                 console.error("Error fetching wallet address:", error);
@@ -48,7 +48,7 @@ export default function PatientEmergencyQR() {
             setLoading(false);
         }
 
-        checkAuth();
+        loadWalletAddress();
     }, [session, status, router]);
 
     const emergencyUrl = walletAddress
@@ -110,19 +110,24 @@ export default function PatientEmergencyQR() {
         );
     }
 
-    if (!walletAddress) {
+    if (!walletAddress && !loading) {
         return (
             <div className="min-h-screen bg-white dark:bg-neutral-900">
                 <Navbar />
                 <main className="max-w-5xl mx-auto px-6 lg:px-8 py-12 pt-24">
                     <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-8 text-center">
                         <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50 mb-4">
-                            Loading Your Emergency Profile
+                            No Wallet Found
                         </h2>
                         <p className="text-neutral-600 dark:text-neutral-400 mb-6">
-                            Please wait while we fetch your emergency information...
+                            Your account doesn't have a wallet address yet. Please complete patient registration first.
                         </p>
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neutral-900 dark:border-neutral-100 mx-auto"></div>
+                        <Link
+                            href="/patient/register"
+                            className="px-6 py-3 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 rounded-lg font-medium hover:bg-neutral-800 dark:hover:bg-neutral-200 transition inline-block"
+                        >
+                            Go to Registration
+                        </Link>
                     </div>
                 </main>
             </div>
@@ -207,10 +212,10 @@ export default function PatientEmergencyQR() {
                             />
                         </div>
 
-                        {/* Wallet Address */}
+                        {/* Blockchain Address */}
                         <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-4 mb-6">
                             <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">
-                                Your Emergency ID
+                                Blockchain Address
                             </p>
                             <p className="text-sm font-mono text-neutral-900 dark:text-neutral-100 break-all">
                                 {walletAddress}

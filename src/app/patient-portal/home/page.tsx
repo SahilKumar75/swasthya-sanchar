@@ -235,24 +235,43 @@ export default function PatientHome() {
                                 </div>
                             </div>
 
-                            {/* Emergency QR Link */}
-                            <Link
-                                href={`/emergency/${profile.walletAddress}`}
-                                target="_blank"
-                                className="col-span-6 md:col-span-3 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-2xl border-2 border-purple-200 dark:border-purple-800 p-6 hover:scale-[1.02] transition-transform cursor-pointer group"
-                            >
-                                <div className="p-3 bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm rounded-xl w-fit mb-4">
-                                    <QrCode className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                            {/* Emergency QR Code Display */}
+                            <div className="col-span-12 md:col-span-5 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-2xl border-2 border-purple-200 dark:border-purple-800 p-6">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="p-3 bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm rounded-xl">
+                                        <QrCode className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-lg font-bold text-purple-900 dark:text-purple-100">
+                                            Emergency QR Code
+                                        </p>
+                                        <p className="text-sm text-purple-700 dark:text-purple-300">
+                                            Scan for instant access
+                                        </p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="text-lg font-bold text-purple-900 dark:text-purple-100 mb-1 group-hover:translate-x-1 transition-transform">
-                                        Emergency QR →
-                                    </p>
-                                    <p className="text-sm text-purple-700 dark:text-purple-300">
-                                        Generate code
-                                    </p>
-                                </div>
-                            </Link>
+                                {qrCode ? (
+                                    <div className="bg-white dark:bg-neutral-800 rounded-xl p-4 flex flex-col items-center">
+                                        <img
+                                            src={qrCode}
+                                            alt="Emergency QR Code"
+                                            className="w-48 h-48 mb-3"
+                                        />
+                                        <Link
+                                            href="/patient/emergency"
+                                            className="text-sm text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
+                                        >
+                                            View full page <ArrowUpRight className="w-3 h-3" />
+                                        </Link>
+                                    </div>
+                                ) : (
+                                    <div className="bg-white dark:bg-neutral-800 rounded-xl p-8 text-center">
+                                        <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                                            Generating QR code...
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
 
                             {/* Medical Records Link */}
                             <Link
