@@ -5,7 +5,17 @@ import { ethers } from 'ethers';
 import { PrismaClient } from '@prisma/client';
 import crypto from 'crypto';
 
-export const prisma = new PrismaClient();
+// Configure Prisma for Supabase Transaction Pooler
+// Transaction mode (port 6543) doesn't support prepared statements
+// See: https://supabase.com/docs/guides/database/connecting-to-postgres
+export const prisma = new PrismaClient({
+    // @ts-ignore - pgbouncer option disables prepared statements for transaction pooling
+    __internal: {
+        engine: {
+            pgbouncer: true,
+        },
+    },
+});
 
 // Encryption settings
 const ENCRYPTION_KEY = process.env.WALLET_ENCRYPTION_KEY || 'default-encryption-key-change-in-production';
