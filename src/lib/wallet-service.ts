@@ -8,14 +8,8 @@ import crypto from 'crypto';
 // Configure Prisma for Supabase Transaction Pooler
 // Transaction mode (port 6543) doesn't support prepared statements
 // See: https://supabase.com/docs/guides/database/connecting-to-postgres
-export const prisma = new PrismaClient({
-    // @ts-ignore - pgbouncer option disables prepared statements for transaction pooling
-    __internal: {
-        engine: {
-            pgbouncer: true,
-        },
-    },
-});
+// Note: Add ?pgbouncer=true to DATABASE_URL in .env to disable prepared statements
+export const prisma = new PrismaClient();
 
 // Encryption settings
 const ENCRYPTION_KEY = process.env.WALLET_ENCRYPTION_KEY || 'default-encryption-key-change-in-production';
