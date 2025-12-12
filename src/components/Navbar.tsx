@@ -133,8 +133,8 @@ export function Navbar({ connection }: NavbarProps) {
                 )}
 
                 <Link
-                  href="/emergency"
-                  className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/emergency"
+                  href="/patient/emergency"
+                  className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient/emergency"
                     ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
                     : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
                     }`}

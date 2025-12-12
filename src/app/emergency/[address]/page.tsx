@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { readContractPublic } from "@/lib/web3";
 import { Shield } from "lucide-react";
 
 interface PrivacySettings {
@@ -55,80 +54,20 @@ export default function EmergencyResponderPage({ params }: { params: { address: 
     try {
       setLoading(true);
       setError("");
-      
-      // Try to load from blockchain, fallback to demo mode if it fails
-      let patient: any = null;
-      try {
-        const result = await readContractPublic("getPatient", [address]);
-        patient = result as any;
-      } catch (blockchainError) {
-        console.log("Blockchain not accessible, using demo mode");
-        // Demo mode - show sample data for demonstration
-        patient = {
-          name: "Demo Patient",
-          dateOfBirth: Math.floor(new Date("1990-01-15").getTime() / 1000),
-          emergencyProfileHash: JSON.stringify({
-            bloodGroup: "O+",
-            allergies: "Penicillin, Peanuts",
-            chronicConditions: "Type 2 Diabetes, Hypertension",
-            currentMedications: "Metformin 500mg, Lisinopril 10mg",
-            name: "Emergency Contact Name",
-            relation: "Spouse",
-            emergencyPhone: "+1234567890",
-            gender: "Male",
-            phone: "+0987654321",
-            email: "demo@example.com"
-          })
-        };
-      }
 
-      if (!patient || !patient.name) {
-        setError("Patient not found or not registered");
+      // Fetch emergency data from database API
+      const response = await fetch(`/api/emergency/${address}`);
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          setError("Patient not found or not registered");
+        } else {
+          setError("Failed to load patient emergency data");
+        }
         return;
       }
 
-      let emergencyData: any = {};
-      if (patient.emergencyProfileHash) {
-        emergencyData = JSON.parse(patient.emergencyProfileHash);
-      }
-
-      const birthDate = new Date(Number(patient.dateOfBirth) * 1000);
-      const dateOfBirth = birthDate.toISOString().split('T')[0];
-
-      const data: PatientEmergencyData = {
-        name: patient.name || "",
-        dateOfBirth: dateOfBirth,
-        gender: emergencyData.gender || "",
-        bloodGroup: emergencyData.bloodGroup || "",
-        phone: emergencyData.phone || "",
-        email: emergencyData.email || "",
-        address: emergencyData.address || "",
-        city: emergencyData.city || "",
-        state: emergencyData.state || "",
-        pincode: emergencyData.pincode || "",
-        emergencyName: emergencyData.name || "",
-        emergencyRelation: emergencyData.relation || "",
-        emergencyPhone: emergencyData.emergencyPhone || "",
-        allergies: emergencyData.allergies || "",
-        chronicConditions: emergencyData.chronicConditions || "",
-        currentMedications: emergencyData.currentMedications || "",
-        previousSurgeries: emergencyData.previousSurgeries || "",
-        height: emergencyData.height || "",
-        weight: emergencyData.weight || "",
-        waistCircumference: emergencyData.waistCircumference || "",
-        privacySettings: emergencyData.privacySettings || {
-          // Only optional fields
-          gender: true,
-          phone: true,
-          email: false,
-          address: true,
-          height: false,
-          weight: false,
-          waistCircumference: false,
-          previousSurgeries: false
-        }
-      };
-
+      const data = await response.json();
       setPatientData(data);
     } catch (error) {
       console.error("Error loading emergency data:", error);
@@ -202,7 +141,7 @@ export default function EmergencyResponderPage({ params }: { params: { address: 
           <div className="space-y-6">
             <div className="bg-white dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6">
               <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 mb-4">Patient Emergency Profile</h2>
-              
+
               {/* Personal Info - Name and DOB always visible */}
               <div className="mb-6 grid grid-cols-3 gap-4">
                 {patientData.name && (<div><p className="text-sm text-neutral-600 dark:text-neutral-400">Name</p><p className="font-semibold">{patientData.name}</p></div>)}
