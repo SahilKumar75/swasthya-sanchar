@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
-import { connectWallet, type WalletConnection } from "@/lib/web3";
 import { Navbar } from "@/components/Navbar";
 import {
     ArrowLeft, Download, Printer, Share2, AlertCircle, Shield,
@@ -15,26 +14,9 @@ import {
 export default function PatientEmergencyQR() {
     const router = useRouter();
     const { data: session, status } = useSession();
-    const [connection, setConnection] = useState<WalletConnection | null>(null);
+    const [walletAddress, setWalletAddress] = useState<string>("");
     const [loading, setLoading] = useState(true);
     const qrRef = useRef<HTMLDivElement>(null);
-
-    async function linkWalletToAccount(walletAddress: string) {
-        try {
-            const response = await fetch("/api/user/link-wallet", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ walletAddress }),
-            });
-
-            if (!response.ok) {
-                const data = await response.json();
-                console.error("Failed to link wallet:", data.error);
-            }
-        } catch (error) {
-            console.error("Error linking wallet:", error);
-        }
-    }
 
     useEffect(() => {
         async function checkAuth() {
@@ -50,15 +32,17 @@ export default function PatientEmergencyQR() {
                 return;
             }
 
-            // Auto-connect wallet
+            // Fetch user's wallet address from database
             try {
-                const conn = await connectWallet();
-                if (conn) {
-                    setConnection(conn);
-                    await linkWalletToAccount(conn.account);
+                const response = await fetch("/api/user/profile");
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.walletAddress) {
+                        setWalletAddress(data.walletAddress);
+                    }
                 }
             } catch (error) {
-                console.log("Wallet connection failed, user can connect manually");
+                console.error("Error fetching wallet address:", error);
             }
 
             setLoading(false);
@@ -67,8 +51,8 @@ export default function PatientEmergencyQR() {
         checkAuth();
     }, [session, status, router]);
 
-    const emergencyUrl = connection
-        ? `${window.location.origin}/emergency/${connection.account}`
+    const emergencyUrl = walletAddress
+        ? `${window.location.origin}/emergency/${walletAddress}`
         : "";
 
     const downloadQR = () => {
@@ -126,30 +110,19 @@ export default function PatientEmergencyQR() {
         );
     }
 
-    if (!connection) {
+    if (!walletAddress) {
         return (
             <div className="min-h-screen bg-white dark:bg-neutral-900">
-                <Navbar connection={connection} />
+                <Navbar />
                 <main className="max-w-5xl mx-auto px-6 lg:px-8 py-12 pt-24">
                     <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-8 text-center">
                         <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50 mb-4">
-                            Connect Your Wallet
+                            Loading Your Emergency Profile
                         </h2>
                         <p className="text-neutral-600 dark:text-neutral-400 mb-6">
-                            Please connect your MetaMask wallet to generate your emergency QR code.
+                            Please wait while we fetch your emergency information...
                         </p>
-                        <button
-                            onClick={async () => {
-                                const conn = await connectWallet();
-                                if (conn) {
-                                    setConnection(conn);
-                                    await linkWalletToAccount(conn.account);
-                                }
-                            }}
-                            className="px-6 py-3 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 rounded-lg font-medium hover:bg-neutral-800 dark:hover:bg-neutral-200 transition"
-                        >
-                            Connect Wallet
-                        </button>
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neutral-900 dark:border-neutral-100 mx-auto"></div>
                     </div>
                 </main>
             </div>
@@ -158,7 +131,7 @@ export default function PatientEmergencyQR() {
 
     return (
         <div className="min-h-screen bg-white dark:bg-neutral-900">
-            <Navbar connection={connection} />
+            <Navbar />
 
             <main className="max-w-5xl mx-auto px-6 lg:px-8 py-12 pt-24">
                 {/* Header */}
@@ -234,13 +207,13 @@ export default function PatientEmergencyQR() {
                             />
                         </div>
 
-                        {/* Blockchain Address */}
+                        {/* Wallet Address */}
                         <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-4 mb-6">
                             <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">
-                                Blockchain Address
+                                Your Emergency ID
                             </p>
                             <p className="text-sm font-mono text-neutral-900 dark:text-neutral-100 break-all">
-                                {connection.account}
+                                {walletAddress}
                             </p>
                         </div>
 
