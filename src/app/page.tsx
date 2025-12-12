@@ -130,11 +130,11 @@ export default function Home() {
       console.log("[AUTH CHECK] User authenticated with role:", userRole);
 
       if (userRole === "patient") {
-        console.log("[AUTH CHECK] ✅ Redirecting patient to /patient-home");
-        router.push("/patient-home");
+        console.log("[AUTH CHECK] ✅ Redirecting patient to /patient-portal");
+        router.push("/patient-portal");
       } else if (userRole === "doctor") {
-        console.log("[AUTH CHECK] ✅ Redirecting doctor to /doctor");
-        router.push("/doctor");
+        console.log("[AUTH CHECK] ✅ Redirecting doctor to /doctor/home");
+        router.push("/doctor/home");
       } else {
         console.log("[AUTH CHECK] ⚠️ Unknown role, staying on landing page");
         setChecking(false);

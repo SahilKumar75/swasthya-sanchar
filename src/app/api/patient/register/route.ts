@@ -106,12 +106,16 @@ export async function POST(req: NextRequest) {
             walletAddress: user.walletAddress,
         });
     } catch (error: any) {
-        console.error('Patient registration error:', error);
+        console.error('❌ Patient registration error:', error);
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
 
         return NextResponse.json(
             {
                 error: 'Failed to register patient on blockchain',
-                details: error.message
+                details: error.message,
+                errorType: error.name
             },
             { status: 500 }
         );

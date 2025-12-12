@@ -1,24 +1,40 @@
 // Backend Wallet Management Service
-// This service handles wallet creation, encryption, and blockchain interactions
+// Handles wallet creation, encryption, and blockchain transactions
 
 import { ethers } from 'ethers';
-import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
+import crypto from 'crypto';
 
-const prisma = new PrismaClient();
+export const prisma = new PrismaClient();
 
-// Encryption key from environment
-const ENCRYPTION_KEY = process.env.WALLET_ENCRYPTION_KEY || 'default-key-change-in-production';
+// Encryption settings
+const ENCRYPTION_KEY = process.env.WALLET_ENCRYPTION_KEY || 'default-encryption-key-change-in-production';
+const ALGORITHM = 'aes-256-cbc';
 
 /**
- * Encrypt a private key for storage
+ * Encrypt private key using AES-256-CBC
  */
 export function encryptPrivateKey(privateKey: string): string {
-    // In production, use proper encryption like AES-256
-    // For now, using bcrypt hash (one-way, not ideal for this use case)
-    // TODO: Replace with proper encryption/decryption
-    const salt = bcrypt.genSaltSync(10);
-    return bcrypt.hashSync(privateKey + ENCRYPTION_KEY, salt);
+    const key = crypto.createHash('sha256').update(ENCRYPTION_KEY).digest();
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
+    let encrypted = cipher.update(privateKey, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    return iv.toString('hex') + ':' + encrypted;
+}
+
+/**
+ * Decrypt private key using AES-256-CBC
+ */
+export function decryptPrivateKey(encryptedKey: string): string {
+    const parts = encryptedKey.split(':');
+    const iv = Buffer.from(parts[0], 'hex');
+    const encryptedText = parts[1];
+    const key = crypto.createHash('sha256').update(ENCRYPTION_KEY).digest();
+    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
+    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
 }
 
 /**
@@ -44,13 +60,16 @@ export async function getUserWallet(userId: string): Promise<{ address: string; 
         throw new Error('User not found');
     }
 
-    // For now, we'll store the private key in memory
-    // In production, use proper key management (HSM, KMS, etc.)
-    // This is a simplified version for the hybrid architecture
+    if (!user.encryptedPrivateKey) {
+        throw new Error('User wallet not found');
+    }
+
+    // Decrypt the private key
+    const privateKey = decryptPrivateKey(user.encryptedPrivateKey);
 
     return {
         address: user.walletAddress,
-        privateKey: user.encryptedPrivateKey, // TODO: Decrypt this properly
+        privateKey,
     };
 }
 
@@ -119,5 +138,3 @@ export async function writeToBlockchain(
 
     return tx.hash;
 }
-
-export { prisma };
