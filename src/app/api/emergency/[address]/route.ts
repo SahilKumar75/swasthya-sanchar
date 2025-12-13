@@ -18,7 +18,7 @@ export async function GET(
         // Find user by wallet address
         const user = await prisma.user.findUnique({
             where: {
-                walletAddress: address.toLowerCase(),
+                walletAddress: address,
             },
             include: {
                 patientProfile: true,
