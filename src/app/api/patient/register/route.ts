@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { dateOfBirth, emergencyData } = body;
+        const { dateOfBirth, profilePicture, emergencyData } = body;
 
         if (!dateOfBirth) {
             return NextResponse.json(
@@ -61,12 +61,23 @@ export async function POST(req: NextRequest) {
             await prisma.patientProfile.update({
                 where: { userId: user.id },
                 data: {
+                    fullName: emergencyData?.fullName,
+                    profilePicture: profilePicture,
                     dateOfBirth: new Date(dateOfBirth),
+                    gender: emergencyData?.gender,
+                    phone: emergencyData?.phone,
                     bloodGroup: emergencyData?.bloodGroup,
+                    streetAddress: emergencyData?.streetAddress,
+                    city: emergencyData?.city,
+                    state: emergencyData?.state,
+                    pincode: emergencyData?.pincode,
+                    height: emergencyData?.height,
+                    weight: emergencyData?.weight,
                     allergies: emergencyData?.allergies,
                     chronicConditions: emergencyData?.chronicConditions,
                     currentMedications: emergencyData?.currentMedications,
                     emergencyName: emergencyData?.emergencyName,
+                    emergencyRelation: emergencyData?.emergencyRelationship,
                     emergencyPhone: emergencyData?.emergencyPhone,
                 },
             });
@@ -114,12 +125,23 @@ export async function POST(req: NextRequest) {
         await prisma.patientProfile.update({
             where: { userId: user.id },
             data: {
+                fullName: emergencyData?.fullName,
+                profilePicture: profilePicture,
                 dateOfBirth: new Date(dateOfBirth),
+                gender: emergencyData?.gender,
+                phone: emergencyData?.phone,
                 bloodGroup: emergencyData?.bloodGroup,
+                streetAddress: emergencyData?.streetAddress,
+                city: emergencyData?.city,
+                state: emergencyData?.state,
+                pincode: emergencyData?.pincode,
+                height: emergencyData?.height,
+                weight: emergencyData?.weight,
                 allergies: emergencyData?.allergies,
                 chronicConditions: emergencyData?.chronicConditions,
                 currentMedications: emergencyData?.currentMedications,
                 emergencyName: emergencyData?.emergencyName,
+                emergencyRelation: emergencyData?.emergencyRelationship,
                 emergencyPhone: emergencyData?.emergencyPhone,
                 isRegisteredOnChain: true, // Mark as registered regardless
                 registeredAt: new Date(),

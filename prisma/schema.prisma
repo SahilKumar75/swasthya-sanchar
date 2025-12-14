@@ -42,14 +42,17 @@ model PatientProfile {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   // Personal info
-  dateOfBirth DateTime?
-  gender      String?
-  bloodGroup  String?
-  phone       String?
-  address     String?
-  city        String?
-  state       String?
-  pincode     String?
+  fullName       String?
+  profilePicture String?   @db.Text // Base64 encoded image
+  dateOfBirth    DateTime?
+  gender         String?
+  bloodGroup     String?
+  phone          String?
+  streetAddress  String?
+  address        String?   // Keep for backward compatibility
+  city           String?
+  state          String?
+  pincode        String?
   
   // Medical info
   allergies          String?

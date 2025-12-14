@@ -39,24 +39,7 @@ export function Navbar({ connection }: NavbarProps) {
     document.documentElement.classList.toggle("dark", newTheme === "dark");
   };
 
-  // If user is not logged in, show only theme toggle
-  if (!session) {
-    return (
-      <button
-        onClick={toggleTheme}
-        className="fixed top-6 right-6 z-50 p-3 rounded-lg bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors duration-200"
-        aria-label="Toggle theme"
-      >
-        {theme === "light" ? (
-          <Moon className="w-5 h-5 text-neutral-700 dark:text-neutral-300" />
-        ) : (
-          <Sun className="w-5 h-5 text-neutral-700 dark:text-neutral-300" />
-        )}
-      </button>
-    );
-  }
-
-  // Full navbar for logged-in users
+  // Render Navbar
   return (
     <header className="w-full z-40 fixed top-0 left-0 bg-transparent">
       <div className="w-full px-6 py-4">
@@ -89,66 +72,67 @@ export function Navbar({ connection }: NavbarProps) {
           </Magnetic>
 
           {/* Center: Home, Features, Emergency (Capsule with animated menu) - Centered */}
-          <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2">
-            <div className="bg-white dark:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 shadow-sm px-1 h-[44px] flex items-center gap-1">
-              <Menu setActive={setActive}>
-                <Link
-                  href={session.user.role === "patient" ? "/patient-portal/home" : "/doctor/home"}
-                  className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient-portal/home" || pathname === "/doctor/home"
-                    ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
-                    : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
-                    }`}
-                >
-                  {t.nav.home}
-                </Link>
-
-                {session.user.role === "patient" ? (
-                  <MenuItem
-                    setActive={setActive}
-                    active={active}
-                    item={t.nav.features}
-                    isActive={pathname?.includes("/records") || pathname?.includes("/access")}
+          {/* Only show center menu if user is logged in OR in dev bypass mode */}
+          {(session || process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') && (
+            <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2">
+              <div className="bg-white dark:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 shadow-sm px-1 h-[44px] flex items-center gap-1">
+                <Menu setActive={setActive}>
+                  <Link
+                    href={session?.user?.role === "patient" ? "/patient-portal/home" : session?.user?.role === "doctor" ? "/doctor/home" : "/patient-portal/home"}
+                    className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient-portal/home" || pathname === "/doctor/home"
+                      ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
+                      : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
+                      }`}
                   >
-                    <div className="flex flex-col space-y-4 text-sm">
-                      <div className="text-gray-500 italic">Coming Soon:</div>
-                      <HoveredLink href="#">Medical Records</HoveredLink>
-                      <HoveredLink href="#">Emergency QR</HoveredLink>
-                      <HoveredLink href="#">Doctor Access</HoveredLink>
-                      <HoveredLink href="#">Blockchain Security</HoveredLink>
-                    </div>
-                  </MenuItem>
-                ) : (
-                  <MenuItem
-                    setActive={setActive}
-                    active={active}
-                    item={t.nav.features}
-                    isActive={pathname?.includes("/patients") || pathname?.includes("/records")}
-                  >
-                    <div className="flex flex-col space-y-4 text-sm">
-                      <HoveredLink href="/doctor/patients">Patient Records</HoveredLink>
-                      <HoveredLink href="/doctor/records">Create Records</HoveredLink>
-                      <HoveredLink href="/doctor/authorization">Authorization Status</HoveredLink>
-                    </div>
-                  </MenuItem>
-                )}
+                    {t.nav.home}
+                  </Link>
 
-                <Link
-                  href="/patient/emergency"
-                  className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient/emergency"
-                    ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
-                    : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
-                    }`}
-                >
-                  Emergency
-                </Link>
-              </Menu>
+                  {(session?.user?.role === "patient" || !session) ? (
+                    <MenuItem
+                      setActive={setActive}
+                      active={active}
+                      item={t.nav.features}
+                      isActive={pathname?.includes("/records") || pathname?.includes("/access")}
+                    >
+                      <div className="flex flex-col space-y-4 text-sm">
+                        <div className="text-gray-500 italic">Coming Soon:</div>
+                        <HoveredLink href="#">Medical Records</HoveredLink>
+                        <HoveredLink href="#">Emergency QR</HoveredLink>
+                        <HoveredLink href="#">Doctor Access</HoveredLink>
+                        <HoveredLink href="#">Blockchain Security</HoveredLink>
+                      </div>
+                    </MenuItem>
+                  ) : (
+                    <MenuItem
+                      setActive={setActive}
+                      active={active}
+                      item={t.nav.features}
+                      isActive={pathname?.includes("/patients") || pathname?.includes("/records")}
+                    >
+                      <div className="flex flex-col space-y-4 text-sm">
+                        <HoveredLink href="/doctor/patients">Patient Records</HoveredLink>
+                        <HoveredLink href="/doctor/records">Create Records</HoveredLink>
+                        <HoveredLink href="/doctor/authorization">Authorization Status</HoveredLink>
+                      </div>
+                    </MenuItem>
+                  )}
+
+                  <Link
+                    href="/patient/emergency"
+                    className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient/emergency"
+                      ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
+                      : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
+                      }`}
+                  >
+                    Emergency
+                  </Link>
+                </Menu>
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Right: Language + Avatar + Theme Toggle (Capsule) - Rightmost position */}
+          {/* Right: Avatar + Theme Toggle + Language (Capsule) - Rightmost position */}
           <div className="flex items-center gap-2 h-[44px] px-3 bg-white dark:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 shadow-sm">
-            <LanguageSelector />
-
             {session?.user && (
               <div className="flex items-center h-full">
                 <ProfileDropdown
@@ -175,6 +159,8 @@ export function Navbar({ connection }: NavbarProps) {
                 <Sun className="w-4 h-4 text-neutral-700 dark:text-neutral-300" />
               )}
             </button>
+
+            <LanguageSelector />
           </div>
         </div>
       </div>

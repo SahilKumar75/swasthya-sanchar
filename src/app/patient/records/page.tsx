@@ -4,50 +4,40 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { connectWallet, readContract, type WalletConnection } from "@/lib/web3";
 import { Navbar } from "@/components/Navbar";
 import RecordViewer from "@/components/record-viewer";
 import {
-    ArrowLeft, FileText, Calendar, User, Download, Eye, X, Loader2
+    ArrowLeft, FileText, Calendar, User, Eye, X, Loader2
 } from "lucide-react";
 
 interface MedicalRecord {
-    id: bigint;
-    patient: string;
-    doctor: string;
+    id: string;
+    patientId: string;
+    doctorId: string;
     recordHash: string;
-    timestamp: bigint;
+    timestamp: string;
     isActive: boolean;
+    doctorName?: string;
 }
 
 export default function PatientRecords() {
     const router = useRouter();
     const { data: session, status } = useSession();
-    const [connection, setConnection] = useState<WalletConnection | null>(null);
     const [loading, setLoading] = useState(true);
     const [records, setRecords] = useState<MedicalRecord[]>([]);
     const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(null);
     const [loadingRecords, setLoadingRecords] = useState(false);
 
-    async function linkWalletToAccount(walletAddress: string) {
-        try {
-            const response = await fetch("/api/user/link-wallet", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ walletAddress }),
-            });
-
-            if (!response.ok) {
-                const data = await response.json();
-                console.error("Failed to link wallet:", data.error);
-            }
-        } catch (error) {
-            console.error("Error linking wallet:", error);
-        }
-    }
-
     useEffect(() => {
         async function checkAuth() {
+            // Development bypass - skip auth checks if enabled
+            if (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') {
+                console.log('[DEV BYPASS] 🔓 Patient records - auth bypass enabled');
+                setLoading(false);
+                await loadMockRecords();
+                return;
+            }
+
             if (status === "loading") return;
 
             if (status === "unauthenticated" || !session?.user) {
@@ -60,61 +50,48 @@ export default function PatientRecords() {
                 return;
             }
 
-            // Auto-connect wallet
-            try {
-                const conn = await connectWallet();
-                if (conn) {
-                    setConnection(conn);
-                    await linkWalletToAccount(conn.account);
-                    await loadRecords(conn);
-                }
-            } catch (error) {
-                console.log("Wallet connection failed, user can connect manually");
-            }
-
             setLoading(false);
+            await loadRecords();
         }
 
         checkAuth();
     }, [session, status, router]);
 
-    async function loadRecords(conn: WalletConnection) {
+    async function loadMockRecords() {
+        setLoadingRecords(true);
+        // Mock data for development
+        const mockRecords: MedicalRecord[] = [
+            {
+                id: "1",
+                patientId: "mock-patient",
+                doctorId: "mock-doctor",
+                recordHash: "QmXxxx1234567890abcdef",
+                timestamp: new Date().toISOString(),
+                isActive: true,
+                doctorName: "Dr. Smith"
+            },
+            {
+                id: "2",
+                patientId: "mock-patient",
+                doctorId: "mock-doctor-2",
+                recordHash: "QmYyyy0987654321fedcba",
+                timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+                isActive: true,
+                doctorName: "Dr. Johnson"
+            }
+        ];
+        setRecords(mockRecords);
+        setLoadingRecords(false);
+    }
+
+    async function loadRecords() {
         try {
             setLoadingRecords(true);
-
-            // Fetch patient's record IDs
-            const recordIds = await readContract(conn, "getPatientRecords", [
-                conn.account as `0x${string}`
-            ]) as unknown as bigint[];
-
-            console.log("Patient record IDs:", recordIds);
-
-            if (!recordIds || recordIds.length === 0) {
-                setRecords([]);
-                setLoadingRecords(false);
-                return;
+            const response = await fetch("/api/records");
+            if (response.ok) {
+                const data = await response.json();
+                setRecords(data.records || []);
             }
-
-            // Fetch each record's details
-            const recordsData = await Promise.all(
-                recordIds.map(async (id) => {
-                    const record = await readContract(conn, "medicalRecords", [id]) as any;
-                    console.log("Fetched record:", record);
-
-                    // Blockchain returns array: [recordId, patient, doctor, recordHash, timestamp, isActive]
-                    return {
-                        id: record[0],
-                        patient: record[1],
-                        doctor: record[2],
-                        recordHash: record[3],
-                        timestamp: record[4],
-                        isActive: record[5]
-                    };
-                })
-            );
-
-            console.log("All patient records:", recordsData);
-            setRecords(recordsData);
         } catch (error) {
             console.error("Error loading records:", error);
         } finally {
@@ -122,8 +99,8 @@ export default function PatientRecords() {
         }
     }
 
-    const formatDate = (timestamp: bigint) => {
-        const date = new Date(Number(timestamp) * 1000);
+    const formatDate = (timestamp: string) => {
+        const date = new Date(timestamp);
         return date.toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
@@ -144,46 +121,15 @@ export default function PatientRecords() {
         );
     }
 
-    if (!connection) {
-        return (
-            <div className="min-h-screen bg-white dark:bg-neutral-900">
-                <Navbar connection={connection} />
-                <main className="max-w-5xl mx-auto px-6 lg:px-8 py-12 pt-24">
-                    <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-8 text-center">
-                        <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50 mb-4">
-                            Connect Your Wallet
-                        </h2>
-                        <p className="text-neutral-600 dark:text-neutral-400 mb-6">
-                            Please connect your MetaMask wallet to view your medical records.
-                        </p>
-                        <button
-                            onClick={async () => {
-                                const conn = await connectWallet();
-                                if (conn) {
-                                    setConnection(conn);
-                                    await linkWalletToAccount(conn.account);
-                                    await loadRecords(conn);
-                                }
-                            }}
-                            className="px-6 py-3 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 rounded-lg font-medium hover:bg-neutral-800 dark:hover:bg-neutral-200 transition"
-                        >
-                            Connect Wallet
-                        </button>
-                    </div>
-                </main>
-            </div>
-        );
-    }
-
     return (
         <div className="min-h-screen bg-white dark:bg-neutral-900">
-            <Navbar connection={connection} />
+            <Navbar />
 
             <main className="max-w-7xl mx-auto px-6 lg:px-8 py-12 pt-24">
                 {/* Header */}
                 <div className="mb-8">
                     <Link
-                        href="/patient-home"
+                        href="/patient-portal/home"
                         className="inline-flex items-center gap-2 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 mb-4 transition"
                     >
                         <ArrowLeft className="w-4 h-4" />
@@ -193,7 +139,7 @@ export default function PatientRecords() {
                         My Medical Records
                     </h1>
                     <p className="text-lg text-neutral-600 dark:text-neutral-400">
-                        View and download your medical documents stored on blockchain
+                        View and download your medical documents
                     </p>
                 </div>
 
@@ -212,17 +158,17 @@ export default function PatientRecords() {
                             Your medical records will appear here once a doctor uploads them.
                         </p>
                         <Link
-                            href="/patient-home/permissions"
+                            href="/patient-portal/home"
                             className="inline-flex items-center gap-2 px-6 py-3 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 rounded-lg font-medium hover:bg-neutral-800 dark:hover:bg-neutral-200 transition"
                         >
-                            Manage Doctor Access
+                            Back to Dashboard
                         </Link>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {records.map((record) => (
                             <div
-                                key={record.id.toString()}
+                                key={record.id}
                                 className="bg-white dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6 hover:shadow-lg transition-shadow"
                             >
                                 <div className="flex items-start justify-between mb-4">
@@ -238,7 +184,7 @@ export default function PatientRecords() {
                                     <div>
                                         <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">Record ID</p>
                                         <p className="text-sm font-mono text-neutral-900 dark:text-neutral-100">
-                                            #{record.id.toString()}
+                                            #{record.id}
                                         </p>
                                     </div>
 
@@ -257,8 +203,8 @@ export default function PatientRecords() {
                                             <User className="w-3 h-3" />
                                             Doctor
                                         </p>
-                                        <p className="text-xs font-mono text-neutral-700 dark:text-neutral-300">
-                                            {record.doctor.slice(0, 10)}...{record.doctor.slice(-8)}
+                                        <p className="text-sm text-neutral-700 dark:text-neutral-300">
+                                            {record.doctorName || 'Unknown'}
                                         </p>
                                     </div>
 
@@ -296,12 +242,13 @@ export default function PatientRecords() {
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
-                        <div className="overflow-y-auto max-h-[calc(90vh-60px)]">
+                        <div className="overflow-y-auto max-h-[calc(90vh-60px)] p-6">
                             <RecordViewer
                                 recordHash={selectedRecord.recordHash}
                                 metadata={{
-                                    doctor: selectedRecord.doctor,
-                                    timestamp: selectedRecord.timestamp
+                                    doctor: selectedRecord.doctorName,
+                                    timestamp: BigInt(Math.floor(new Date(selectedRecord.timestamp).getTime() / 1000)),
+                                    notes: `Record ID: ${selectedRecord.id}`
                                 }}
                             />
                         </div>

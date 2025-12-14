@@ -3,7 +3,7 @@
 import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Activity } from "lucide-react"
+import { StarOfLife } from "@/components/icons/StarOfLife"
 import Link from "next/link"
 import { useLanguage } from "@/contexts/LanguageContext"
 
@@ -17,8 +17,8 @@ function FooterSection() {
           {/* Brand Section */}
           <div className="relative">
             <div className="flex items-center gap-2 mb-4">
-              <Activity className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-              <h2 className="text-2xl font-bold tracking-tight">Swasthya Sanchar</h2>
+              <StarOfLife className="w-8 h-8 text-red-600 dark:text-red-500 flex-shrink-0" />
+              <span className="text-xl text-neutral-900 dark:text-neutral-100 tracking-wide" style={{ fontFamily: 'Helvetica, Arial, sans-serif', fontWeight: 'bold' }}>Swasthya Sanchar</span>
             </div>
             <p className="mb-6 text-neutral-600 dark:text-neutral-400">
               {t.footer.brandDescription}
@@ -47,33 +47,33 @@ function FooterSection() {
 
           {/* Features */}
           <div>
-            <h3 className="mb-4 text-lg font-semibold">{t.footer.features}</h3>
+            <h3 className="mb-4 text-lg font-semibold">Key Features</h3>
             <nav className="space-y-2 text-sm">
               <Link href="#" className="block transition-colors hover:text-blue-600 dark:hover:text-blue-400">
-                {t.footer.blockchainSecurity}
+                You Own Your Data
               </Link>
               <Link href="#" className="block transition-colors hover:text-blue-600 dark:hover:text-blue-400">
-                {t.footer.emergencyQR}
+                Emergency Ready QR
               </Link>
               <Link href="#" className="block transition-colors hover:text-blue-600 dark:hover:text-blue-400">
-                {t.footer.medicalRecords}
+                Permanent & Portable
               </Link>
               <Link href="#" className="block transition-colors hover:text-blue-600 dark:hover:text-blue-400">
-                {t.footer.doctorAccessControl}
+                Consent Based Sharing
               </Link>
             </nav>
           </div>
 
           {/* About */}
           <div className="relative">
-            <h3 className="mb-4 text-lg font-semibold">{t.footer.aboutProject}</h3>
+            <h3 className="mb-4 text-lg font-semibold">Why Blockchain?</h3>
             <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-4">
-              {t.footer.aboutDescription}
+              Empowering you with complete ownership of your medical history. Instant emergency access for first responders, seamless sharing for doctors, and privacy by design.
             </p>
             <div className="space-y-2 text-sm text-neutral-600 dark:text-neutral-400">
-              <p>{t.footer.endToEndEncryption}</p>
-              <p>{t.footer.instantEmergencyAccess}</p>
-              <p>{t.footer.poweredByEthereum}</p>
+              <p>✓ Global Access Anywhere</p>
+              <p>✓ Tamper-Proof Records</p>
+              <p>✓ Decentralized & Secure</p>
             </div>
           </div>
         </div>

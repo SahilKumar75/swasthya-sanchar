@@ -22,6 +22,8 @@ interface PatientProfile {
     emergencyPhone?: string;
     isRegisteredOnChain?: boolean;
     walletAddress?: string;
+    height?: string;
+    weight?: string;
 }
 
 export default function PatientHome() {
@@ -32,6 +34,12 @@ export default function PatientHome() {
     const [qrCode, setQrCode] = useState<string>("");
 
     useEffect(() => {
+        // Development bypass - skip auth checks if enabled
+        if (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') {
+            console.log('[DEV BYPASS] 🔓 Patient portal home - auth bypass enabled');
+            return;
+        }
+
         if (status === "unauthenticated") {
             router.push("/auth/login");
         }
@@ -40,6 +48,34 @@ export default function PatientHome() {
     useEffect(() => {
         const fetchProfile = async () => {
             try {
+                // Development bypass - use mock data
+                if (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') {
+                    console.log('[DEV BYPASS] 🔓 Loading mock patient data for home page');
+                    const mockProfile: PatientProfile = {
+                        dateOfBirth: "1990-01-15",
+                        bloodGroup: "O+",
+                        allergies: "Penicillin, Peanuts",
+                        chronicConditions: "None",
+                        currentMedications: "Aspirin, Vitamin D",
+                        emergencyName: "Jane Doe",
+                        emergencyPhone: "+91 9876543211",
+                        isRegisteredOnChain: true,
+                        walletAddress: "0x1234567890abcdef1234567890abcdef12345678",
+                        height: "175",
+                        weight: "70"
+                    };
+
+                    setProfile(mockProfile);
+
+                    // Generate QR code
+                    const QRCode = (await import("qrcode")).default;
+                    const emergencyUrl = `${window.location.origin}/emergency/0x1234567890abcdef1234567890abcdef12345678`;
+                    const qr = await QRCode.toDataURL(emergencyUrl, { width: 200, margin: 2 });
+                    setQrCode(qr);
+                    setLoading(false);
+                    return;
+                }
+
                 const res = await fetch("/api/patient/status");
                 const data = await res.json();
                 setProfile(data);
@@ -58,7 +94,7 @@ export default function PatientHome() {
             }
         };
 
-        if (session) {
+        if (session || process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') {
             fetchProfile();
         }
     }, [session]);
@@ -94,6 +130,22 @@ export default function PatientHome() {
         return profile.currentMedications.split(',').filter(m => m.trim()).length;
     };
 
+    const calculateBMI = () => {
+        if (!profile?.height || !profile?.weight) return null;
+        const heightInMeters = parseFloat(profile.height) / 100;
+        const weightInKg = parseFloat(profile.weight);
+        if (heightInMeters <= 0 || weightInKg <= 0) return null;
+        const bmi = weightInKg / (heightInMeters * heightInMeters);
+        return bmi.toFixed(1);
+    };
+
+    const getBMICategory = (bmi: number) => {
+        if (bmi < 18.5) return { category: 'Underweight', color: 'text-blue-600 dark:text-blue-400' };
+        if (bmi < 25) return { category: 'Normal', color: 'text-green-600 dark:text-green-400' };
+        if (bmi < 30) return { category: 'Overweight', color: 'text-orange-600 dark:text-orange-400' };
+        return { category: 'Obese', color: 'text-red-600 dark:text-red-400' };
+    };
+
     if (status === "loading" || loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -102,13 +154,15 @@ export default function PatientHome() {
         );
     }
 
-    if (!session) {
+    if (!session && process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH !== 'true') {
         return null;
     }
 
     const isRegistered = profile?.isRegisteredOnChain || false;
     const bloodInfo = getBloodGroupRarity(profile?.bloodGroup);
     const medicationCount = getMedicationCount();
+    const bmi = calculateBMI();
+    const bmiInfo = bmi ? getBMICategory(parseFloat(bmi)) : null;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-neutral-900 dark:via-neutral-900 dark:to-neutral-800">
@@ -118,11 +172,8 @@ export default function PatientHome() {
                 {/* Header */}
                 <div className="mb-8">
                     <h2 className="text-3xl font-bold text-neutral-900 dark:text-neutral-50">
-                        Welcome back, {session.user?.email?.split('@')[0]}!
+                        Welcome back, {session?.user?.email?.split('@')[0] || 'Developer'}!
                     </h2>
-                    <p className="text-neutral-600 dark:text-neutral-400 mt-1">
-                        Your health dashboard
-                    </p>
                 </div>
 
                 {/* Registration Status Banner */}
@@ -150,198 +201,203 @@ export default function PatientHome() {
 
                 {isRegistered && profile ? (
                     <>
-                        {/* Bento Grid - Health Dashboard */}
-                        <div className="grid grid-cols-12 gap-4 mb-8">
-                            {/* Blood Group Card */}
-                            <div className="col-span-12 md:col-span-4 bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-900/20 dark:to-red-900/20 rounded-2xl border-2 border-rose-200 dark:border-rose-800 p-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="p-2.5 bg-white/70 dark:bg-neutral-800/70 backdrop-blur-sm rounded-lg">
-                                        <Droplet className="w-5 h-5 text-rose-600 dark:text-rose-400" />
-                                    </div>
-                                    <span className="text-xs font-medium px-3 py-1 rounded-full bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300">
-                                        {bloodInfo.rarity}
-                                    </span>
-                                </div>
-                                <div className="flex items-baseline gap-3 mb-2">
-                                    <span className="text-4xl font-bold text-rose-900 dark:text-rose-100">
-                                        {profile.bloodGroup || "N/A"}
-                                    </span>
-                                    <div className="flex-1">
-                                        <p className="text-sm text-rose-700 dark:text-rose-300 mb-1">
-                                            {bloodInfo.percentage}% of population
-                                        </p>
-                                        <div className="w-full bg-white/50 dark:bg-neutral-800/50 rounded-full h-1.5">
-                                            <div
-                                                className="bg-gradient-to-r from-rose-500 to-red-600 h-1.5 rounded-full"
-                                                style={{ width: `${Math.min(bloodInfo.percentage * 2, 100)}%` }}
-                                            ></div>
+                        {/* Simplified Layout - Two Column Grid */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                            {/* Left Column: BMI, Blood Group, and Current Medications */}
+                            <div className="space-y-8">
+                                {/* BMI | Blood Group - Side by Side with Values on Top */}
+                                <div className="flex items-start gap-8">
+                                    {/* BMI */}
+                                    {bmi && bmiInfo && (
+                                        <div className="flex flex-col">
+                                            <div className="flex items-baseline gap-3 mb-2">
+                                                <span className="text-5xl font-bold text-neutral-900 dark:text-neutral-50">{bmi}</span>
+                                                <span className={`text-xl font-medium ${bmiInfo.color}`}>{bmiInfo.category}</span>
+                                            </div>
+                                            <h3 className="text-sm font-medium text-neutral-600 dark:text-neutral-400">Body Mass Index (BMI)</h3>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Age Card */}
-                            <div className="col-span-6 md:col-span-3 bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20 rounded-2xl border border-pink-200 dark:border-pink-800 p-6">
-                                <div className="p-2.5 bg-white/70 dark:bg-neutral-800/70 backdrop-blur-sm rounded-lg w-fit mb-4">
-                                    <Calendar className="w-5 h-5 text-pink-600 dark:text-pink-400" />
-                                </div>
-                                <div>
-                                    <div className="flex items-baseline gap-2 mb-1">
-                                        <span className="text-4xl font-bold text-pink-900 dark:text-pink-100">
-                                            {calculateAge(profile.dateOfBirth)}
-                                        </span>
-                                        <span className="text-lg text-pink-700 dark:text-pink-300">yrs</span>
-                                    </div>
-                                    <p className="text-sm text-pink-700 dark:text-pink-300">Age</p>
-                                </div>
-                            </div>
-
-                            {/* Active Medications */}
-                            <div className="col-span-6 md:col-span-4 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl border border-amber-200 dark:border-amber-800 p-6">
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className="p-2.5 bg-white/70 dark:bg-neutral-800/70 backdrop-blur-sm rounded-lg">
-                                        <Pill className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                                    </div>
-                                    <span className="text-xs font-medium text-amber-700 dark:text-amber-300">Active</span>
-                                </div>
-                                <div>
-                                    <div className="flex items-baseline gap-2 mb-1">
-                                        <span className="text-4xl font-bold text-amber-900 dark:text-amber-100">
-                                            {medicationCount}
-                                        </span>
-                                        <span className="text-lg text-amber-700 dark:text-amber-300">meds</span>
-                                    </div>
-                                    <p className="text-sm text-amber-700 dark:text-amber-300">Current prescriptions</p>
-                                </div>
-                            </div>
-
-                            {/* Emergency Contact */}
-                            <div className="col-span-6 md:col-span-4 bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 rounded-2xl border border-red-200 dark:border-red-800 p-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="p-3 bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm rounded-xl">
-                                        <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
-                                    </div>
-                                    <span className="text-sm font-medium text-red-700 dark:text-red-300">Emergency</span>
-                                </div>
-                                <div>
-                                    <p className="text-lg font-bold text-red-900 dark:text-red-100 mb-1">
-                                        {profile.emergencyName || "Not set"}
-                                    </p>
-                                    {profile.emergencyPhone && (
-                                        <p className="text-sm font-mono text-red-800 dark:text-red-200 mt-2">
-                                            {profile.emergencyPhone}
-                                        </p>
                                     )}
-                                </div>
-                            </div>
 
-                            {/* Emergency QR Code Display */}
-                            <div className="col-span-12 md:col-span-5 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-2xl border-2 border-purple-200 dark:border-purple-800 p-6">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="p-3 bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm rounded-xl">
-                                        <QrCode className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                                    </div>
-                                    <div>
-                                        <p className="text-lg font-bold text-purple-900 dark:text-purple-100">
-                                            Emergency QR Code
-                                        </p>
-                                        <p className="text-sm text-purple-700 dark:text-purple-300">
-                                            Scan for instant access
-                                        </p>
+                                    {/* Separator */}
+                                    {bmi && bmiInfo && <span className="text-3xl text-neutral-300 dark:text-neutral-600 mt-2">|</span>}
+
+                                    {/* Blood Group */}
+                                    <div className="flex flex-col">
+                                        <div className="flex items-baseline gap-3 mb-2">
+                                            <span className="text-5xl font-bold text-rose-600 dark:text-rose-400">{profile.bloodGroup || "N/A"}</span>
+                                            <span className="text-sm text-neutral-600 dark:text-neutral-400">
+                                                {bloodInfo.rarity} • {bloodInfo.percentage}%
+                                            </span>
+                                        </div>
+                                        <h3 className="text-sm font-medium text-neutral-600 dark:text-neutral-400">Blood Group</h3>
                                     </div>
                                 </div>
-                                {qrCode ? (
-                                    <div className="bg-white dark:bg-neutral-800 rounded-xl p-4 flex flex-col items-center">
-                                        <img
-                                            src={qrCode}
-                                            alt="Emergency QR Code"
-                                            className="w-48 h-48 mb-3"
-                                        />
-                                        <Link
-                                            href="/patient/emergency"
-                                            className="text-sm text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1"
-                                        >
-                                            View full page <ArrowUpRight className="w-3 h-3" />
-                                        </Link>
-                                    </div>
-                                ) : (
-                                    <div className="bg-white dark:bg-neutral-800 rounded-xl p-8 text-center">
-                                        <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                                            Generating QR code...
-                                        </p>
+
+                                {/* Current Medications */}
+                                {profile.currentMedications && (
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-neutral-700 dark:text-neutral-300 mb-3">Current Medications</h3>
+                                        <div className="ml-4 pl-4 space-y-3 relative">
+                                            {profile.currentMedications.split(',').filter(m => m.trim()).map((med, idx, arr) => {
+                                                const isLast = idx === arr.length - 1;
+                                                return (
+                                                    <div key={idx} className="relative">
+                                                        {/* Vertical line (only if not last) */}
+                                                        {!isLast && (
+                                                            <div className="absolute left-[-1rem] top-0 bottom-0 w-0.5 bg-neutral-300 dark:bg-neutral-600"></div>
+                                                        )}
+
+                                                        {/* Vertical line for last item (only to the connector) */}
+                                                        {isLast && (
+                                                            <div className="absolute left-[-1rem] top-0 h-3 w-0.5 bg-neutral-300 dark:bg-neutral-600"></div>
+                                                        )}
+
+                                                        {/* Horizontal connector */}
+                                                        <div className="absolute left-[-1rem] top-3 w-4 h-0.5 bg-neutral-300 dark:bg-neutral-600"></div>
+
+                                                        {/* Medication info */}
+                                                        <div>
+                                                            <p className="font-medium text-neutral-900 dark:text-neutral-100">{med.trim()}</p>
+                                                            <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+                                                                Prescribed by Dr. Smith • Jan 15, 2024
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 )}
                             </div>
 
-                            {/* Medical Records Link */}
-                            <Link
-                                href="#"
-                                onClick={(e) => { e.preventDefault(); alert("Medical Records feature coming soon!"); }}
-                                className="col-span-6 md:col-span-3 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl border-2 border-blue-200 dark:border-blue-800 p-6 hover:scale-[1.02] transition-transform cursor-pointer group"
-                            >
-                                <div className="p-3 bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm rounded-xl w-fit mb-4">
-                                    <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                                </div>
+                            {/* Right Column: Diagnosis & Health Tips */}
+                            <div className="space-y-6">
+                                {/* Diagnosed Conditions */}
                                 <div>
-                                    <p className="text-lg font-bold text-blue-900 dark:text-blue-100 mb-1 group-hover:translate-x-1 transition-transform">
-                                        Medical Records →
-                                    </p>
-                                    <p className="text-sm text-blue-700 dark:text-blue-300">
-                                        View history
-                                    </p>
+                                    <h3 className="text-lg font-semibold text-neutral-700 dark:text-neutral-300 mb-3">Diagnosed With</h3>
+                                    <div className="flex items-center gap-2">
+                                        <span className="px-3 py-1.5 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 rounded-lg text-sm font-medium">
+                                            Hypothyroidism
+                                        </span>
+                                        <span className="text-xs text-neutral-500 dark:text-neutral-400">Since Dec 2023</span>
+                                    </div>
                                 </div>
-                            </Link>
 
-                            {/* Doctor Access/Permissions Link */}
-                            <Link
-                                href="#"
-                                onClick={(e) => { e.preventDefault(); alert("Doctor Access feature coming soon!"); }}
-                                className="col-span-6 md:col-span-3 bg-gradient-to-br from-cyan-50 to-teal-50 dark:from-cyan-900/20 dark:to-teal-900/20 rounded-2xl border-2 border-cyan-200 dark:border-cyan-800 p-6 hover:scale-[1.02] transition-transform cursor-pointer group"
-                            >
-                                <div className="p-3 bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm rounded-xl w-fit mb-4">
-                                    <Shield className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
+                                {/* Dietary Tips & Medication Schedule - Side by Side */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Dietary Tips */}
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-neutral-700 dark:text-neutral-300 mb-3">Dietary Recommendations</h3>
+                                        <ul className="space-y-2 text-sm text-neutral-700 dark:text-neutral-300">
+                                            <li>
+                                                <span className="font-semibold text-green-700 dark:text-green-400">Do:</span> Include iodine-rich foods (seafood, dairy, eggs)
+                                            </li>
+                                            <li>
+                                                <span className="font-semibold text-green-700 dark:text-green-400">Do:</span> Consume selenium sources (Brazil nuts, tuna, sardines)
+                                            </li>
+                                            <li>
+                                                <span className="font-semibold text-red-700 dark:text-red-400">Don't:</span> Limit soy products and cruciferous vegetables
+                                            </li>
+                                            <li>
+                                                <span className="font-semibold text-red-700 dark:text-red-400">Don't:</span> Avoid excessive caffeine intake
+                                            </li>
+                                        </ul>
+                                    </div>
+
+                                    {/* Medication Schedule */}
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-neutral-700 dark:text-neutral-300 mb-3">Medication Schedule</h3>
+                                        <div className="space-y-3">
+                                            <div className="border-l-4 border-blue-500 pl-4 py-2">
+                                                <p className="font-medium text-neutral-900 dark:text-neutral-100">Aspirin</p>
+                                                <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+                                                    <span className="font-medium">Dosage:</span> 75mg daily
+                                                </p>
+                                                <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                                                    <span className="font-medium">Timing:</span> After breakfast with water
+                                                </p>
+                                            </div>
+                                            <div className="border-l-4 border-purple-500 pl-4 py-2">
+                                                <p className="font-medium text-neutral-900 dark:text-neutral-100">Vitamin D</p>
+                                                <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+                                                    <span className="font-medium">Dosage:</span> 1000 IU daily
+                                                </p>
+                                                <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                                                    <span className="font-medium">Timing:</span> Morning with meal
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="text-lg font-bold text-cyan-900 dark:text-cyan-100 mb-1 group-hover:translate-x-1 transition-transform">
-                                        Doctor Access →
-                                    </p>
-                                    <p className="text-sm text-cyan-700 dark:text-cyan-300">
-                                        Manage permissions
-                                    </p>
-                                </div>
-                            </Link>
+                            </div>
                         </div>
 
-                        {/* Quick Info Section */}
-                        <div className="bg-white dark:bg-neutral-800/50 rounded-xl border border-neutral-200 dark:border-neutral-700 p-8 mb-8">
-                            <h3 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 mb-6">
-                                Medical Information
-                            </h3>
-                            <div className="grid md:grid-cols-3 gap-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-2">
-                                        Known Allergies
-                                    </label>
-                                    <p className="text-neutral-900 dark:text-neutral-100">
-                                        {profile.allergies || "None reported"}
-                                    </p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-2">
-                                        Chronic Conditions
-                                    </label>
-                                    <p className="text-neutral-900 dark:text-neutral-100">
-                                        {profile.chronicConditions || "None reported"}
-                                    </p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-2">
-                                        Current Medications
-                                    </label>
-                                    <p className="text-neutral-900 dark:text-neutral-100">
-                                        {profile.currentMedications || "None reported"}
-                                    </p>
-                                </div>
+                        {/* Features Section */}
+                        <div>
+                            <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 mb-6">Features</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {/* Medical Records Link */}
+                                <Link
+                                    href="/patient/records"
+                                    className="group relative overflow-hidden bg-white dark:bg-neutral-800 rounded-xl p-6 border border-neutral-200 dark:border-neutral-700 hover:border-blue-400 dark:hover:border-blue-600 transition-all duration-300 hover:shadow-lg"
+                                >
+                                    <div className="flex items-start gap-4">
+                                        <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg group-hover:scale-110 transition-transform duration-300">
+                                            <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50 mb-1">
+                                                Medical Records
+                                            </h3>
+                                            <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                                                Access your complete medical history
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="absolute bottom-0 left-0 h-1 bg-blue-500 w-0 group-hover:w-full transition-all duration-300"></div>
+                                </Link>
+
+                                {/* Doctor Access Link */}
+                                <Link
+                                    href="/patient-home/permissions"
+                                    className="group relative overflow-hidden bg-white dark:bg-neutral-800 rounded-xl p-6 border border-neutral-200 dark:border-neutral-700 hover:border-cyan-400 dark:hover:border-cyan-600 transition-all duration-300 hover:shadow-lg"
+                                >
+                                    <div className="flex items-start gap-4">
+                                        <div className="p-3 bg-cyan-100 dark:bg-cyan-900/30 rounded-lg group-hover:scale-110 transition-transform duration-300">
+                                            <Shield className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50 mb-1">
+                                                Doctor Access
+                                            </h3>
+                                            <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                                                Manage doctor permissions
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="absolute bottom-0 left-0 h-1 bg-cyan-500 w-0 group-hover:w-full transition-all duration-300"></div>
+                                </Link>
+
+                                {/* Emergency Card Link */}
+                                <Link
+                                    href="/patient/emergency"
+                                    className="group relative overflow-hidden bg-white dark:bg-neutral-800 rounded-xl p-6 border border-neutral-200 dark:border-neutral-700 hover:border-red-400 dark:hover:border-red-600 transition-all duration-300 hover:shadow-lg"
+                                >
+                                    <div className="flex items-start gap-4">
+                                        <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-lg group-hover:scale-110 transition-transform duration-300">
+                                            <QrCode className="w-6 h-6 text-red-600 dark:text-red-400" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50 mb-1">
+                                                Emergency Card
+                                            </h3>
+                                            <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                                                Quick access QR code
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="absolute bottom-0 left-0 h-1 bg-red-500 w-0 group-hover:w-full transition-all duration-300"></div>
+                                </Link>
                             </div>
                         </div>
                     </>

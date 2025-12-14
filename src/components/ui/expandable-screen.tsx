@@ -35,6 +35,7 @@ interface ExpandableScreenProps {
   contentRadius?: string
   animationDuration?: number
   defaultExpanded?: boolean
+  expanded?: boolean
   onExpandChange?: (expanded: boolean) => void
   lockScroll?: boolean
 }
@@ -46,10 +47,13 @@ export function ExpandableScreen({
   contentRadius = "24px",
   animationDuration = 0.3,
   defaultExpanded = false,
+  expanded,
   onExpandChange,
   lockScroll = true,
 }: ExpandableScreenProps) {
-  const [isExpanded, setIsExpanded] = React.useState(defaultExpanded)
+  const [internalExpanded, setInternalExpanded] = React.useState(defaultExpanded)
+
+  const isExpanded = expanded !== undefined ? expanded : internalExpanded
 
   React.useEffect(() => {
     if (lockScroll) {
@@ -79,12 +83,12 @@ export function ExpandableScreen({
   }, [isExpanded])
 
   const expand = React.useCallback(() => {
-    setIsExpanded(true)
+    setInternalExpanded(true)
     onExpandChange?.(true)
   }, [onExpandChange])
 
   const collapse = React.useCallback(() => {
-    setIsExpanded(false)
+    setInternalExpanded(false)
     onExpandChange?.(false)
   }, [onExpandChange])
 
@@ -187,9 +191,8 @@ export function ExpandableScreenContent({
             {showCloseButton && (
               <button
                 onClick={collapse}
-                className={`fixed top-4 right-4 z-[60] p-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-colors ${
-                  closeButtonClassName || ""
-                }`}
+                className={`fixed top-4 right-4 z-[60] p-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-colors ${closeButtonClassName || ""
+                  }`}
                 aria-label="Close"
               >
                 <X className="w-6 h-6 text-white" />

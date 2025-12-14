@@ -2,102 +2,81 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-    connectWallet,
-    getCurrentAccount,
-    onAccountsChanged,
-    type WalletConnection,
-    readContract as readContractHelper,
-    writeContract as writeContractHelper
-} from '@/lib/web3';
-import { HEALTH_RECORDS_ABI, HEALTH_RECORDS_ADDRESS } from '@/lib/contracts';
-import { isAddress } from 'viem';
+import { useSession } from 'next-auth/react';
+import { Navbar } from '@/components/Navbar';
+import { ArrowLeft, Shield, Trash2, Plus, Loader2 } from 'lucide-react';
 
 interface AuthorizedDoctor {
-    address: string;
-    grantedAt: bigint;
+    id: string;
+    doctorEmail: string;
+    doctorName?: string;
+    grantedAt: string;
 }
 
 export default function PermissionsPage() {
     const router = useRouter();
-    const [connection, setConnection] = useState<WalletConnection | null>(null);
-    const [address, setAddress] = useState<string>('');
+    const { data: session, status } = useSession();
+    const [loading, setLoading] = useState(true);
     const [authorizedDoctors, setAuthorizedDoctors] = useState<AuthorizedDoctor[]>([]);
-    const [newDoctorAddress, setNewDoctorAddress] = useState('');
-    const [loading, setLoading] = useState(false);
+    const [newDoctorEmail, setNewDoctorEmail] = useState('');
+    const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
-    // Initialize wallet connection
     useEffect(() => {
-        initWallet();
-
-        // Listen for account changes
-        onAccountsChanged((accounts) => {
-            if (accounts.length === 0) {
-                setConnection(null);
-                setAddress('');
-            } else {
-                initWallet();
+        async function checkAuth() {
+            // Development bypass
+            if (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') {
+                console.log('[DEV BYPASS] 🔓 Permissions page - auth bypass enabled');
+                setLoading(false);
+                loadMockDoctors();
+                return;
             }
-        });
-    }, []);
 
-    // Fetch authorized doctors when connection changes
-    useEffect(() => {
-        if (connection && address) {
-            fetchAuthorizedDoctors();
-        }
-    }, [connection, address]);
+            if (status === "loading") return;
 
-    const initWallet = async () => {
-        const currentAccount = await getCurrentAccount();
-        if (currentAccount) {
-            const conn = await connectWallet();
-            if (conn) {
-                setConnection(conn);
-                setAddress(conn.account);
+            if (status === "unauthenticated" || !session?.user) {
+                router.push("/auth/login");
+                return;
             }
-        }
-    };
 
-    const handleConnect = async () => {
-        const conn = await connectWallet();
-        if (conn) {
-            setConnection(conn);
-            setAddress(conn.account);
+            if (session.user.role !== "patient") {
+                router.push("/");
+                return;
+            }
+
+            setLoading(false);
+            await fetchAuthorizedDoctors();
         }
+
+        checkAuth();
+    }, [session, status, router]);
+
+    const loadMockDoctors = () => {
+        const mockDoctors: AuthorizedDoctor[] = [
+            {
+                id: '1',
+                doctorEmail: 'dr.smith@hospital.com',
+                doctorName: 'Dr. John Smith',
+                grantedAt: new Date().toISOString()
+            },
+            {
+                id: '2',
+                doctorEmail: 'dr.johnson@clinic.com',
+                doctorName: 'Dr. Sarah Johnson',
+                grantedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+            }
+        ];
+        setAuthorizedDoctors(mockDoctors);
     };
 
     const fetchAuthorizedDoctors = async () => {
-        if (!connection || !address) return;
-
         try {
-            const doctorsResult = await readContractHelper(
-                connection,
-                'getAuthorizedDoctors',
-                [address as `0x${string}`]
-            );
-
-            const doctors = doctorsResult as unknown as `0x${string}`[];
-
-            // Fetch grant timestamps for each doctor
-            const doctorsWithTimestamps = await Promise.all(
-                doctors.map(async (doctorAddr) => {
-                    const timestamp = await readContractHelper(
-                        connection,
-                        'accessGrantedAt',
-                        [address as `0x${string}`, doctorAddr]
-                    ) as bigint;
-
-                    return {
-                        address: doctorAddr,
-                        grantedAt: timestamp,
-                    };
-                })
-            );
-
-            setAuthorizedDoctors(doctorsWithTimestamps);
+            const response = await fetch('/api/patient/authorized-doctors');
+            if (response.ok) {
+                const data = await response.json();
+                setAuthorizedDoctors(data.doctors || []);
+            }
         } catch (err) {
             console.error('Error fetching authorized doctors:', err);
             setError('Failed to load authorized doctors');
@@ -109,173 +88,201 @@ export default function PermissionsPage() {
         setError('');
         setSuccess('');
 
-        // Validate address
-        if (!isAddress(newDoctorAddress)) {
-            setError('Invalid Ethereum address');
+        if (!newDoctorEmail || !newDoctorEmail.includes('@')) {
+            setError('Please enter a valid email address');
             return;
         }
 
-        if (!connection) {
-            setError('Please connect your wallet');
-            return;
-        }
-
-        setLoading(true);
+        setSubmitting(true);
 
         try {
-            // Call grantDoctorAccess on smart contract
-            await writeContractHelper(
-                connection,
-                'grantDoctorAccess',
-                [newDoctorAddress as `0x${string}`]
-            );
-
-            setSuccess(`Access granted to ${newDoctorAddress}`);
-            setNewDoctorAddress('');
-
-            // Refresh the list
-            await fetchAuthorizedDoctors();
-        } catch (err: any) {
-            console.error('Error granting access:', err);
-            if (err.message?.includes('Doctor already authorized')) {
-                setError('This doctor is already authorized');
-            } else if (err.message?.includes('User rejected') || err.message?.includes('User denied')) {
-                setError('Transaction rejected');
-            } else {
-                setError('Failed to grant access. Please try again.');
+            // Dev bypass
+            if (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                const newDoctor: AuthorizedDoctor = {
+                    id: Date.now().toString(),
+                    doctorEmail: newDoctorEmail,
+                    grantedAt: new Date().toISOString()
+                };
+                setAuthorizedDoctors([...authorizedDoctors, newDoctor]);
+                setSuccess(`Access granted to ${newDoctorEmail}`);
+                setNewDoctorEmail('');
+                setSubmitting(false);
+                return;
             }
+
+            const response = await fetch('/api/patient/grant-access', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ doctorEmail: newDoctorEmail })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                setSuccess(`Access granted to ${newDoctorEmail}`);
+                setNewDoctorEmail('');
+                await fetchAuthorizedDoctors();
+            } else {
+                setError(data.error || 'Failed to grant access');
+            }
+        } catch (err) {
+            console.error('Error granting access:', err);
+            setError('Failed to grant access. Please try again.');
         } finally {
-            setLoading(false);
+            setSubmitting(false);
         }
     };
 
-    const handleRevokeAccess = async (doctorAddress: string) => {
-        if (!connection) return;
-
+    const handleRevokeAccess = async (doctorId: string, doctorEmail: string) => {
         setError('');
         setSuccess('');
-        setLoading(true);
+        setSubmitting(true);
 
         try {
-            await writeContractHelper(
-                connection,
-                'revokeDoctorAccess',
-                [doctorAddress as `0x${string}`]
-            );
+            // Dev bypass
+            if (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                setAuthorizedDoctors(authorizedDoctors.filter(d => d.id !== doctorId));
+                setSuccess(`Access revoked from ${doctorEmail}`);
+                setSubmitting(false);
+                return;
+            }
 
-            setSuccess(`Access revoked from ${doctorAddress}`);
+            const response = await fetch('/api/patient/revoke-access', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ doctorId })
+            });
 
-            // Refresh the list
-            await fetchAuthorizedDoctors();
-        } catch (err: any) {
+            if (response.ok) {
+                setSuccess(`Access revoked from ${doctorEmail}`);
+                await fetchAuthorizedDoctors();
+            } else {
+                const data = await response.json();
+                setError(data.error || 'Failed to revoke access');
+            }
+        } catch (err) {
             console.error('Error revoking access:', err);
             setError('Failed to revoke access. Please try again.');
         } finally {
-            setLoading(false);
+            setSubmitting(false);
         }
     };
 
-    if (!connection) {
+    if (status === "loading" || loading) {
         return (
-            <div className="min-h-screen bg-black text-white flex items-center justify-center">
-                <div className="text-center">
-                    <h1 className="text-2xl font-bold mb-4">Connect Your Wallet</h1>
-                    <p className="text-gray-400 mb-6">Please connect your wallet to manage doctor permissions</p>
-                    <button
-                        onClick={handleConnect}
-                        className="bg-white text-black px-6 py-3 rounded font-semibold hover:bg-gray-200 transition-colors"
-                    >
-                        Connect Wallet
-                    </button>
-                </div>
+            <div className="min-h-screen bg-white dark:bg-neutral-900 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-neutral-600 dark:text-neutral-400" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-black text-white p-8">
-            <div className="max-w-4xl mx-auto">
+        <div className="min-h-screen bg-white dark:bg-neutral-900">
+            <Navbar />
+
+            <main className="max-w-4xl mx-auto px-6 lg:px-8 py-12 pt-24">
                 {/* Header */}
                 <div className="mb-8">
-                    <button
-                        onClick={() => router.push('/patient-home')}
-                        className="text-gray-400 hover:text-white mb-4 flex items-center gap-2"
-                    >
-                        ← Back to Dashboard
-                    </button>
-                    <h1 className="text-3xl font-bold mb-2">Manage Doctor Access</h1>
-                    <p className="text-gray-400">
+                    <h1 className="text-4xl font-bold text-neutral-900 dark:text-neutral-50 mb-2">
+                        Manage Doctor Access
+                    </h1>
+                    <p className="text-lg text-neutral-600 dark:text-neutral-400">
                         Control which doctors can view your medical records
                     </p>
                 </div>
 
                 {/* Alerts */}
                 {error && (
-                    <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded mb-6">
+                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg mb-6">
                         {error}
                     </div>
                 )}
                 {success && (
-                    <div className="bg-green-500/10 border border-green-500 text-green-500 px-4 py-3 rounded mb-6">
+                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 px-4 py-3 rounded-lg mb-6">
                         {success}
                     </div>
                 )}
 
                 {/* Grant Access Form */}
-                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 mb-8">
-                    <h2 className="text-xl font-semibold mb-4">Grant Access to Doctor</h2>
+                <div className="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl p-6 mb-8">
+                    <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-50 mb-4">
+                        Grant Access to Doctor
+                    </h2>
                     <form onSubmit={handleGrantAccess} className="space-y-4">
                         <div>
-                            <label htmlFor="doctorAddress" className="block text-sm font-medium text-gray-300 mb-2">
-                                Doctor Wallet Address
+                            <label htmlFor="doctorEmail" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                                Doctor Email Address
                             </label>
                             <input
-                                type="text"
-                                id="doctorAddress"
-                                value={newDoctorAddress}
-                                onChange={(e) => setNewDoctorAddress(e.target.value)}
-                                placeholder="0x..."
-                                className="w-full bg-black border border-zinc-700 rounded px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-zinc-500"
-                                disabled={loading}
+                                type="email"
+                                id="doctorEmail"
+                                value={newDoctorEmail}
+                                onChange={(e) => setNewDoctorEmail(e.target.value)}
+                                placeholder="doctor@hospital.com"
+                                className="w-full bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg px-4 py-2 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                disabled={submitting}
                             />
                         </div>
                         <button
                             type="submit"
-                            disabled={loading || !newDoctorAddress}
-                            className="w-full bg-white text-black font-semibold py-3 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            disabled={submitting || !newDoctorEmail}
+                            className="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                         >
-                            {loading ? 'Processing...' : 'Grant Access'}
+                            {submitting ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Processing...
+                                </>
+                            ) : (
+                                <>
+                                    <Plus className="w-4 h-4" />
+                                    Grant Access
+                                </>
+                            )}
                         </button>
                     </form>
                 </div>
 
                 {/* Authorized Doctors List */}
-                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
-                    <h2 className="text-xl font-semibold mb-4">Authorized Doctors</h2>
+                <div className="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl p-6">
+                    <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-50 mb-4">
+                        Authorized Doctors
+                    </h2>
 
                     {authorizedDoctors.length === 0 ? (
-                        <div className="text-center py-12 text-gray-400">
-                            <p>No doctors authorized yet</p>
+                        <div className="text-center py-12 text-neutral-500 dark:text-neutral-400">
+                            <Shield className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                            <p className="font-medium">No doctors authorized yet</p>
                             <p className="text-sm mt-2">Grant access to a doctor using the form above</p>
                         </div>
                     ) : (
                         <div className="space-y-3">
                             {authorizedDoctors.map((doctor) => (
                                 <div
-                                    key={doctor.address}
-                                    className="flex items-center justify-between bg-black border border-zinc-800 rounded p-4"
+                                    key={doctor.id}
+                                    className="flex items-center justify-between bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg p-4"
                                 >
                                     <div className="flex-1">
-                                        <p className="font-mono text-sm">{doctor.address}</p>
-                                        <p className="text-xs text-gray-400 mt-1">
-                                            Granted: {new Date(Number(doctor.grantedAt) * 1000).toLocaleDateString()}
+                                        <p className="font-medium text-neutral-900 dark:text-neutral-100">
+                                            {doctor.doctorName || doctor.doctorEmail}
+                                        </p>
+                                        {doctor.doctorName && (
+                                            <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                                                {doctor.doctorEmail}
+                                            </p>
+                                        )}
+                                        <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-1">
+                                            Granted: {new Date(doctor.grantedAt).toLocaleDateString()}
                                         </p>
                                     </div>
                                     <button
-                                        onClick={() => handleRevokeAccess(doctor.address)}
-                                        disabled={loading}
-                                        className="ml-4 bg-red-500/10 text-red-500 border border-red-500 px-4 py-2 rounded hover:bg-red-500/20 disabled:opacity-50 transition-colors"
+                                        onClick={() => handleRevokeAccess(doctor.id, doctor.doctorEmail)}
+                                        disabled={submitting}
+                                        className="ml-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 px-4 py-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 disabled:opacity-50 transition-colors flex items-center gap-2"
                                     >
+                                        <Trash2 className="w-4 h-4" />
                                         Revoke
                                     </button>
                                 </div>
@@ -283,18 +290,7 @@ export default function PermissionsPage() {
                         </div>
                     )}
                 </div>
-
-                {/* Info Box */}
-                <div className="mt-8 bg-blue-500/10 border border-blue-500 rounded-lg p-4">
-                    <h3 className="font-semibold text-blue-400 mb-2">ℹ️ How it works</h3>
-                    <ul className="text-sm text-gray-300 space-y-1">
-                        <li>• Only authorized doctors can view your medical records</li>
-                        <li>• You can revoke access at any time</li>
-                        <li>• All access changes are recorded on the blockchain</li>
-                        <li>• Doctors need your explicit permission to create new records</li>
-                    </ul>
-                </div>
-            </div>
+            </main>
         </div>
     );
 }
