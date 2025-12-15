@@ -9,6 +9,7 @@ import RecordViewer from "@/components/record-viewer";
 import {
     ArrowLeft, FileText, Calendar, User, Eye, X, Loader2
 } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface MedicalRecord {
     id: string;
@@ -27,16 +28,11 @@ export default function PatientRecords() {
     const [records, setRecords] = useState<MedicalRecord[]>([]);
     const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(null);
     const [loadingRecords, setLoadingRecords] = useState(false);
+    const { t } = useLanguage();
 
     useEffect(() => {
         async function checkAuth() {
-            // Development bypass - skip auth checks if enabled
-            if (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') {
-                console.log('[DEV BYPASS] 🔓 Patient records - auth bypass enabled');
-                setLoading(false);
-                await loadMockRecords();
-                return;
-            }
+
 
             if (status === "loading") return;
 
@@ -46,7 +42,7 @@ export default function PatientRecords() {
             }
 
             if (session.user.role !== "patient") {
-                router.push(session.user.role === "doctor" ? "/doctor/home" : "/patient-home");
+                router.push(session.user.role === "doctor" ? "/doctor-portal/home" : "/patient-home");
                 return;
             }
 
@@ -57,32 +53,7 @@ export default function PatientRecords() {
         checkAuth();
     }, [session, status, router]);
 
-    async function loadMockRecords() {
-        setLoadingRecords(true);
-        // Mock data for development
-        const mockRecords: MedicalRecord[] = [
-            {
-                id: "1",
-                patientId: "mock-patient",
-                doctorId: "mock-doctor",
-                recordHash: "QmXxxx1234567890abcdef",
-                timestamp: new Date().toISOString(),
-                isActive: true,
-                doctorName: "Dr. Smith"
-            },
-            {
-                id: "2",
-                patientId: "mock-patient",
-                doctorId: "mock-doctor-2",
-                recordHash: "QmYyyy0987654321fedcba",
-                timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-                isActive: true,
-                doctorName: "Dr. Johnson"
-            }
-        ];
-        setRecords(mockRecords);
-        setLoadingRecords(false);
-    }
+
 
     async function loadRecords() {
         try {
@@ -115,7 +86,7 @@ export default function PatientRecords() {
             <div className="min-h-screen bg-white dark:bg-neutral-900 flex items-center justify-center">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neutral-900 dark:border-neutral-100 mx-auto mb-4"></div>
-                    <p className="text-neutral-600 dark:text-neutral-400">Loading...</p>
+                    <p className="text-neutral-600 dark:text-neutral-400">{t.common.loading}</p>
                 </div>
             </div>
         );
@@ -133,13 +104,13 @@ export default function PatientRecords() {
                         className="inline-flex items-center gap-2 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 mb-4 transition"
                     >
                         <ArrowLeft className="w-4 h-4" />
-                        Back to Dashboard
+                        {t.portal.records.backToDashboard}
                     </Link>
                     <h1 className="text-4xl font-bold text-neutral-900 dark:text-neutral-50 mb-2">
-                        My Medical Records
+                        {t.portal.records.myRecords}
                     </h1>
                     <p className="text-lg text-neutral-600 dark:text-neutral-400">
-                        View and download your medical documents
+                        {t.portal.records.myRecordsDesc}
                     </p>
                 </div>
 
@@ -152,16 +123,16 @@ export default function PatientRecords() {
                     <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-12 text-center">
                         <FileText className="w-16 h-16 text-neutral-400 dark:text-neutral-600 mx-auto mb-4" />
                         <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-50 mb-2">
-                            No Medical Records Yet
+                            {t.portal.records.noRecords}
                         </h3>
                         <p className="text-neutral-600 dark:text-neutral-400 mb-6">
-                            Your medical records will appear here once a doctor uploads them.
+                            {t.portal.records.noRecordsDesc}
                         </p>
                         <Link
                             href="/patient-portal/home"
                             className="inline-flex items-center gap-2 px-6 py-3 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 rounded-lg font-medium hover:bg-neutral-800 dark:hover:bg-neutral-200 transition"
                         >
-                            Back to Dashboard
+                            {t.portal.records.backToDashboard}
                         </Link>
                     </div>
                 ) : (
@@ -176,13 +147,13 @@ export default function PatientRecords() {
                                         <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                                     </div>
                                     <span className="text-xs font-medium px-2 py-1 rounded-full bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300">
-                                        Active
+                                        {t.portal.records.active}
                                     </span>
                                 </div>
 
                                 <div className="space-y-3 mb-4">
                                     <div>
-                                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">Record ID</p>
+                                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">{t.portal.records.recordId}</p>
                                         <p className="text-sm font-mono text-neutral-900 dark:text-neutral-100">
                                             #{record.id}
                                         </p>
@@ -191,7 +162,7 @@ export default function PatientRecords() {
                                     <div>
                                         <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1 flex items-center gap-1">
                                             <Calendar className="w-3 h-3" />
-                                            Upload Date
+                                            {t.portal.records.uploadDate}
                                         </p>
                                         <p className="text-sm text-neutral-700 dark:text-neutral-300">
                                             {formatDate(record.timestamp)}
@@ -201,15 +172,15 @@ export default function PatientRecords() {
                                     <div>
                                         <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1 flex items-center gap-1">
                                             <User className="w-3 h-3" />
-                                            Doctor
+                                            {t.portal.records.doctor}
                                         </p>
                                         <p className="text-sm text-neutral-700 dark:text-neutral-300">
-                                            {record.doctorName || 'Unknown'}
+                                            {record.doctorName || t.portal.records.unknown}
                                         </p>
                                     </div>
 
                                     <div>
-                                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">IPFS Hash</p>
+                                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">{t.portal.records.ipfsHash}</p>
                                         <p className="text-xs font-mono text-neutral-700 dark:text-neutral-300">
                                             {record.recordHash?.slice(0, 20) || 'N/A'}...
                                         </p>
@@ -221,7 +192,7 @@ export default function PatientRecords() {
                                     className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium flex items-center justify-center gap-2"
                                 >
                                     <Eye className="w-4 h-4" />
-                                    View Record
+                                    {t.portal.records.viewRecord}
                                 </button>
                             </div>
                         ))}
@@ -234,7 +205,7 @@ export default function PatientRecords() {
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
                         <div className="flex items-center justify-between p-6 border-b border-neutral-200 dark:border-neutral-700">
-                            <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">Medical Record</h3>
+                            <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">{t.portal.records.medicalRecord}</h3>
                             <button
                                 onClick={() => setSelectedRecord(null)}
                                 className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg transition"

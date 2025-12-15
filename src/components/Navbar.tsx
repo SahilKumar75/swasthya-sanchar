@@ -72,14 +72,14 @@ export function Navbar({ connection }: NavbarProps) {
           </Magnetic>
 
           {/* Center: Home, Features, Emergency (Capsule with animated menu) - Centered */}
-          {/* Only show center menu if user is logged in OR in dev bypass mode */}
-          {(session || process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') && (
+          {/* Only show center menu if user is logged in OR in dev bypass mode AND not on landing page */}
+          {(session || process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') && pathname !== '/' && (
             <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2">
               <div className="bg-white dark:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 shadow-sm px-1 h-[44px] flex items-center gap-1">
                 <Menu setActive={setActive}>
                   <Link
-                    href={session?.user?.role === "patient" ? "/patient-portal/home" : session?.user?.role === "doctor" ? "/doctor/home" : "/patient-portal/home"}
-                    className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient-portal/home" || pathname === "/doctor/home"
+                    href={session?.user?.role === "patient" ? "/patient-portal/home" : session?.user?.role === "doctor" ? "/doctor-portal/home" : "/patient-portal/home"}
+                    className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient-portal/home" || pathname === "/doctor-portal/home"
                       ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
                       : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
                       }`}
@@ -87,61 +87,74 @@ export function Navbar({ connection }: NavbarProps) {
                     {t.nav.home}
                   </Link>
 
-                  {(session?.user?.role === "patient" || !session) ? (
-                    <MenuItem
-                      setActive={setActive}
-                      active={active}
-                      item={t.nav.features}
-                      isActive={pathname?.includes("/records") || pathname?.includes("/access")}
-                    >
-                      <div className="flex flex-col space-y-4 text-sm">
-                        <div className="text-gray-500 italic">Coming Soon:</div>
-                        <HoveredLink href="#">Medical Records</HoveredLink>
-                        <HoveredLink href="#">Emergency QR</HoveredLink>
-                        <HoveredLink href="#">Doctor Access</HoveredLink>
-                        <HoveredLink href="#">Blockchain Security</HoveredLink>
-                      </div>
-                    </MenuItem>
+                  {(session?.user?.role === "patient" && process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH !== 'true') || (!session && process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH !== 'true') ? (
+                    <>
+                      <Link
+                        href="/patient/emergency"
+                        className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient/emergency"
+                          ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
+                          : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
+                          }`}
+                      >
+                        {t.nav.emergency}
+                      </Link>
+                      <Link
+                        href="/patient/records"
+                        className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient/records"
+                          ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
+                          : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
+                          }`}
+                      >
+                        {t.nav.medicalRecords}
+                      </Link>
+                      <Link
+                        href="/patient/permissions"
+                        className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient/permissions"
+                          ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
+                          : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
+                          }`}
+                      >
+                        {t.nav.doctorAccess}
+                      </Link>
+                    </>
                   ) : (
-                    <MenuItem
-                      setActive={setActive}
-                      active={active}
-                      item={t.nav.features}
-                      isActive={pathname?.includes("/patients") || pathname?.includes("/records")}
-                    >
-                      <div className="flex flex-col space-y-4 text-sm">
-                        <HoveredLink href="/doctor/patients">Patient Records</HoveredLink>
-                        <HoveredLink href="/doctor/records">Create Records</HoveredLink>
-                        <HoveredLink href="/doctor/authorization">Authorization Status</HoveredLink>
-                      </div>
-                    </MenuItem>
+                    <>
+                      <Link
+                        href="/doctor-portal/patients"
+                        className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/doctor-portal/patients"
+                          ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
+                          : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
+                          }`}
+                      >
+                        {t.nav.patients}
+                      </Link>
+                      <Link
+                        href="/doctor-portal/upload"
+                        className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/doctor-portal/upload"
+                          ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
+                          : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
+                          }`}
+                      >
+                        {t.nav.uploadRecords}
+                      </Link>
+                    </>
                   )}
-
-                  <Link
-                    href="/patient/emergency"
-                    className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient/emergency"
-                      ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
-                      : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
-                      }`}
-                  >
-                    Emergency
-                  </Link>
                 </Menu>
               </div>
             </div>
           )}
 
           {/* Right: Avatar + Theme Toggle + Language (Capsule) - Rightmost position */}
-          <div className="flex items-center gap-2 h-[44px] px-3 bg-white dark:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 shadow-sm">
-            {session?.user && (
+          <div className="flex items-center gap-1 h-[44px] px-1 bg-white dark:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 shadow-sm">
+            {(session?.user || process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') && pathname !== '/' && (
               <div className="flex items-center h-full">
                 <ProfileDropdown
                   user={{
-                    name: session.user.email?.split("@")[0],
-                    email: session.user.email,
+                    name: session?.user?.email?.split("@")[0] || "Developer",
+                    email: session?.user?.email || "dev@example.com",
                     image: null,
                   }}
-                  role={session.user.role}
+                  role={session?.user?.role || (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true' ? "doctor" : "patient")}
                   theme={theme}
                   onThemeToggle={toggleTheme}
                 />

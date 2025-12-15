@@ -82,7 +82,7 @@ export default function PatientHome() {
       }
 
       if (session.user.role !== "patient") {
-        router.push(session.user.role === "doctor" ? "/doctor/home" : "/patient-home");
+        router.push(session.user.role === "doctor" ? "/doctor-portal/home" : "/patient-home");
         return;
       }
 

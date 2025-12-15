@@ -11,6 +11,7 @@ import {
     ArrowLeft, Download, Printer, Share2, AlertCircle, Shield,
     Heart, QrCode, CheckCircle, Info
 } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function PatientEmergencyQR() {
     const router = useRouter();
@@ -18,17 +19,11 @@ export default function PatientEmergencyQR() {
     const [walletAddress, setWalletAddress] = useState<string>("");
     const [loading, setLoading] = useState(true);
     const qrRef = useRef<HTMLDivElement>(null);
+    const { t } = useLanguage();
 
     useEffect(() => {
         async function loadWalletAddress() {
-            // Development bypass - skip auth checks if enabled
-            if (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') {
-                console.log('[DEV BYPASS] 🔓 Emergency page - auth bypass enabled');
-                // Use mock wallet address for development
-                setWalletAddress('0x1234567890abcdef1234567890abcdef12345678');
-                setLoading(false);
-                return;
-            }
+
 
             if (status === "loading") return;
 
@@ -38,7 +33,7 @@ export default function PatientEmergencyQR() {
             }
 
             if (session.user.role !== "patient") {
-                router.push(session.user.role === "doctor" ? "/doctor/home" : "/patient-home");
+                router.push(session.user.role === "doctor" ? "/doctor-portal/home" : "/patient-home");
                 return;
             }
 
@@ -114,7 +109,7 @@ export default function PatientEmergencyQR() {
             <div className="min-h-screen bg-white dark:bg-neutral-900 flex items-center justify-center">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neutral-900 dark:border-neutral-100 mx-auto mb-4"></div>
-                    <p className="text-neutral-600 dark:text-neutral-400">Loading...</p>
+                    <p className="text-neutral-600 dark:text-neutral-400">{t.portal.emergency.loading}</p>
                 </div>
             </div>
         );
@@ -127,16 +122,16 @@ export default function PatientEmergencyQR() {
                 <main className="max-w-5xl mx-auto px-6 lg:px-8 py-12 pt-24">
                     <div className="bg-neutral-50 dark:bg-neutral-800/50 rounded-lg border border-neutral-200 dark:border-neutral-700 p-8 text-center">
                         <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-50 mb-4">
-                            No Wallet Found
+                            {t.portal.emergency.noWallet}
                         </h2>
                         <p className="text-neutral-600 dark:text-neutral-400 mb-6">
-                            Your account doesn't have a wallet address yet. Please complete patient registration first.
+                            {t.portal.emergency.noWalletDesc}
                         </p>
                         <Link
                             href="/patient/register"
                             className="px-6 py-3 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 rounded-lg font-medium hover:bg-neutral-800 dark:hover:bg-neutral-200 transition inline-block"
                         >
-                            Go to Registration
+                            {t.portal.emergency.goToRegistration}
                         </Link>
                     </div>
                 </main>
@@ -151,21 +146,12 @@ export default function PatientEmergencyQR() {
             <main className="max-w-5xl mx-auto px-6 lg:px-8 py-12 pt-24">
                 {/* Header */}
                 <div className="mb-8">
-                    <Link
-                        href="/patient-home"
-                        className="inline-flex items-center gap-2 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 mb-4 transition"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        Back to Dashboard
-                    </Link>
-                    <div>
-                        <h1 className="text-4xl font-bold text-neutral-900 dark:text-neutral-50 mb-2">
-                            Emergency QR Code
-                        </h1>
-                        <p className="text-lg text-neutral-600 dark:text-neutral-400">
-                            Life-saving information, accessible in seconds
-                        </p>
-                    </div>
+                    <h1 className="text-4xl font-bold text-neutral-900 dark:text-neutral-50 mb-2">
+                        {t.portal.emergency.medicalCard}
+                    </h1>
+                    <p className="text-lg text-neutral-600 dark:text-neutral-400">
+                        {t.portal.emergency.medicalCardDesc}
+                    </p>
                 </div>
 
 
@@ -176,7 +162,7 @@ export default function PatientEmergencyQR() {
                             <div className="h-full flex flex-col">
                                 <div className="text-center mb-6">
                                     <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50">
-                                        Your Emergency QR Code
+                                        {t.portal.emergency.yourQRCode}
                                     </h2>
                                 </div>
 
@@ -201,14 +187,14 @@ export default function PatientEmergencyQR() {
                                         className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
                                     >
                                         <Download className="w-4 h-4" />
-                                        Download
+                                        {t.portal.emergency.download}
                                     </button>
                                     <button
                                         onClick={printQR}
                                         className="flex items-center justify-center gap-2 px-4 py-3 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition font-medium"
                                     >
                                         <Printer className="w-4 h-4" />
-                                        Print
+                                        {t.portal.emergency.print}
                                     </button>
                                     {typeof navigator !== 'undefined' && 'share' in navigator && (
                                         <button
@@ -216,7 +202,7 @@ export default function PatientEmergencyQR() {
                                             className="col-span-2 flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
                                         >
                                             <Share2 className="w-4 h-4" />
-                                            Share QR Code
+                                            {t.portal.emergency.share}
                                         </button>
                                     )}
                                 </div>
@@ -231,10 +217,10 @@ export default function PatientEmergencyQR() {
                                         <Info className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                                     </div>
                                     <h2 className="text-2xl font-bold text-blue-900 dark:text-blue-100 mb-2">
-                                        QR Code Details
+                                        {t.portal.emergency.qrDetails}
                                     </h2>
                                     <p className="text-sm text-blue-700 dark:text-blue-300">
-                                        Technical information
+                                        {t.portal.emergency.technicalInfo}
                                     </p>
                                 </div>
 
@@ -242,7 +228,7 @@ export default function PatientEmergencyQR() {
                                     {/* Blockchain Address */}
                                     <div className="bg-white/50 dark:bg-neutral-900/50 rounded-lg p-4">
                                         <p className="text-xs text-blue-600 dark:text-blue-400 mb-1 font-semibold">
-                                            Blockchain Address
+                                            {t.portal.emergency.blockchainAddress}
                                         </p>
                                         <p className="text-xs font-mono text-blue-900 dark:text-blue-100 break-all">
                                             {walletAddress}
@@ -252,7 +238,7 @@ export default function PatientEmergencyQR() {
                                     {/* Emergency URL */}
                                     <div className="bg-white/50 dark:bg-neutral-900/50 rounded-lg p-4">
                                         <p className="text-xs text-blue-600 dark:text-blue-400 mb-1 font-semibold">
-                                            Emergency Page URL
+                                            {t.portal.emergency.emergencyPageUrl}
                                         </p>
                                         <p className="text-xs font-mono text-blue-900 dark:text-blue-100 break-all">
                                             {emergencyUrl}
@@ -262,20 +248,20 @@ export default function PatientEmergencyQR() {
                                     {/* Security Info */}
                                     <div className="bg-white/50 dark:bg-neutral-900/50 rounded-lg p-4">
                                         <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">
-                                            🔒 Security Features
+                                            {t.portal.emergency.securityFeatures}
                                         </h3>
                                         <ul className="space-y-1 text-xs text-blue-800 dark:text-blue-200">
-                                            <li>• Blockchain-secured data</li>
-                                            <li>• No wallet required to scan</li>
-                                            <li>• Instant access for responders</li>
-                                            <li>• Tamper-proof records</li>
+                                            <li>{t.portal.emergency.security1}</li>
+                                            <li>{t.portal.emergency.security2}</li>
+                                            <li>{t.portal.emergency.security3}</li>
+                                            <li>{t.portal.emergency.security4}</li>
                                         </ul>
                                     </div>
                                 </div>
 
                                 <div className="mt-4 pt-4 border-t border-blue-200 dark:border-blue-700">
                                     <p className="text-xs text-blue-700 dark:text-blue-300 text-center">
-                                        Hover to flip back
+                                        {t.portal.emergency.flipBack}
                                     </p>
                                 </div>
                             </div>
@@ -292,11 +278,11 @@ export default function PatientEmergencyQR() {
                                         <AlertCircle className="w-5 h-5 text-neutral-700 dark:text-neutral-300" />
                                     </div>
                                     <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50">
-                                        First Responder View
+                                        {t.portal.emergency.firstResponderView}
                                     </h2>
                                 </div>
                                 <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                                    Emergency medical information preview
+                                    {t.portal.emergency.preview}
                                 </p>
                             </div>
 
@@ -322,7 +308,7 @@ export default function PatientEmergencyQR() {
                                     {/* Blood Type */}
                                     <div className="flex items-baseline gap-3 pb-4 border-b border-neutral-100 dark:border-neutral-800">
                                         <dt className="text-sm font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide w-32 flex-shrink-0">
-                                            Blood Type
+                                            {t.portal.emergency.bloodType}
                                         </dt>
                                         <dd className="text-2xl font-bold text-neutral-900 dark:text-neutral-50">
                                             O+
@@ -332,7 +318,7 @@ export default function PatientEmergencyQR() {
                                     {/* Allergies */}
                                     <div className="flex gap-3 pb-4 border-b border-neutral-100 dark:border-neutral-800">
                                         <dt className="text-sm font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide w-32 flex-shrink-0">
-                                            Allergies
+                                            {t.portal.emergency.allergies}
                                         </dt>
                                         <dd className="flex-1">
                                             <ul className="text-sm text-neutral-700 dark:text-neutral-300 space-y-1">
@@ -345,7 +331,7 @@ export default function PatientEmergencyQR() {
                                     {/* Medications */}
                                     <div className="flex gap-3 pb-4 border-b border-neutral-100 dark:border-neutral-800">
                                         <dt className="text-sm font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide w-32 flex-shrink-0">
-                                            Medications
+                                            {t.portal.patientHome.currentMedications}
                                         </dt>
                                         <dd className="flex-1">
                                             <ul className="text-sm text-neutral-700 dark:text-neutral-300 space-y-1">
@@ -358,7 +344,7 @@ export default function PatientEmergencyQR() {
                                     {/* Conditions */}
                                     <div className="flex gap-3 pb-4 border-b border-neutral-100 dark:border-neutral-800">
                                         <dt className="text-sm font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide w-32 flex-shrink-0">
-                                            Conditions
+                                            {t.portal.emergency.conditions}
                                         </dt>
                                         <dd className="flex-1">
                                             <ul className="text-sm text-neutral-700 dark:text-neutral-300 space-y-1">
@@ -370,7 +356,7 @@ export default function PatientEmergencyQR() {
                                     {/* Emergency Contact */}
                                     <div className="flex gap-3">
                                         <dt className="text-sm font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide w-32 flex-shrink-0">
-                                            Emergency Contact
+                                            {t.portal.emergency.emergencyContactLabel}
                                         </dt>
                                         <dd className="flex-1">
                                             <div className="text-sm text-neutral-700 dark:text-neutral-300 space-y-1">
@@ -386,7 +372,7 @@ export default function PatientEmergencyQR() {
                             {/* Emergency Helpline - Footer Strip */}
                             <div className="bg-red-600 dark:bg-red-700 px-6 py-4">
                                 <p className="text-sm text-white font-bold text-center">
-                                    Emergency Helpline: <a href="tel:108" className="underline hover:text-red-100">108</a> (Ambulance) • <a href="tel:102" className="underline hover:text-red-100">102</a> (Medical)
+                                    {t.portal.emergency.helpline} <a href="tel:108" className="underline hover:text-red-100">108</a> ({t.portal.emergency.ambulance}) • <a href="tel:102" className="underline hover:text-red-100">102</a> ({t.portal.emergency.medical})
                                 </p>
                             </div>
                         </div>
@@ -400,7 +386,7 @@ export default function PatientEmergencyQR() {
                             rel="noopener noreferrer"
                             className="block w-full px-6 py-4 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-lg hover:from-red-700 hover:to-rose-700 transition font-medium text-center"
                         >
-                            Test Emergency Page →
+                            {t.portal.emergency.testPage} →
                         </a>
                     </div>
                 </div>
@@ -415,25 +401,25 @@ export default function PatientEmergencyQR() {
                                     <Info className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                                 </div>
                                 <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">
-                                    How to Use
+                                    {t.portal.emergency.howToUse}
                                 </h3>
                             </div>
                             <ol className="space-y-2 text-sm text-neutral-700 dark:text-neutral-300">
                                 <li className="flex gap-2">
                                     <span className="font-semibold text-blue-600 dark:text-blue-400">1.</span>
-                                    <span>Download or print your QR code</span>
+                                    <span>{t.portal.emergency.step1}</span>
                                 </li>
                                 <li className="flex gap-2">
                                     <span className="font-semibold text-blue-600 dark:text-blue-400">2.</span>
-                                    <span>Keep it in your wallet or phone case</span>
+                                    <span>{t.portal.emergency.step2}</span>
                                 </li>
                                 <li className="flex gap-2">
                                     <span className="font-semibold text-blue-600 dark:text-blue-400">3.</span>
-                                    <span>Responders scan to access your info</span>
+                                    <span>{t.portal.emergency.step3}</span>
                                 </li>
                                 <li className="flex gap-2">
                                     <span className="font-semibold text-blue-600 dark:text-blue-400">4.</span>
-                                    <span>No wallet or crypto knowledge needed</span>
+                                    <span>{t.portal.emergency.step4}</span>
                                 </li>
                             </ol>
                         </div>
@@ -445,29 +431,29 @@ export default function PatientEmergencyQR() {
                                     <Shield className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                                 </div>
                                 <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">
-                                    Information Shared
+                                    {t.portal.emergency.infoShared}
                                 </h3>
                             </div>
                             <ul className="space-y-2 text-sm text-neutral-700 dark:text-neutral-300">
                                 <li className="flex items-center gap-2">
                                     <CheckCircle className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0" />
-                                    <span>Blood Type</span>
+                                    <span>{t.portal.emergency.bloodType}</span>
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <CheckCircle className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0" />
-                                    <span>Allergies</span>
+                                    <span>{t.portal.emergency.allergies}</span>
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <CheckCircle className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0" />
-                                    <span>Current Medications</span>
+                                    <span>{t.portal.patientHome.currentMedications}</span>
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <CheckCircle className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0" />
-                                    <span>Medical Conditions</span>
+                                    <span>{t.portal.emergency.conditions}</span>
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <CheckCircle className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0" />
-                                    <span>Emergency Contact</span>
+                                    <span>{t.portal.emergency.emergencyContactLabel}</span>
                                 </li>
                             </ul>
                         </div>
@@ -479,29 +465,29 @@ export default function PatientEmergencyQR() {
                                     <QrCode className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                                 </div>
                                 <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">
-                                    Best Practices
+                                    {t.portal.emergency.bestPractices}
                                 </h3>
                             </div>
                             <ul className="space-y-2 text-sm text-neutral-700 dark:text-neutral-300">
                                 <li className="flex items-start gap-2">
                                     <span className="text-amber-600 dark:text-amber-400 mt-0.5">•</span>
-                                    <span>Print on waterproof paper</span>
+                                    <span>{t.portal.emergency.practice1}</span>
                                 </li>
                                 <li className="flex items-start gap-2">
                                     <span className="text-amber-600 dark:text-amber-400 mt-0.5">•</span>
-                                    <span>Keep multiple copies</span>
+                                    <span>{t.portal.emergency.practice2}</span>
                                 </li>
                                 <li className="flex items-start gap-2">
                                     <span className="text-amber-600 dark:text-amber-400 mt-0.5">•</span>
-                                    <span>Update if info changes</span>
+                                    <span>{t.portal.emergency.practice3}</span>
                                 </li>
                                 <li className="flex items-start gap-2">
                                     <span className="text-amber-600 dark:text-amber-400 mt-0.5">•</span>
-                                    <span>Share with family members</span>
+                                    <span>{t.portal.emergency.practice4}</span>
                                 </li>
                                 <li className="flex items-start gap-2">
                                     <span className="text-amber-600 dark:text-amber-400 mt-0.5">•</span>
-                                    <span>Add to phone lock screen</span>
+                                    <span>{t.portal.emergency.practice5}</span>
                                 </li>
                             </ul>
                         </div>

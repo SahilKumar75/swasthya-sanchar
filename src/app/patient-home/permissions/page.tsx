@@ -26,12 +26,7 @@ export default function PermissionsPage() {
     useEffect(() => {
         async function checkAuth() {
             // Development bypass
-            if (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') {
-                console.log('[DEV BYPASS] 🔓 Permissions page - auth bypass enabled');
-                setLoading(false);
-                loadMockDoctors();
-                return;
-            }
+
 
             if (status === "loading") return;
 
@@ -52,23 +47,7 @@ export default function PermissionsPage() {
         checkAuth();
     }, [session, status, router]);
 
-    const loadMockDoctors = () => {
-        const mockDoctors: AuthorizedDoctor[] = [
-            {
-                id: '1',
-                doctorEmail: 'dr.smith@hospital.com',
-                doctorName: 'Dr. John Smith',
-                grantedAt: new Date().toISOString()
-            },
-            {
-                id: '2',
-                doctorEmail: 'dr.johnson@clinic.com',
-                doctorName: 'Dr. Sarah Johnson',
-                grantedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-            }
-        ];
-        setAuthorizedDoctors(mockDoctors);
-    };
+
 
     const fetchAuthorizedDoctors = async () => {
         try {
@@ -97,19 +76,7 @@ export default function PermissionsPage() {
 
         try {
             // Dev bypass
-            if (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                const newDoctor: AuthorizedDoctor = {
-                    id: Date.now().toString(),
-                    doctorEmail: newDoctorEmail,
-                    grantedAt: new Date().toISOString()
-                };
-                setAuthorizedDoctors([...authorizedDoctors, newDoctor]);
-                setSuccess(`Access granted to ${newDoctorEmail}`);
-                setNewDoctorEmail('');
-                setSubmitting(false);
-                return;
-            }
+
 
             const response = await fetch('/api/patient/grant-access', {
                 method: 'POST',
@@ -141,13 +108,7 @@ export default function PermissionsPage() {
 
         try {
             // Dev bypass
-            if (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                setAuthorizedDoctors(authorizedDoctors.filter(d => d.id !== doctorId));
-                setSuccess(`Access revoked from ${doctorEmail}`);
-                setSubmitting(false);
-                return;
-            }
+
 
             const response = await fetch('/api/patient/revoke-access', {
                 method: 'POST',

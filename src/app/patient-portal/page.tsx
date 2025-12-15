@@ -33,6 +33,7 @@ interface PatientData {
   previousSurgeries: string;
   height: string;
   weight: string;
+  profilePicture?: string;
 }
 
 export default function PatientPortal() {
@@ -88,7 +89,8 @@ export default function PatientPortal() {
           currentMedications: "None",
           previousSurgeries: "Appendectomy (2015)",
           height: "175",
-          weight: "70"
+          weight: "70",
+          profilePicture: "/sahil-kumar-singh.jpg"
         };
 
         setPatientData(mockProfile);
@@ -236,11 +238,33 @@ export default function PatientPortal() {
       <Navbar />
 
       <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-24">
-        {/* Header with Wallet Address */}
+        {/* Header with Profile Picture and Wallet Address */}
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-4xl font-bold text-neutral-900 dark:text-neutral-50">My Portal</h2>
-            <p className="text-neutral-600 dark:text-neutral-400 mt-2">Manage your complete health profile</p>
+          <div className="flex items-center gap-6">
+            {/* Profile Picture */}
+            <div className="relative">
+              {patientData.profilePicture ? (
+                <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white dark:border-neutral-800 shadow-lg">
+                  <img
+                    src={patientData.profilePicture}
+                    alt={patientData.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center border-4 border-white dark:border-neutral-800 shadow-lg">
+                  <span className="text-2xl font-bold text-white">
+                    {patientData.name.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Title */}
+            <div>
+              <h2 className="text-4xl font-bold text-neutral-900 dark:text-neutral-50">My Portal</h2>
+              <p className="text-neutral-600 dark:text-neutral-400 mt-2">Manage your complete health profile</p>
+            </div>
           </div>
           <div className="flex flex-col items-end gap-2">
             {isEditing ? (

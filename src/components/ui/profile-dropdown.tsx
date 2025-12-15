@@ -85,7 +85,7 @@ export function ProfileDropdown({ user, role, theme, onThemeToggle }: ProfileDro
       icon: Stethoscope,
       onClick: () => {
         setIsOpen(false)
-        router.push("/doctor")
+        router.push("/doctor-portal")
       },
     },
     {
@@ -93,7 +93,7 @@ export function ProfileDropdown({ user, role, theme, onThemeToggle }: ProfileDro
       icon: Settings,
       onClick: () => {
         setIsOpen(false)
-        router.push("/doctor/settings")
+        router.push("/settings")
       },
     },
   ] : [
@@ -110,23 +110,23 @@ export function ProfileDropdown({ user, role, theme, onThemeToggle }: ProfileDro
       icon: Settings,
       onClick: () => {
         setIsOpen(false)
-        router.push("/patient/settings")
+        router.push("/settings")
       },
     },
   ]
 
   // Check if any menu item route matches current path
   const isProfileActive = role === "doctor"
-    ? pathname === "/doctor" || pathname === "/doctor/settings"
-    : pathname === "/patient-portal" || pathname === "/patient/settings"
+    ? pathname === "/doctor-portal" || pathname === "/settings"
+    : pathname === "/patient-portal" || pathname === "/settings"
 
   return (
     <div ref={dropdownRef} className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all ${isOpen || isProfileActive
-            ? "bg-neutral-900 dark:bg-white shadow-sm"
-            : "hover:bg-neutral-100 dark:hover:bg-neutral-700"
+        className={`flex items-center gap-2 px-3 h-[36px] rounded-full transition-all ${isOpen || isProfileActive
+          ? "bg-neutral-900 dark:bg-white shadow-sm"
+          : "hover:bg-neutral-100 dark:hover:bg-neutral-700"
           }`}
       >
         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-semibold text-xs">
@@ -142,14 +142,14 @@ export function ProfileDropdown({ user, role, theme, onThemeToggle }: ProfileDro
         </div>
         <div className="hidden md:flex flex-col items-start">
           <span className={`text-sm font-medium transition-colors ${isOpen || isProfileActive
-              ? "text-white dark:text-neutral-900"
-              : "text-neutral-900 dark:text-neutral-100"
+            ? "text-white dark:text-neutral-900"
+            : "text-neutral-900 dark:text-neutral-100"
             }`}>
             {user.name || user.email?.split("@")[0] || "User"}
           </span>
           <span className={`text-xs transition-colors ${isOpen || isProfileActive
-              ? "text-neutral-300 dark:text-neutral-600"
-              : "text-neutral-600 dark:text-neutral-400"
+            ? "text-neutral-300 dark:text-neutral-600"
+            : "text-neutral-600 dark:text-neutral-400"
             }`}>
             {user.email}
           </span>
@@ -205,29 +205,12 @@ export function ProfileDropdown({ user, role, theme, onThemeToggle }: ProfileDro
               </button>
             ))}
 
-            {/* Theme Toggle */}
-            {onThemeToggle && (
-              <button
-                onClick={() => {
-                  onThemeToggle()
-                  setIsOpen(false)
-                }}
-                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-left group"
-              >
-                {theme === "light" ? (
-                  <Moon className="w-4 h-4 text-neutral-600 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-neutral-100 transition-colors" />
-                ) : (
-                  <Sun className="w-4 h-4 text-neutral-600 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-neutral-100 transition-colors" />
-                )}
-                <span className="text-sm text-neutral-700 dark:text-neutral-300 group-hover:text-neutral-900 dark:group-hover:text-neutral-100 transition-colors">
-                  {theme === "light" ? t.nav.darkMode : t.nav.lightMode}
-                </span>
-              </button>
-            )}
-
             {/* Help */}
             <button
-              onClick={() => setIsOpen(false)}
+              onClick={() => {
+                setIsOpen(false)
+                router.push('/help')
+              }}
               className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-left group"
             >
               <HelpCircle className="w-4 h-4 text-neutral-600 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-neutral-100 transition-colors" />

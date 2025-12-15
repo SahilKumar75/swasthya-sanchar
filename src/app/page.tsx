@@ -19,85 +19,72 @@ import {
 import { BlockchainFeatureSection } from "@/components/ui/accordion-feature-section";
 import { Timeline } from "@/components/ui/timeline";
 import { MatrixText } from "@/components/ui/matrix-text";
-
-const howItWorksData = [
-  {
-    title: "1. Create Account",
-    content: (
-      <p>
-        Sign up securely using your email. We verify your identity to ensure a trusted network of patients and healthcare providers.
-      </p>
-    ),
-  },
-  {
-    title: "2. Add Medical History",
-    content: (
-      <p>
-        Upload your existing records, allergies, and medications. Your data is encrypted and stored on the blockchain, owned only by you.
-      </p>
-    ),
-  },
-  {
-    title: "3. Get Your QR Code",
-    content: (
-      <p>
-        Receive a unique QR code linked to your profile. This is your key to quick, secure sharing of vital information.
-      </p>
-    ),
-  },
-  {
-    title: "4. Emergency Access",
-    content: (
-      <p>
-        In an emergency, first responders scan your QR code to instantly access critical life-saving data like blood type and allergies.
-      </p>
-    ),
-  },
-];
-
-const blockchainFeatures = [
-  {
-    id: 1,
-    title: "You Own Your Data",
-    description: "No hospital, no government, no corporation owns your health records. Only you control who sees what with your private keys.",
-    image: "https://images.unsplash.com/photo-1639322537228-f710d846310a?q=80&w=2232&auto=format&fit=crop", // Blockchain/Lock concept
-  },
-  {
-    id: 2,
-    title: "Emergency Ready",
-    description: "QR code on your ID gives first responders instant access to life-saving info like allergies and blood type—no wallet or login needed.",
-    image: "https://images.unsplash.com/photo-1516574187841-693083f0498c?q=80&w=2370&auto=format&fit=crop", // Ambulance/Emergency
-  },
-  {
-    id: 3,
-    title: "Permanent & Portable",
-    description: "Your records live on the blockchain forever. Change hospitals? Move cities? Your history follows you automatically without faxing papers.",
-    image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=2070&auto=format&fit=crop", // Connectivity/Portability
-  },
-  {
-    id: 4,
-    title: "Consent Based Sharing",
-    description: "Authorize specific doctors to view your records for a limited time. Revoke access anytime. Every access is logged transparently.",
-    image: "https://images.unsplash.com/photo-1576091160550-217358c7db81?q=80&w=2070&auto=format&fit=crop", // Doctor/Tablet consent
-  },
-  {
-    id: 5,
-    title: "Global Access",
-    description: "Travel abroad? Your medical history is accessible worldwide, cutting through language and system barriers.",
-    image: "https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?q=80&w=2070&auto=format&fit=crop", // Map/Global
-  },
-  {
-    id: 6,
-    title: "Tamper-Proof",
-    description: "Blockchain ensures your records can't be altered or deleted by malicious actors. Complete audit trail of every interaction.",
-    image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop", // Security/Tech
-  },
-];
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function Home() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [checking, setChecking] = useState(true);
+  const { t } = useLanguage();
+
+  // Dynamic data arrays using translations
+  const howItWorksData = [
+    {
+      title: t.landing.howItWorks.step1Title,
+      content: <p>{t.landing.howItWorks.step1Content}</p>,
+    },
+    {
+      title: t.landing.howItWorks.step2Title,
+      content: <p>{t.landing.howItWorks.step2Content}</p>,
+    },
+    {
+      title: t.landing.howItWorks.step3Title,
+      content: <p>{t.landing.howItWorks.step3Content}</p>,
+    },
+    {
+      title: t.landing.howItWorks.step4Title,
+      content: <p>{t.landing.howItWorks.step4Content}</p>,
+    },
+  ];
+
+  const blockchainFeatures = [
+    {
+      id: 1,
+      title: t.landing.blockchain.feature1Title,
+      description: t.landing.blockchain.feature1Description,
+      image: "https://images.unsplash.com/photo-1639322537228-f710d846310a?q=80&w=2232&auto=format&fit=crop",
+    },
+    {
+      id: 2,
+      title: t.landing.blockchain.feature2Title,
+      description: t.landing.blockchain.feature2Description,
+      image: "https://images.unsplash.com/photo-1516574187841-693083f0498c?q=80&w=2370&auto=format&fit=crop",
+    },
+    {
+      id: 3,
+      title: t.landing.blockchain.feature3Title,
+      description: t.landing.blockchain.feature3Description,
+      image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=2070&auto=format&fit=crop",
+    },
+    {
+      id: 4,
+      title: t.landing.blockchain.feature4Title,
+      description: t.landing.blockchain.feature4Description,
+      image: "https://images.unsplash.com/photo-1576091160550-217358c7db81?q=80&w=2070&auto=format&fit=crop",
+    },
+    {
+      id: 5,
+      title: t.landing.blockchain.feature5Title,
+      description: t.landing.blockchain.feature5Description,
+      image: "https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?q=80&w=2070&auto=format&fit=crop",
+    },
+    {
+      id: 6,
+      title: t.landing.blockchain.feature6Title,
+      description: t.landing.blockchain.feature6Description,
+      image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop",
+    },
+  ];
 
   /* State for text animation */
   const [index, setIndex] = useState(0);
@@ -132,13 +119,13 @@ export default function Home() {
       });
 
       if (result?.error) {
-        setLoginError("Invalid email or password");
+        setLoginError(t.auth.invalidCredentials);
       } else {
         router.push("/");
         router.refresh();
       }
     } catch (err: any) {
-      setLoginError("An error occurred. Please try again.");
+      setLoginError(t.auth.errorOccurred);
     } finally {
       setLoginLoading(false);
     }
@@ -149,12 +136,12 @@ export default function Home() {
     setSignupError("");
 
     if (signupPassword !== signupConfirmPassword) {
-      setSignupError("Passwords do not match");
+      setSignupError(t.auth.passwordMismatch);
       return;
     }
 
     if (signupPassword.length < 8) {
-      setSignupError("Password must be at least 8 characters");
+      setSignupError(t.auth.passwordMinLength);
       return;
     }
 
@@ -182,14 +169,14 @@ export default function Home() {
       });
 
       if (result?.error) {
-        setSignupError("Account created but failed to sign in. Please try logging in.");
+        setSignupError(t.auth.accountCreatedButLoginFailed);
         setSignupLoading(false);
       } else {
         router.push("/");
         router.refresh();
       }
     } catch (err: any) {
-      setSignupError("An error occurred. Please try again.");
+      setSignupError(t.auth.errorOccurred);
       setSignupLoading(false);
     }
   };
@@ -226,8 +213,8 @@ export default function Home() {
         console.log("[AUTH CHECK] ✅ Redirecting patient to /patient-portal");
         router.push("/patient-portal");
       } else if (userRole === "doctor") {
-        console.log("[AUTH CHECK] ✅ Redirecting doctor to /doctor/home");
-        router.push("/doctor/home");
+        console.log("[AUTH CHECK] ✅ Redirecting doctor to /doctor-portal/home");
+        router.push("/doctor-portal/home");
       } else {
         console.log("[AUTH CHECK] ⚠️ Unknown role, staying on landing page");
         setChecking(false);
@@ -242,7 +229,7 @@ export default function Home() {
       <div className="min-h-screen bg-white dark:bg-neutral-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neutral-900 dark:border-neutral-100 mx-auto mb-4"></div>
-          <p className="text-neutral-600 dark:text-neutral-400">Checking authentication...</p>
+          <p className="text-neutral-600 dark:text-neutral-400">{t.landing.hero.checkingAuth}</p>
         </div>
       </div>
     );
@@ -257,13 +244,13 @@ export default function Home() {
           <div className="space-y-8">
             {/* Headline */}
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
-              <MatrixText className="text-neutral-900 dark:text-neutral-50">Your Health Identity,</MatrixText>
+              <MatrixText className="text-neutral-900 dark:text-neutral-50">{t.landing.hero.title1}</MatrixText>
               <br />
-              <MatrixText className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">Decentralized & Secure.</MatrixText>
+              <MatrixText className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">{t.landing.hero.title2}</MatrixText>
             </h1>
 
             <p className="max-w-2xl text-xl text-neutral-600 dark:text-neutral-400 leading-relaxed mb-8">
-              Empowering you with complete ownership of your medical history. Instant emergency access for first responders, seamless sharing for doctors, and privacy by design.
+              {t.landing.hero.description}
             </p>
 
 
@@ -284,7 +271,7 @@ export default function Home() {
                       onClick={() => setActiveModal("login")}
                       className="group inline-flex items-center justify-center gap-2 px-6 py-3 bg-neutral-900 dark:bg-neutral-100 text-neutral-50 dark:text-neutral-900 font-medium rounded-lg hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors duration-200"
                     >
-                      Sign In
+                      {t.landing.hero.signIn}
                       <svg
                         className="w-4 h-4 group-hover:translate-x-0.5 transition-transform"
                         fill="none"
@@ -305,28 +292,28 @@ export default function Home() {
                     <div className="h-full w-full overflow-y-auto">
                       <div className="min-h-screen">
                         <AuthenticationLayout
-                          title="Welcome Back"
-                          description="Sign in to access your secure medical records."
+                          title={t.auth.welcomeBack}
+                          description={t.auth.welcomeBackDescription}
                           heroImageSrc="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=2070&auto=format&fit=crop"
                           testimonials={[
                             {
                               avatarSrc: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix",
-                              name: "Dr. Sarah Chen",
-                              handle: "@drchen_md",
-                              text: "Swasthya Sanchar has revolutionized how I access patient history in emergencies."
+                              name: t.auth.testimonial1Name,
+                              handle: t.auth.testimonial1Handle,
+                              text: t.auth.testimonial1Text
                             },
                             {
                               avatarSrc: "https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus",
-                              name: "Marcus Johnson",
-                              handle: "@marcus_j",
-                              text: "I feel so much safer knowing my medical data is accessible to paramedics instantly."
+                              name: t.auth.testimonial2Name,
+                              handle: t.auth.testimonial2Handle,
+                              text: t.auth.testimonial2Text
                             }
                           ]}
                         >
                           <form onSubmit={handleLogin} className="space-y-5 animate-element animate-delay-300">
                             <div>
                               <label htmlFor="login-email" className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-2">
-                                Email Address
+                                {t.auth.emailAddress}
                               </label>
                               <GlassInputWrapper>
                                 <input
@@ -338,14 +325,14 @@ export default function Home() {
                                   value={loginEmail}
                                   onChange={(e) => setLoginEmail(e.target.value)}
                                   className="w-full bg-transparent text-sm p-4 rounded-2xl focus:outline-none text-neutral-900 dark:text-neutral-100 placeholder-neutral-400"
-                                  placeholder="Enter your email"
+                                  placeholder={t.auth.enterEmail}
                                 />
                               </GlassInputWrapper>
                             </div>
 
                             <div>
                               <label htmlFor="login-password" className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-2">
-                                Password
+                                {t.auth.password}
                               </label>
                               <GlassInputWrapper>
                                 <input
@@ -357,7 +344,7 @@ export default function Home() {
                                   value={loginPassword}
                                   onChange={(e) => setLoginPassword(e.target.value)}
                                   className="w-full bg-transparent text-sm p-4 rounded-2xl focus:outline-none text-neutral-900 dark:text-neutral-100 placeholder-neutral-400"
-                                  placeholder="Enter your password"
+                                  placeholder={t.auth.enterPassword}
                                 />
                               </GlassInputWrapper>
                             </div>
@@ -373,17 +360,17 @@ export default function Home() {
                               disabled={loginLoading}
                               className="w-full rounded-2xl bg-neutral-900 dark:bg-neutral-100 py-4 font-medium text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              {loginLoading ? "Signing in..." : "Sign In"}
+                              {loginLoading ? t.auth.signingIn : t.auth.signIn}
                             </button>
 
                             <div className="text-center text-sm text-neutral-500">
-                              Don&apos;t have an account?{" "}
+                              {t.auth.dontHaveAccount}{" "}
                               <button
                                 type="button"
                                 onClick={() => setActiveModal("signup")}
                                 className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
                               >
-                                Create one
+                                {t.auth.createOne}
                               </button>
                             </div>
                           </form>
@@ -409,7 +396,7 @@ export default function Home() {
                       onClick={() => setActiveModal("signup")}
                       className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 font-medium rounded-lg border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors duration-200"
                     >
-                      Create Account
+                      {t.landing.hero.createAccount}
                     </button>
                   </ExpandableScreenTrigger>
 
@@ -417,28 +404,28 @@ export default function Home() {
                     <div className="h-full w-full overflow-y-auto">
                       <div className="min-h-screen">
                         <AuthenticationLayout
-                          title="Join Swasthya Sanchar"
-                          description="Create your account and take control of your health data."
+                          title={t.auth.joinSwasthya}
+                          description={t.auth.joinSwasthyaDescription}
                           heroImageSrc="https://images.unsplash.com/photo-1579684385180-02581041b353?q=80&w=2070&auto=format&fit=crop"
                           testimonials={[
                             {
                               avatarSrc: "https://api.dicebear.com/7.x/avataaars/svg?seed=Aiden",
-                              name: "Aiden T.",
-                              handle: "@aiden_tech",
-                              text: "The blockchain security gives me peace of mind that my data is truly mine."
+                              name: t.auth.testimonial3Name,
+                              handle: t.auth.testimonial3Handle,
+                              text: t.auth.testimonial3Text
                             },
                             {
                               avatarSrc: "https://api.dicebear.com/7.x/avataaars/svg?seed=Emily",
-                              name: "Emily R.",
-                              handle: "@emily_nur",
-                              text: "As a nurse, this platform saves us critical minutes during emergency intake."
+                              name: t.auth.testimonial4Name,
+                              handle: t.auth.testimonial4Handle,
+                              text: t.auth.testimonial4Text
                             }
                           ]}
                         >
                           <form onSubmit={handleSignup} className="space-y-4 animate-element animate-delay-300">
                             <div>
                               <label htmlFor="signup-email" className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-2">
-                                Email Address
+                                {t.auth.emailAddress}
                               </label>
                               <GlassInputWrapper>
                                 <input
@@ -450,7 +437,7 @@ export default function Home() {
                                   value={signupEmail}
                                   onChange={(e) => setSignupEmail(e.target.value)}
                                   className="w-full bg-transparent text-sm p-4 rounded-2xl focus:outline-none text-neutral-900 dark:text-neutral-100 placeholder-neutral-400"
-                                  placeholder="Enter your email"
+                                  placeholder={t.auth.enterEmail}
                                 />
                               </GlassInputWrapper>
                             </div>
@@ -458,7 +445,7 @@ export default function Home() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div>
                                 <label htmlFor="signup-password" className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-2">
-                                  Password
+                                  {t.auth.password}
                                 </label>
                                 <GlassInputWrapper>
                                   <input
@@ -470,14 +457,14 @@ export default function Home() {
                                     value={signupPassword}
                                     onChange={(e) => setSignupPassword(e.target.value)}
                                     className="w-full bg-transparent text-sm p-4 rounded-2xl focus:outline-none text-neutral-900 dark:text-neutral-100 placeholder-neutral-400"
-                                    placeholder="Min 8 chars"
+                                    placeholder={t.auth.minChars}
                                   />
                                 </GlassInputWrapper>
                               </div>
 
                               <div>
                                 <label htmlFor="signup-confirm-password" className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-2">
-                                  Confirm Password
+                                  {t.auth.confirmPassword}
                                 </label>
                                 <GlassInputWrapper>
                                   <input
@@ -489,7 +476,7 @@ export default function Home() {
                                     value={signupConfirmPassword}
                                     onChange={(e) => setSignupConfirmPassword(e.target.value)}
                                     className="w-full bg-transparent text-sm p-4 rounded-2xl focus:outline-none text-neutral-900 dark:text-neutral-100 placeholder-neutral-400"
-                                    placeholder="Confirm password"
+                                    placeholder={t.auth.confirmPasswordPlaceholder}
                                   />
                                 </GlassInputWrapper>
                               </div>
@@ -497,7 +484,7 @@ export default function Home() {
 
                             <div>
                               <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-3">
-                                I am a...
+                                {t.auth.iAmA}
                               </label>
                               <div className="grid grid-cols-2 gap-4">
                                 <button
@@ -508,7 +495,7 @@ export default function Home() {
                                     : "bg-transparent text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700 hover:border-neutral-400"
                                     }`}
                                 >
-                                  Patient
+                                  {t.auth.patient}
                                 </button>
                                 <button
                                   type="button"
@@ -518,7 +505,7 @@ export default function Home() {
                                     : "bg-transparent text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700 hover:border-neutral-400"
                                     }`}
                                 >
-                                  Doctor
+                                  {t.auth.doctor}
                                 </button>
                               </div>
                             </div>
@@ -534,17 +521,17 @@ export default function Home() {
                               disabled={signupLoading}
                               className="w-full rounded-2xl bg-neutral-900 dark:bg-neutral-100 py-4 font-medium text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              {signupLoading ? "Creating Account..." : "Create Account"}
+                              {signupLoading ? t.auth.creatingAccount : t.auth.createAccount}
                             </button>
 
                             <div className="text-center text-sm text-neutral-500">
-                              Already have an account?{" "}
+                              {t.auth.alreadyHaveAccount}{" "}
                               <button
                                 type="button"
                                 onClick={() => setActiveModal("login")}
                                 className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
                               >
-                                Sign in
+                                {t.auth.signInLink}
                               </button>
                             </div>
                           </form>
@@ -563,11 +550,10 @@ export default function Home() {
       <div className="w-full py-20 md:py-28 border-b border-neutral-200 dark:border-neutral-800">
         <div className="mb-8 px-6 md:px-12 lg:px-20">
           <h2 className="text-4xl md:text-5xl font-bold text-neutral-900 dark:text-neutral-50 mb-4">
-            How It Works
+            {t.landing.howItWorks.title}
           </h2>
           <p className="text-lg text-neutral-600 dark:text-neutral-400 max-w-2xl leading-relaxed">
-            Four simple steps from registration to life-saving emergency access.
-            See how blockchain technology empowers you and protects your privacy.
+            {t.landing.howItWorks.description}
           </p>
         </div>
 
@@ -577,8 +563,8 @@ export default function Home() {
       <div className="border-b border-neutral-200 dark:border-neutral-800">
         <BlockchainFeatureSection
           features={blockchainFeatures}
-          title="Why Blockchain for Healthcare?"
-          description="Traditional systems fail when you need them most. Here's what makes us different."
+          title={t.landing.blockchain.title}
+          description={t.landing.blockchain.description}
         />
       </div>
 
@@ -586,43 +572,43 @@ export default function Home() {
       <div className="max-w-5xl mx-auto px-6 lg:px-8 py-20 md:py-28">
         <div className="mb-12 text-center">
           <h2 className="text-4xl md:text-5xl font-bold text-neutral-900 dark:text-neutral-50 mb-4">
-            Meet the Team
+            {t.landing.team.title}
           </h2>
           <p className="text-lg text-neutral-600 dark:text-neutral-400 max-w-2xl mx-auto">
-            The passionate developers behind Swasthya Sanchar working to revolutionize healthcare data access.
+            {t.landing.team.description}
           </p>
         </div>
 
         <div className="flex flex-wrap justify-center gap-6">
           <TeamMemberCard
-            name="Sahil Kumar Singh"
-            role="Lead Developer"
+            name={t.landing.team.member1Name}
+            role={t.landing.team.member1Role}
             image="/sahil-kumar-singh.jpg"
-            bio="Full-stack developer passionate about blockchain and healthcare innovation. Leading the technical architecture of Swasthya Sanchar."
+            bio={t.landing.team.member1Bio}
           />
           <TeamMemberCard
-            name="Siddhant Tiwari"
-            role="Developer"
+            name={t.landing.team.member2Name}
+            role={t.landing.team.member2Role}
             image="/siddhant-tiwari.jpg"
-            bio="Blockchain enthusiast and frontend specialist. Focused on creating seamless user experiences for patients and doctors."
+            bio={t.landing.team.member2Bio}
           />
           <TeamMemberCard
-            name="Akshit Thakur"
-            role="Developer"
+            name={t.landing.team.member3Name}
+            role={t.landing.team.member3Role}
             image="/akshit-thakur.jpg"
-            bio="Backend wizard ensuring secure and efficient data handling. dedicated to building robust medical record systems."
+            bio={t.landing.team.member3Bio}
           />
           <TeamMemberCard
-            name="Shivam Rana"
-            role="Developer"
+            name={t.landing.team.member4Name}
+            role={t.landing.team.member4Role}
             image="/shivam-rana.jpg"
-            bio="Smart contract developer with a keen eye for security. Implementing the core decentralized logic of the platform."
+            bio={t.landing.team.member4Bio}
           />
           <TeamMemberCard
-            name="Nancy"
-            role="Developer"
+            name={t.landing.team.member5Name}
+            role={t.landing.team.member5Role}
             image="/nancy.jpg"
-            bio="UI/UX designer and frontend developer creating intuitive healthcare interfaces. Ensuring accessibility and user-centered design."
+            bio={t.landing.team.member5Bio}
           />
         </div>
       </div>

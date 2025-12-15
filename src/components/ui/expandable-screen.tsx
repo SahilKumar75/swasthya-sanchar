@@ -195,7 +195,7 @@ export function ExpandableScreenContent({
                   }`}
                 aria-label="Close"
               >
-                <X className="w-6 h-6 text-white" />
+                <X className="w-6 h-6 text-neutral-900 dark:text-white" />
               </button>
             )}
             {children}

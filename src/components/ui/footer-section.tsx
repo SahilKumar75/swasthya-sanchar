@@ -36,7 +36,7 @@ function FooterSection() {
               <Link href="/patient-portal" className="block transition-colors hover:text-blue-600 dark:hover:text-blue-400">
                 {t.footer.patientPortal}
               </Link>
-              <Link href="/doctor" className="block transition-colors hover:text-blue-600 dark:hover:text-blue-400">
+              <Link href="/doctor-portal" className="block transition-colors hover:text-blue-600 dark:hover:text-blue-400">
                 {t.footer.doctorPortal}
               </Link>
               <Link href="/emergency" className="block transition-colors hover:text-blue-600 dark:hover:text-blue-400">
