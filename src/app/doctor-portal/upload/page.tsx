@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
@@ -22,7 +22,7 @@ interface UploadedRecord {
     description: string;
 }
 
-export default function DoctorUploadPage() {
+function DoctorUploadContent() {
     const { data: session, status } = useSession();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -340,5 +340,20 @@ export default function DoctorUploadPage() {
                 </div>
             </main>
         </div>
+    );
+}
+
+export default function DoctorUploadPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-gray-600 dark:text-neutral-400">Loading...</p>
+                </div>
+            </div>
+        }>
+            <DoctorUploadContent />
+        </Suspense>
     );
 }

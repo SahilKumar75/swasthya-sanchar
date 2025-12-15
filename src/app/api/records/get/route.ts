@@ -6,6 +6,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { readFromBlockchain } from '@/lib/wallet-service';
 import { HEALTH_RECORDS_ABI } from '@/lib/contracts';
 
+export const dynamic = 'force-dynamic';
+
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '';
 
 export async function GET(req: NextRequest) {
