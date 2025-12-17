@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { exec } from "child_process";
-import { promisify } from "util";
-
-const execAsync = promisify(exec);
+import { prisma } from "@/lib/wallet-service";
 
 // This endpoint should be protected in production!
 // Only use for manual schema migrations
@@ -19,28 +16,44 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        console.log("🔄 Running Prisma DB Push...");
+        console.log("🔄 Running database migration...");
 
-        const { stdout, stderr } = await execAsync("npx prisma db push --accept-data-loss");
+        // Execute the migration SQL directly
+        const migrationSQL = `
+      -- Add missing columns to PatientProfile if they don't exist
+      DO $$ 
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                      WHERE table_name='PatientProfile' AND column_name='fullName') THEN
+          ALTER TABLE "PatientProfile" ADD COLUMN "fullName" TEXT;
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                      WHERE table_name='PatientProfile' AND column_name='profilePicture') THEN
+          ALTER TABLE "PatientProfile" ADD COLUMN "profilePicture" TEXT;
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                      WHERE table_name='PatientProfile' AND column_name='streetAddress') THEN
+          ALTER TABLE "PatientProfile" ADD COLUMN "streetAddress" TEXT;
+        END IF;
+      END $$;
+    `;
 
-        console.log("✅ Prisma DB Push completed!");
-        console.log("STDOUT:", stdout);
-        if (stderr) console.log("STDERR:", stderr);
+        await prisma.$executeRawUnsafe(migrationSQL);
+
+        console.log("✅ Migration completed successfully!");
 
         return NextResponse.json({
             success: true,
-            message: "Database schema updated successfully",
-            output: stdout,
-            errors: stderr || null
+            message: "Database schema updated successfully"
         });
     } catch (error: any) {
-        console.error("❌ Prisma DB Push failed:", error);
+        console.error("❌ Migration failed:", error);
         return NextResponse.json(
             {
                 success: false,
-                error: error.message,
-                output: error.stdout || null,
-                errors: error.stderr || null
+                error: error.message
             },
             { status: 500 }
         );
