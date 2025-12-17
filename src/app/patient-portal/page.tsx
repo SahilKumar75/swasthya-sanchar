@@ -105,7 +105,7 @@ export default function PatientPortal() {
         return;
       }
 
-      const res = await fetch("/api/patient/profile");
+      const res = await fetch("/api/patient/status");
       const data = await res.json();
 
       if (data.error) {
@@ -114,7 +114,7 @@ export default function PatientPortal() {
       }
 
       const profile: PatientData = {
-        name: session?.user?.email?.split('@')[0] || "Patient",
+        name: data.fullName || session?.user?.email?.split('@')[0] || "Patient",
         dateOfBirth: data.dateOfBirth || "",
         gender: data.gender || "",
         bloodGroup: data.bloodGroup || "",
@@ -132,7 +132,8 @@ export default function PatientPortal() {
         currentMedications: data.currentMedications || "",
         previousSurgeries: data.previousSurgeries || "",
         height: data.height || "",
-        weight: data.weight || ""
+        weight: data.weight || "",
+        profilePicture: data.profilePicture || ""  // Add profile picture
       };
 
       setPatientData(profile);
@@ -237,14 +238,14 @@ export default function PatientPortal() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-neutral-900 dark:via-neutral-900 dark:to-neutral-800">
       <Navbar />
 
-      <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-24">
+      <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-24 pb-32">
         {/* Header with Profile Picture and Wallet Address */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
+          <div className="flex items-center gap-4 sm:gap-6">
             {/* Profile Picture */}
-            <div className="relative">
+            <div className="relative flex-shrink-0">
               {patientData.profilePicture ? (
-                <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white dark:border-neutral-800 shadow-lg">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-4 border-white dark:border-neutral-800 shadow-lg">
                   <img
                     src={patientData.profilePicture}
                     alt={patientData.name}
@@ -252,8 +253,8 @@ export default function PatientPortal() {
                   />
                 </div>
               ) : (
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center border-4 border-white dark:border-neutral-800 shadow-lg">
-                  <span className="text-2xl font-bold text-white">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center border-4 border-white dark:border-neutral-800 shadow-lg">
+                  <span className="text-xl sm:text-2xl font-bold text-white">
                     {patientData.name.charAt(0).toUpperCase()}
                   </span>
                 </div>
@@ -261,12 +262,12 @@ export default function PatientPortal() {
             </div>
 
             {/* Title */}
-            <div>
-              <h2 className="text-4xl font-bold text-neutral-900 dark:text-neutral-50">My Portal</h2>
-              <p className="text-neutral-600 dark:text-neutral-400 mt-2">Manage your complete health profile</p>
+            <div className="min-w-0">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-neutral-900 dark:text-neutral-50 truncate">My Portal</h2>
+              <p className="text-sm sm:text-base text-neutral-600 dark:text-neutral-400 mt-1">Manage your complete health profile</p>
             </div>
           </div>
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-2 w-full lg:w-auto">
             {isEditing ? (
               <div className="flex gap-2">
                 <button
@@ -275,31 +276,39 @@ export default function PatientPortal() {
                     setEditFormData(patientData);
                   }}
                   disabled={updating}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-neutral-200 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-xl hover:bg-neutral-300 dark:hover:bg-neutral-600 transition disabled:opacity-50 font-medium"
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-neutral-200 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 rounded-xl hover:bg-neutral-300 dark:hover:bg-neutral-600 transition disabled:opacity-50 font-medium"
                 >
                   <X className="w-4 h-4" />
-                  Cancel
+                  <span className="hidden sm:inline">Cancel</span>
                 </button>
                 <button
                   onClick={handleUpdateProfile}
                   disabled={updating}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 dark:bg-blue-500 text-white rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition disabled:opacity-50 font-medium shadow-lg shadow-blue-500/30"
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 dark:bg-blue-500 text-white rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition disabled:opacity-50 font-medium shadow-lg shadow-blue-500/30"
                 >
                   <Save className="w-4 h-4" />
-                  {updating ? "Saving..." : "Save Changes"}
+                  {updating ? "Saving..." : "Save"}
                 </button>
               </div>
             ) : (
               <>
-                <div className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 shadow-sm">
-                  <Shield className="w-4 h-4 text-neutral-600 dark:text-neutral-400" />
-                  <div>
+                <button
+                  onClick={() => {
+                    if (walletAddress) {
+                      navigator.clipboard.writeText(walletAddress);
+                      alert('Wallet address copied to clipboard!');
+                    }
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 shadow-sm hover:bg-neutral-50 dark:hover:bg-neutral-700 transition cursor-pointer w-full sm:w-auto"
+                >
+                  <Shield className="w-4 h-4 text-neutral-600 dark:text-neutral-400 flex-shrink-0" />
+                  <div className="min-w-0 flex-1 text-left">
                     <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium">Wallet Address</p>
-                    <p className="text-xs text-neutral-900 dark:text-neutral-100 font-mono">
+                    <p className="text-xs text-neutral-900 dark:text-neutral-100 font-mono truncate">
                       {walletAddress ? `${walletAddress.slice(0, 8)}...${walletAddress.slice(-6)}` : "Not registered"}
                     </p>
                   </div>
-                </div>
+                </button>
               </>
             )}
           </div>
