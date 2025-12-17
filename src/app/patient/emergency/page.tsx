@@ -18,6 +18,7 @@ export default function PatientEmergencyQR() {
     const { data: session, status } = useSession();
     const [walletAddress, setWalletAddress] = useState<string>("");
     const [loading, setLoading] = useState(true);
+    const [patientData, setPatientData] = useState<any>(null);
     const qrRef = useRef<HTMLDivElement>(null);
     const { t } = useLanguage();
 
@@ -48,6 +49,17 @@ export default function PatientEmergencyQR() {
                 }
             } catch (error) {
                 console.error("Error fetching wallet address:", error);
+            }
+
+            // Fetch patient profile data
+            try {
+                const response = await fetch("/api/patient/status");
+                if (response.ok) {
+                    const data = await response.json();
+                    setPatientData(data);
+                }
+            } catch (error) {
+                console.error("Error fetching patient data:", error);
             }
 
             setLoading(false);
@@ -290,15 +302,23 @@ export default function PatientEmergencyQR() {
                             <div className="flex-1 overflow-y-auto p-6">
                                 {/* Patient Info */}
                                 <div className="flex items-center gap-4 pb-6 border-b border-neutral-200 dark:border-neutral-700">
-                                    <div className="w-16 h-16 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center text-neutral-700 dark:text-neutral-300 font-bold text-xl flex-shrink-0">
-                                        JD
-                                    </div>
+                                    {patientData?.profilePicture ? (
+                                        <img
+                                            src={patientData.profilePicture}
+                                            alt={patientData.fullName || "Patient"}
+                                            className="w-16 h-16 rounded-full object-cover border-2 border-neutral-300 dark:border-neutral-600 flex-shrink-0"
+                                        />
+                                    ) : (
+                                        <div className="w-16 h-16 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center text-neutral-700 dark:text-neutral-300 font-bold text-xl flex-shrink-0">
+                                            {patientData?.fullName?.charAt(0)?.toUpperCase() || session?.user?.email?.charAt(0)?.toUpperCase() || "P"}
+                                        </div>
+                                    )}
                                     <div>
                                         <h3 className="text-xl font-bold text-neutral-900 dark:text-neutral-50">
-                                            John Doe
+                                            {patientData?.fullName || session?.user?.email?.split('@')[0] || "Patient"}
                                         </h3>
                                         <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                                            Patient ID: #12345
+                                            Patient ID: #{walletAddress?.slice(0, 8) || "N/A"}
                                         </p>
                                     </div>
                                 </div>
@@ -311,7 +331,7 @@ export default function PatientEmergencyQR() {
                                             {t.portal.emergency.bloodType}
                                         </dt>
                                         <dd className="text-2xl font-bold text-neutral-900 dark:text-neutral-50">
-                                            O+
+                                            {patientData?.bloodGroup || "N/A"}
                                         </dd>
                                     </div>
 
@@ -321,10 +341,15 @@ export default function PatientEmergencyQR() {
                                             {t.portal.emergency.allergies}
                                         </dt>
                                         <dd className="flex-1">
-                                            <ul className="text-sm text-neutral-700 dark:text-neutral-300 space-y-1">
-                                                <li>Penicillin</li>
-                                                <li>Peanuts</li>
-                                            </ul>
+                                            {patientData?.allergies ? (
+                                                <ul className="text-sm text-neutral-700 dark:text-neutral-300 space-y-1">
+                                                    {patientData.allergies.split(',').map((allergy: string, idx: number) => (
+                                                        <li key={idx}>{allergy.trim()}</li>
+                                                    ))}
+                                                </ul>
+                                            ) : (
+                                                <p className="text-sm text-neutral-500 dark:text-neutral-400">None reported</p>
+                                            )}
                                         </dd>
                                     </div>
 
@@ -334,10 +359,15 @@ export default function PatientEmergencyQR() {
                                             {t.portal.patientHome.currentMedications}
                                         </dt>
                                         <dd className="flex-1">
-                                            <ul className="text-sm text-neutral-700 dark:text-neutral-300 space-y-1">
-                                                <li>Aspirin 75mg daily</li>
-                                                <li>Vitamin D 1000 IU</li>
-                                            </ul>
+                                            {patientData?.currentMedications ? (
+                                                <ul className="text-sm text-neutral-700 dark:text-neutral-300 space-y-1">
+                                                    {patientData.currentMedications.split(',').map((med: string, idx: number) => (
+                                                        <li key={idx}>{med.trim()}</li>
+                                                    ))}
+                                                </ul>
+                                            ) : (
+                                                <p className="text-sm text-neutral-500 dark:text-neutral-400">None</p>
+                                            )}
                                         </dd>
                                     </div>
 
@@ -347,9 +377,15 @@ export default function PatientEmergencyQR() {
                                             {t.portal.emergency.conditions}
                                         </dt>
                                         <dd className="flex-1">
-                                            <ul className="text-sm text-neutral-700 dark:text-neutral-300 space-y-1">
-                                                <li>Hypothyroidism</li>
-                                            </ul>
+                                            {patientData?.chronicConditions ? (
+                                                <ul className="text-sm text-neutral-700 dark:text-neutral-300 space-y-1">
+                                                    {patientData.chronicConditions.split(',').map((condition: string, idx: number) => (
+                                                        <li key={idx}>{condition.trim()}</li>
+                                                    ))}
+                                                </ul>
+                                            ) : (
+                                                <p className="text-sm text-neutral-500 dark:text-neutral-400">None</p>
+                                            )}
                                         </dd>
                                     </div>
 
@@ -360,9 +396,8 @@ export default function PatientEmergencyQR() {
                                         </dt>
                                         <dd className="flex-1">
                                             <div className="text-sm text-neutral-700 dark:text-neutral-300 space-y-1">
-                                                <p><span className="font-semibold">Name:</span> Jane Doe</p>
-                                                <p><span className="font-semibold">Relation:</span> Spouse</p>
-                                                <p><span className="font-semibold">Phone:</span> +1 (555) 123-4567</p>
+                                                <p><span className="font-semibold">Name:</span> {patientData?.emergencyName || "N/A"}</p>
+                                                <p><span className="font-semibold">Phone:</span> {patientData?.emergencyPhone || "N/A"}</p>
                                             </div>
                                         </dd>
                                     </div>

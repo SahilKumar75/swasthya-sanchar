@@ -99,13 +99,6 @@ export default function PatientRecords() {
             <main className="max-w-7xl mx-auto px-6 lg:px-8 py-12 pt-24">
                 {/* Header */}
                 <div className="mb-8">
-                    <Link
-                        href="/patient-portal/home"
-                        className="inline-flex items-center gap-2 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 mb-4 transition"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        {t.portal.records.backToDashboard}
-                    </Link>
                     <h1 className="text-4xl font-bold text-neutral-900 dark:text-neutral-50 mb-2">
                         {t.portal.records.myRecords}
                     </h1>
