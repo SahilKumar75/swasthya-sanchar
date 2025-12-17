@@ -210,8 +210,8 @@ export default function Home() {
       console.log("[AUTH CHECK] User authenticated with role:", userRole);
 
       if (userRole === "patient") {
-        console.log("[AUTH CHECK] ✅ Redirecting patient to /patient-portal");
-        router.push("/patient-portal");
+        console.log("[AUTH CHECK] ✅ Redirecting patient to /patient-portal/home");
+        router.push("/patient-portal/home");
       } else if (userRole === "doctor") {
         console.log("[AUTH CHECK] ✅ Redirecting doctor to /doctor-portal/home");
         router.push("/doctor-portal/home");
