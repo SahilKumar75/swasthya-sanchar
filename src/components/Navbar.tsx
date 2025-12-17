@@ -53,7 +53,7 @@ export function Navbar({ connection, minimal = false }: NavbarProps) {
 
       try {
         const endpoint = session.user.role === "patient"
-          ? "/api/patient/profile"
+          ? "/api/patient/status"
           : "/api/doctor/profile";
 
         const res = await fetch(endpoint);
