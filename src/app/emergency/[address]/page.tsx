@@ -37,6 +37,7 @@ interface PatientEmergencyData {
   height: string;
   weight: string;
   waistCircumference: string;
+  profilePicture?: string;
   privacySettings: PrivacySettings;
 }
 
@@ -140,13 +141,34 @@ export default function EmergencyResponderPage({ params }: { params: { address: 
         {patientData && (
           <div className="space-y-6">
             <div className="bg-white dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6">
-              <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 mb-4">Patient Emergency Profile</h2>
+              <div className="flex items-start gap-6 mb-6">
+                {/* Profile Picture */}
+                {patientData.profilePicture ? (
+                  <div className="flex-shrink-0">
+                    <img
+                      src={patientData.profilePicture}
+                      alt={patientData.name}
+                      className="w-24 h-24 rounded-full object-cover border-4 border-blue-500 dark:border-blue-400 shadow-lg"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex-shrink-0 w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center border-4 border-blue-500 dark:border-blue-400 shadow-lg">
+                    <span className="text-3xl font-bold text-white">
+                      {patientData.name?.charAt(0).toUpperCase() || 'P'}
+                    </span>
+                  </div>
+                )}
 
-              {/* Personal Info - Name and DOB always visible */}
-              <div className="mb-6 grid grid-cols-3 gap-4">
-                {patientData.name && (<div><p className="text-sm text-neutral-600 dark:text-neutral-400">Name</p><p className="font-semibold">{patientData.name}</p></div>)}
-                {patientData.dateOfBirth && (<div><p className="text-sm text-neutral-600 dark:text-neutral-400">DOB</p><p className="font-semibold">{patientData.dateOfBirth}</p></div>)}
-                {isVisible('gender') && patientData.gender && (<div><p className="text-sm text-neutral-600 dark:text-neutral-400">Gender</p><p className="font-semibold capitalize">{patientData.gender}</p></div>)}
+                <div className="flex-1">
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 mb-4">Patient Emergency Profile</h2>
+
+                  {/* Personal Info - Name and DOB always visible */}
+                  <div className="grid grid-cols-3 gap-4">
+                    {patientData.name && (<div><p className="text-sm text-neutral-600 dark:text-neutral-400">Name</p><p className="font-semibold">{patientData.name}</p></div>)}
+                    {patientData.dateOfBirth && (<div><p className="text-sm text-neutral-600 dark:text-neutral-400">DOB</p><p className="font-semibold">{patientData.dateOfBirth}</p></div>)}
+                    {isVisible('gender') && patientData.gender && (<div><p className="text-sm text-neutral-600 dark:text-neutral-400">Gender</p><p className="font-semibold capitalize">{patientData.gender}</p></div>)}
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-6">

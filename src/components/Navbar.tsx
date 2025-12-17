@@ -21,6 +21,7 @@ export function Navbar({ connection, minimal = false }: NavbarProps) {
   const [active, setActive] = useState<string | null>(null);
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [isMobile, setIsMobile] = useState(false);
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const { data: session } = useSession();
   const pathname = usePathname();
   const { t } = useLanguage();
@@ -44,6 +45,29 @@ export function Navbar({ connection, minimal = false }: NavbarProps) {
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  // Fetch profile picture
+  useEffect(() => {
+    const fetchProfilePicture = async () => {
+      if (!session?.user) return;
+
+      try {
+        const endpoint = session.user.role === "patient"
+          ? "/api/patient/profile"
+          : "/api/doctor/profile";
+
+        const res = await fetch(endpoint);
+        if (res.ok) {
+          const data = await res.json();
+          setProfilePicture(data.profilePicture || null);
+        }
+      } catch (error) {
+        console.error("Error fetching profile picture:", error);
+      }
+    };
+
+    fetchProfilePicture();
+  }, [session]);
 
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";
@@ -80,7 +104,7 @@ export function Navbar({ connection, minimal = false }: NavbarProps) {
                   user={{
                     name: session.user.email?.split("@")[0] || "User",
                     email: session.user.email || "",
-                    image: null,
+                    image: profilePicture,
                   }}
                   role={session.user.role || "patient"}
                   theme={theme}
@@ -147,8 +171,8 @@ export function Navbar({ connection, minimal = false }: NavbarProps) {
                 <Link
                   href="/patient-portal/home"
                   className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all min-w-[64px] ${pathname === "/patient-portal/home"
-                      ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
-                      : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                    : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                     }`}
                 >
                   <Home className="w-5 h-5" />
@@ -158,8 +182,8 @@ export function Navbar({ connection, minimal = false }: NavbarProps) {
                 <Link
                   href="/patient/emergency"
                   className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all min-w-[64px] ${pathname === "/patient/emergency"
-                      ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
-                      : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                    : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                     }`}
                 >
                   <AlertCircle className="w-5 h-5" />
@@ -169,8 +193,8 @@ export function Navbar({ connection, minimal = false }: NavbarProps) {
                 <Link
                   href="/patient/records"
                   className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all min-w-[64px] ${pathname === "/patient/records"
-                      ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
-                      : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                    : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                     }`}
                 >
                   <FileText className="w-5 h-5" />
@@ -180,8 +204,8 @@ export function Navbar({ connection, minimal = false }: NavbarProps) {
                 <Link
                   href="/patient/permissions"
                   className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all min-w-[64px] ${pathname === "/patient/permissions"
-                      ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
-                      : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                    : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                     }`}
                 >
                   <Users className="w-5 h-5" />
@@ -193,8 +217,8 @@ export function Navbar({ connection, minimal = false }: NavbarProps) {
                 <Link
                   href="/doctor-portal/home"
                   className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all min-w-[64px] ${pathname === "/doctor-portal/home"
-                      ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
-                      : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                    : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                     }`}
                 >
                   <Home className="w-5 h-5" />
@@ -204,8 +228,8 @@ export function Navbar({ connection, minimal = false }: NavbarProps) {
                 <Link
                   href="/doctor-portal/patients"
                   className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all min-w-[64px] ${pathname === "/doctor-portal/patients"
-                      ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
-                      : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                    : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                     }`}
                 >
                   <Users className="w-5 h-5" />
@@ -215,8 +239,8 @@ export function Navbar({ connection, minimal = false }: NavbarProps) {
                 <Link
                   href="/doctor-portal/upload"
                   className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all min-w-[64px] ${pathname === "/doctor-portal/upload"
-                      ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
-                      : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                    : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                     }`}
                 >
                   <FileText className="w-5 h-5" />
@@ -231,7 +255,7 @@ export function Navbar({ connection, minimal = false }: NavbarProps) {
                 user={{
                   name: session?.user?.email?.split("@")[0] || "User",
                   email: session?.user?.email || "",
-                  image: null,
+                  image: profilePicture,
                 }}
                 role={session?.user?.role || "patient"}
                 theme={theme}
@@ -356,7 +380,7 @@ export function Navbar({ connection, minimal = false }: NavbarProps) {
                   user={{
                     name: session?.user?.email?.split("@")[0] || "Developer",
                     email: session?.user?.email || "dev@example.com",
-                    image: null,
+                    image: profilePicture,
                   }}
                   role={session?.user?.role || (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true' ? "doctor" : "patient")}
                   theme={theme}

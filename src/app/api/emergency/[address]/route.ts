@@ -56,6 +56,7 @@ export async function GET(
             height: profile.height || '',
             weight: profile.weight || '',
             waistCircumference: '',
+            profilePicture: profile.profilePicture || '', // Add profile picture
             privacySettings: {
                 gender: true,
                 phone: true,
