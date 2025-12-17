@@ -263,7 +263,7 @@ export default function PatientRegister() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-neutral-900 dark:via-neutral-900 dark:to-neutral-800">
-            <Navbar />
+            <Navbar minimal={true} />
 
             <div className="max-w-3xl mx-auto px-4 py-12 pt-24">
                 {/* Header */}

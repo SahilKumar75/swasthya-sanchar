@@ -6,7 +6,7 @@ import { Magnetic } from "@/components/core/magnetic";
 import { StarOfLife } from "@/components/icons/StarOfLife";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Moon, Sun, Activity } from "lucide-react";
+import { Moon, Sun, Activity, Home, AlertCircle, FileText, Users } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
@@ -14,11 +14,13 @@ import { formatAddress } from "@/lib/web3";
 
 interface NavbarProps {
   connection?: { account: string } | null;
+  minimal?: boolean; // New prop for registration pages
 }
 
-export function Navbar({ connection }: NavbarProps) {
+export function Navbar({ connection, minimal = false }: NavbarProps) {
   const [active, setActive] = useState<string | null>(null);
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [isMobile, setIsMobile] = useState(false);
   const { data: session } = useSession();
   const pathname = usePathname();
   const { t } = useLanguage();
@@ -32,6 +34,17 @@ export function Navbar({ connection }: NavbarProps) {
     document.documentElement.classList.toggle("dark", initialTheme === "dark");
   }, []);
 
+  // Detect mobile viewport
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";
     setTheme(newTheme);
@@ -39,12 +52,204 @@ export function Navbar({ connection }: NavbarProps) {
     document.documentElement.classList.toggle("dark", newTheme === "dark");
   };
 
-  // Render Navbar
+  // If minimal mode, show only logo, avatar, theme, and language
+  if (minimal) {
+    return (
+      <header className="w-full z-40 fixed top-0 left-0 bg-transparent">
+        <div className="w-full px-4 md:px-6 py-4">
+          <div className="flex items-center justify-between gap-4">
+            {/* Left: Logo + Title */}
+            <Magnetic
+              intensity={0.2}
+              springOptions={{ bounce: 0.1 }}
+              actionArea="global"
+              range={200}
+            >
+              <div className="flex items-center gap-2 h-[44px] px-4 bg-white dark:bg-neutral-800 rounded-full shadow-sm cursor-default">
+                <StarOfLife className="w-6 h-6 md:w-8 md:h-8 text-red-600 dark:text-red-500 flex-shrink-0" />
+                <span className="text-xs md:text-sm text-neutral-900 dark:text-neutral-100 whitespace-nowrap tracking-wide font-bold">
+                  Swasthya Sanchar
+                </span>
+              </div>
+            </Magnetic>
+
+            {/* Right: Avatar + Theme + Language */}
+            <div className="flex items-center gap-1 h-[44px] px-1 bg-white dark:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 shadow-sm">
+              {session?.user && (
+                <ProfileDropdown
+                  user={{
+                    name: session.user.email?.split("@")[0] || "User",
+                    email: session.user.email || "",
+                    image: null,
+                  }}
+                  role={session.user.role || "patient"}
+                  theme={theme}
+                  onThemeToggle={toggleTheme}
+                />
+              )}
+
+              <button
+                onClick={toggleTheme}
+                className="p-2 h-[32px] w-[32px] flex items-center justify-center rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+                aria-label="Toggle theme"
+              >
+                {theme === "light" ? (
+                  <Moon className="w-4 h-4 text-neutral-700 dark:text-neutral-300" />
+                ) : (
+                  <Sun className="w-4 h-4 text-neutral-700 dark:text-neutral-300" />
+                )}
+              </button>
+
+              <LanguageSelector />
+            </div>
+          </div>
+        </div>
+      </header>
+    );
+  }
+
+  // Mobile Bottom Navigation
+  if (isMobile && (session || process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') && pathname !== '/') {
+    return (
+      <>
+        {/* Top bar with logo and controls */}
+        <header className="w-full z-40 fixed top-0 left-0 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800">
+          <div className="w-full px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <StarOfLife className="w-6 h-6 text-red-600 dark:text-red-500" />
+                <span className="text-xs text-neutral-900 dark:text-neutral-100 font-bold">Swasthya Sanchar</span>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={toggleTheme}
+                  className="p-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                  aria-label="Toggle theme"
+                >
+                  {theme === "light" ? (
+                    <Moon className="w-4 h-4 text-neutral-700 dark:text-neutral-300" />
+                  ) : (
+                    <Sun className="w-4 h-4 text-neutral-700 dark:text-neutral-300" />
+                  )}
+                </button>
+                <LanguageSelector />
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Bottom Navigation */}
+        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-neutral-900 border-t border-neutral-200 dark:border-neutral-800 pb-safe">
+          <div className="flex items-center justify-around px-2 py-2">
+            {session?.user?.role === "patient" ? (
+              <>
+                <Link
+                  href="/patient-portal/home"
+                  className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all min-w-[64px] ${pathname === "/patient-portal/home"
+                      ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                      : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    }`}
+                >
+                  <Home className="w-5 h-5" />
+                  <span className="text-[10px] font-medium">{t.nav.home}</span>
+                </Link>
+
+                <Link
+                  href="/patient/emergency"
+                  className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all min-w-[64px] ${pathname === "/patient/emergency"
+                      ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                      : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    }`}
+                >
+                  <AlertCircle className="w-5 h-5" />
+                  <span className="text-[10px] font-medium">{t.nav.emergency}</span>
+                </Link>
+
+                <Link
+                  href="/patient/records"
+                  className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all min-w-[64px] ${pathname === "/patient/records"
+                      ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                      : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    }`}
+                >
+                  <FileText className="w-5 h-5" />
+                  <span className="text-[10px] font-medium">Records</span>
+                </Link>
+
+                <Link
+                  href="/patient/permissions"
+                  className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all min-w-[64px] ${pathname === "/patient/permissions"
+                      ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                      : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    }`}
+                >
+                  <Users className="w-5 h-5" />
+                  <span className="text-[10px] font-medium">Access</span>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/doctor-portal/home"
+                  className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all min-w-[64px] ${pathname === "/doctor-portal/home"
+                      ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                      : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    }`}
+                >
+                  <Home className="w-5 h-5" />
+                  <span className="text-[10px] font-medium">{t.nav.home}</span>
+                </Link>
+
+                <Link
+                  href="/doctor-portal/patients"
+                  className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all min-w-[64px] ${pathname === "/doctor-portal/patients"
+                      ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                      : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    }`}
+                >
+                  <Users className="w-5 h-5" />
+                  <span className="text-[10px] font-medium">{t.nav.patients}</span>
+                </Link>
+
+                <Link
+                  href="/doctor-portal/upload"
+                  className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all min-w-[64px] ${pathname === "/doctor-portal/upload"
+                      ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                      : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    }`}
+                >
+                  <FileText className="w-5 h-5" />
+                  <span className="text-[10px] font-medium">Upload</span>
+                </Link>
+              </>
+            )}
+
+            {/* Profile in bottom nav */}
+            <div className="flex flex-col items-center gap-1 px-3 py-2">
+              <ProfileDropdown
+                user={{
+                  name: session?.user?.email?.split("@")[0] || "User",
+                  email: session?.user?.email || "",
+                  image: null,
+                }}
+                role={session?.user?.role || "patient"}
+                theme={theme}
+                onThemeToggle={toggleTheme}
+              />
+            </div>
+          </div>
+        </nav>
+      </>
+    );
+  }
+
+  // Desktop Navbar (original with improvements)
   return (
     <header className="w-full z-40 fixed top-0 left-0 bg-transparent">
       <div className="w-full px-6 py-4">
         <div className="flex items-center justify-between gap-4">
-          {/* Left: Logo + Title (Capsule) - Non-clickable with Magnetic effect */}
+          {/* Left: Logo + Title (Capsule) */}
           <Magnetic
             intensity={0.2}
             springOptions={{ bounce: 0.1 }}
@@ -71,15 +276,14 @@ export function Navbar({ connection }: NavbarProps) {
             </div>
           </Magnetic>
 
-          {/* Center: Home, Features, Emergency (Capsule with animated menu) - Centered */}
-          {/* Only show center menu if user is logged in OR in dev bypass mode AND not on landing page */}
+          {/* Center: Navigation Links - Reduced spacing */}
           {(session || process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') && pathname !== '/' && (
             <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2">
-              <div className="bg-white dark:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 shadow-sm px-1 h-[44px] flex items-center gap-1">
+              <div className="bg-white dark:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 shadow-sm px-1 h-[44px] flex items-center gap-0.5">
                 <Menu setActive={setActive}>
                   <Link
                     href={session?.user?.role === "patient" ? "/patient-portal/home" : session?.user?.role === "doctor" ? "/doctor-portal/home" : "/patient-portal/home"}
-                    className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient-portal/home" || pathname === "/doctor-portal/home"
+                    className={`px-4 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient-portal/home" || pathname === "/doctor-portal/home"
                       ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
                       : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
                       }`}
@@ -91,7 +295,7 @@ export function Navbar({ connection }: NavbarProps) {
                     <>
                       <Link
                         href="/patient/emergency"
-                        className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient/emergency"
+                        className={`px-4 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient/emergency"
                           ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
                           : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
                           }`}
@@ -100,7 +304,7 @@ export function Navbar({ connection }: NavbarProps) {
                       </Link>
                       <Link
                         href="/patient/records"
-                        className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient/records"
+                        className={`px-4 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient/records"
                           ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
                           : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
                           }`}
@@ -109,7 +313,7 @@ export function Navbar({ connection }: NavbarProps) {
                       </Link>
                       <Link
                         href="/patient/permissions"
-                        className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient/permissions"
+                        className={`px-4 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient/permissions"
                           ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
                           : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
                           }`}
@@ -121,7 +325,7 @@ export function Navbar({ connection }: NavbarProps) {
                     <>
                       <Link
                         href="/doctor-portal/patients"
-                        className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/doctor-portal/patients"
+                        className={`px-4 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/doctor-portal/patients"
                           ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
                           : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
                           }`}
@@ -130,7 +334,7 @@ export function Navbar({ connection }: NavbarProps) {
                       </Link>
                       <Link
                         href="/doctor-portal/upload"
-                        className={`px-5 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/doctor-portal/upload"
+                        className={`px-4 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/doctor-portal/upload"
                           ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
                           : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
                           }`}
@@ -144,7 +348,7 @@ export function Navbar({ connection }: NavbarProps) {
             </div>
           )}
 
-          {/* Right: Avatar + Theme Toggle + Language (Capsule) - Rightmost position */}
+          {/* Right: Avatar + Theme Toggle + Language */}
           <div className="flex items-center gap-1 h-[44px] px-1 bg-white dark:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 shadow-sm">
             {(session?.user || process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') && pathname !== '/' && (
               <div className="flex items-center h-full">
