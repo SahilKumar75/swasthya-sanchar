@@ -31,7 +31,7 @@ export function TeamMemberCard({ name, role, image, bio }: TeamMemberProps) {
             }}
         >
             {/* Hover card - existing functionality */}
-            <div className='group relative h-[350px] w-[290px] overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800 shadow-md hover:shadow-xl transition-shadow duration-300'>
+            <div className='group relative h-[350px] w-full sm:w-[290px] overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800 shadow-md hover:shadow-xl transition-shadow duration-300'>
                 <MorphingDialogTrigger
                     style={{
                         borderRadius: '12px',

@@ -20,6 +20,8 @@ export interface Translations {
     doctorAccess: string
     patients: string
     uploadRecords: string
+    records: string
+    access: string
   }
   // Common
   common: {
@@ -478,6 +480,8 @@ export const translations: Record<Language, Translations> = {
       doctorAccess: 'Doctor Access',
       patients: 'Patients',
       uploadRecords: 'Upload Records',
+      records: 'Records',
+      access: 'Access',
     },
     common: {
       save: 'Save',
@@ -926,6 +930,8 @@ export const translations: Record<Language, Translations> = {
       doctorAccess: 'डॉक्टर पहुंच',
       patients: 'मरीज',
       uploadRecords: 'रिकॉर्ड अपलोड करें',
+      records: 'रिकॉर्ड',
+      access: 'पहुंच',
     },
     common: {
       save: 'सहेजें',
@@ -1374,6 +1380,8 @@ export const translations: Record<Language, Translations> = {
       doctorAccess: 'डॉक्टर प्रवेश',
       patients: 'रुग्ण',
       uploadRecords: 'रेकॉर्ड अपलोड करा',
+      records: 'रेकॉर्ड',
+      access: 'प्रवेश',
     },
     common: {
       save: 'जतन करा',
@@ -1822,6 +1830,8 @@ export const translations: Record<Language, Translations> = {
       doctorAccess: 'डॉक्टर पहुंच',
       patients: 'मरीज',
       uploadRecords: 'रिकॉर्ड अपलोड करीं',
+      records: 'रिकॉर्ड',
+      access: 'पहुंच',
     },
     common: {
       save: 'सेव करीं',

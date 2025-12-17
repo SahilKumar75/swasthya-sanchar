@@ -238,7 +238,7 @@ export default function PatientPortal() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-neutral-900 dark:via-neutral-900 dark:to-neutral-800">
       <Navbar />
 
-      <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-24 pb-32">
+      <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-24 pb-40 md:pb-32">
         {/* Header with Profile Picture and Wallet Address */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
           <div className="flex items-center gap-4 sm:gap-6">
@@ -315,10 +315,10 @@ export default function PatientPortal() {
         </div>
 
         {/* Bento Grid Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4 auto-rows-auto">
 
           {/* Personal Information and Emergency Contact - Stacked Column (Spans 2 rows) */}
-          <div className="lg:col-span-2 lg:row-span-2 flex flex-col gap-4">
+          <div className="lg:col-span-2 xl:row-span-2 flex flex-col gap-4">
             {/* Personal Information - Compact */}
             <div className="bg-white dark:bg-neutral-800/50 rounded-2xl border border-neutral-200 dark:border-neutral-700 p-4 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-4">

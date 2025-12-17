@@ -198,7 +198,7 @@ export function Navbar({ connection, minimal = false }: NavbarProps) {
                     }`}
                 >
                   <FileText className="w-5 h-5" />
-                  <span className="text-[10px] font-medium">Records</span>
+                  <span className="text-[10px] font-medium">{t.nav.records}</span>
                 </Link>
 
                 <Link
@@ -209,7 +209,7 @@ export function Navbar({ connection, minimal = false }: NavbarProps) {
                     }`}
                 >
                   <Users className="w-5 h-5" />
-                  <span className="text-[10px] font-medium">Access</span>
+                  <span className="text-[10px] font-medium">{t.nav.access}</span>
                 </Link>
               </>
             ) : (
