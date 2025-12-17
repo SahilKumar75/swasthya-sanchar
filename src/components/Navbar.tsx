@@ -260,6 +260,7 @@ export function Navbar({ connection, minimal = false }: NavbarProps) {
                 role={session?.user?.role || "patient"}
                 theme={theme}
                 onThemeToggle={toggleTheme}
+                openUpward={true}
               />
             </div>
           </div>

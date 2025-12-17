@@ -26,9 +26,10 @@ interface ProfileDropdownProps {
   role?: string
   theme?: "light" | "dark"
   onThemeToggle?: () => void
+  openUpward?: boolean // New prop for mobile bottom nav
 }
 
-export function ProfileDropdown({ user, role, theme, onThemeToggle }: ProfileDropdownProps) {
+export function ProfileDropdown({ user, role, theme, onThemeToggle, openUpward = false }: ProfileDropdownProps) {
   const [isOpen, setIsOpen] = React.useState(false)
   const router = useRouter()
   const pathname = usePathname()
@@ -164,7 +165,7 @@ export function ProfileDropdown({ user, role, theme, onThemeToggle }: ProfileDro
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-neutral-900 rounded-xl shadow-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className={`absolute ${openUpward ? 'bottom-full mb-2' : 'top-full mt-2'} right-0 w-72 bg-white dark:bg-neutral-900 rounded-xl shadow-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden z-50 animate-in fade-in ${openUpward ? 'slide-in-from-bottom-2' : 'slide-in-from-top-2'} duration-200`}>
           {/* User Info Header */}
           <div className="px-4 py-4 border-b border-neutral-200 dark:border-neutral-800 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20">
             <div className="flex items-center gap-3">
