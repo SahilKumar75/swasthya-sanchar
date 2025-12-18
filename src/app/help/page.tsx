@@ -59,7 +59,7 @@ export default function HelpSupportPage() {
                         They made this website
                     </p>
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 md:gap-8">
                         {/* Sahil Kumar Singh */}
                         <div className="bg-white dark:bg-neutral-800 rounded-2xl border-2 border-neutral-200 dark:border-neutral-700 overflow-hidden hover:shadow-2xl hover:scale-105 hover:border-blue-500 dark:hover:border-blue-500 transition-all duration-300 group">
                             <div className="aspect-square overflow-hidden bg-neutral-100 dark:bg-neutral-700">
