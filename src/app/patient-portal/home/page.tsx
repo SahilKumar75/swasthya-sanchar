@@ -59,6 +59,32 @@ export default function PatientHome() {
     useEffect(() => {
         // Skip auth check in development if bypass is enabled
         if (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') {
+            // Set mock profile data for testing
+            const mockProfile: PatientProfile = {
+                isRegisteredOnChain: true,
+                walletAddress: '0x1234567890abcdef',
+                fullName: 'Test Patient',
+                dateOfBirth: '1990-01-01',
+                gender: 'Male',
+                bloodGroup: 'O+',
+                phone: '+91 9876543210',
+                address: '123 Test Street',
+                city: 'Mumbai',
+                state: 'Maharashtra',
+                pincode: '400001',
+                height: '175',
+                weight: '70',
+                allergies: 'Penicillin',
+                chronicConditions: 'Hypertension',
+                currentMedications: 'Aspirin 75mg daily',
+                previousSurgeries: 'Appendectomy',
+                emergencyName: 'Emergency Contact',
+                emergencyRelation: 'Spouse',
+                emergencyPhone: '+91 9876543211',
+                profilePicture: ''
+            };
+            setProfile(mockProfile);
+            validateMedicalData(mockProfile);
             setLoading(false);
             return;
         }
