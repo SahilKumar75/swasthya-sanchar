@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Shield } from "lucide-react";
+import { Shield, RefreshCw } from "lucide-react";
+import OfflineIndicator from "@/components/OfflineIndicator";
 
 interface PrivacySettings {
   // Only optional fields - name, DOB, bloodGroup, emergencyContact are ALWAYS visible
@@ -41,11 +42,80 @@ interface PatientEmergencyData {
   privacySettings: PrivacySettings;
 }
 
+// Cache duration: 7 days
+const CACHE_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
+
+// Utility functions for localStorage caching
+function saveToCache(address: string, data: PatientEmergencyData) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(`emergency_${address}`, JSON.stringify(data));
+    localStorage.setItem(`emergency_${address}_timestamp`, Date.now().toString());
+  } catch (error) {
+    console.warn('Failed to save to cache:', error);
+  }
+}
+
+function loadFromCache(address: string): PatientEmergencyData | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const cached = localStorage.getItem(`emergency_${address}`);
+    return cached ? JSON.parse(cached) : null;
+  } catch (error) {
+    console.warn('Failed to load from cache:', error);
+    return null;
+  }
+}
+
+function getCacheAge(address: string): number | null {
+  if (typeof window === 'undefined') return null;
+  const timestamp = localStorage.getItem(`emergency_${address}_timestamp`);
+  if (!timestamp) return null;
+  return Date.now() - parseInt(timestamp);
+}
+
+function formatCacheAge(ageMs: number): string {
+  const minutes = Math.floor(ageMs / 60000);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
+  if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+  if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+  return 'just now';
+}
+
 export default function EmergencyResponderPage({ params }: { params: { address: string } }) {
   const [address, setAddress] = useState<string>(params.address || "");
   const [loading, setLoading] = useState(true);
   const [patientData, setPatientData] = useState<PatientEmergencyData | null>(null);
   const [error, setError] = useState<string>("");
+  const [isOnline, setIsOnline] = useState(true);
+  const [usingCache, setUsingCache] = useState(false);
+  const [cacheAge, setCacheAge] = useState<number | null>(null);
+
+  useEffect(() => {
+    // Set initial online status
+    setIsOnline(navigator.onLine);
+
+    // Listen for online/offline events
+    const handleOnline = () => {
+      setIsOnline(true);
+      // Auto-refresh when back online if using cached data
+      if (usingCache) {
+        loadEmergencyData();
+      }
+    };
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [usingCache]);
 
   useEffect(() => {
     loadEmergencyData();
@@ -55,6 +125,8 @@ export default function EmergencyResponderPage({ params }: { params: { address: 
     try {
       setLoading(true);
       setError("");
+      setUsingCache(false);
+      setCacheAge(null);
 
       // Fetch emergency data from database API
       const response = await fetch(`/api/emergency/${address}`);
@@ -65,14 +137,44 @@ export default function EmergencyResponderPage({ params }: { params: { address: 
         } else {
           setError("Failed to load patient emergency data");
         }
+
+        // If offline, try loading from cache
+        if (!navigator.onLine) {
+          const cached = loadFromCache(address);
+          if (cached) {
+            setPatientData(cached);
+            setUsingCache(true);
+            setCacheAge(getCacheAge(address));
+            setError(""); // Clear error if we have cached data
+          }
+        }
         return;
       }
 
       const data = await response.json();
+
+      // Save to cache for offline use
+      saveToCache(address, data);
+
       setPatientData(data);
+      setUsingCache(false);
     } catch (error) {
       console.error("Error loading emergency data:", error);
-      setError("Failed to load patient emergency data");
+
+      // Network error - try cache fallback
+      if (!navigator.onLine) {
+        const cached = loadFromCache(address);
+        if (cached) {
+          setPatientData(cached);
+          setUsingCache(true);
+          setCacheAge(getCacheAge(address));
+          setError(""); // Clear error since we have cached data
+        } else {
+          setError("No cached data available. Please connect to internet.");
+        }
+      } else {
+        setError("Failed to load patient emergency data");
+      }
     } finally {
       setLoading(false);
     }
@@ -110,19 +212,52 @@ export default function EmergencyResponderPage({ params }: { params: { address: 
                 <p className="text-sm text-gray-600">First Responder View</p>
               </div>
             </div>
-            <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">Back to Home</Link>
+            <div className="flex items-center gap-4">
+              <OfflineIndicator />
+              <Link href="/" className="text-sm text-gray-600 hover:text-gray-900 dark:text-neutral-400 dark:hover:text-neutral-100">Back to Home</Link>
+            </div>
           </div>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Offline Cache Banner */}
+        {usingCache && cacheAge !== null && (
+          <div className={`rounded-lg p-4 mb-6 flex items-center justify-between gap-3 ${cacheAge > CACHE_DURATION_MS
+              ? 'bg-red-50 dark:bg-red-900/20 border-2 border-red-300 dark:border-red-800'
+              : cacheAge > 24 * 60 * 60 * 1000
+                ? 'bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-800'
+                : 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-300 dark:border-blue-800'
+            }`}>
+            <div className="flex items-center gap-3">
+              <Shield className="w-6 h-6 flex-shrink-0" />
+              <div>
+                <p className="font-semibold">Viewing Offline Cached Data</p>
+                <p className="text-sm">Last updated: {formatCacheAge(cacheAge)}</p>
+                {cacheAge > CACHE_DURATION_MS && (
+                  <p className="text-sm font-semibold mt-1">⚠️ Cache is very old. Connect to internet for latest data.</p>
+                )}
+              </div>
+            </div>
+            {isOnline && (
+              <button
+                onClick={loadEmergencyData}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition whitespace-nowrap"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Sync Now
+              </button>
+            )}
+          </div>
+        )}
+
         <div className="bg-red-600 dark:bg-red-700 text-white rounded-lg p-4 mb-6 flex items-center gap-3 border border-red-700 dark:border-red-800" role="alert">
           <svg className="w-8 h-8 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
           <div>
-            <p className="font-semibold text-lg">Instant Emergency Access</p>
-            <p className="text-sm">Critical patient info from blockchain, accessible via QR scan</p>
+            <p className="font-semibold text-lg">Instant Emergency Access{!isOnline && ' (Offline Mode)'}</p>
+            <p className="text-sm">{isOnline ? 'Critical patient info from blockchain, accessible via QR scan' : 'Showing cached emergency data - works without internet'}</p>
           </div>
         </div>
 

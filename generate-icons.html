@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Generate PNG Icons</title>
+</head>
+
+<body>
+    <canvas id="canvas192" width="192" height="192" style="display:none;"></canvas>
+    <canvas id="canvas512" width="512" height="512" style="display:none;"></canvas>
+
+    <div style="padding: 2rem; font-family: system-ui;">
+        <h2>Icon Generator</h2>
+        <p>Click the buttons below to download the PNG icons:</p>
+        <button onclick="generateIcon(192)" style="padding: 1rem 2rem; margin: 0.5rem; cursor: pointer;">Download
+            192x192 Icon</button>
+        <button onclick="generateIcon(512)" style="padding: 1rem 2rem; margin: 0.5rem; cursor: pointer;">Download
+            512x512 Icon</button>
+
+        <div style="margin-top: 2rem;">
+            <h3>Preview:</h3>
+            <div id="preview"></div>
+        </div>
+    </div>
+
+    <script>
+        function drawStarOfLife(ctx, size) {
+            ctx.fillStyle = '#DC2626';
+
+            const scale = size / 200;
+            ctx.scale(scale, scale);
+
+            // Vertical bar
+            ctx.fillRect(80, 10, 40, 180);
+
+            // Save context for rotations
+            ctx.save();
+            ctx.translate(100, 100);
+            ctx.rotate(60 * Math.PI / 180);
+            ctx.translate(-100, -100);
+            ctx.fillRect(80, 10, 40, 180);
+            ctx.restore();
+
+            ctx.save();
+            ctx.translate(100, 100);
+            ctx.rotate(-60 * Math.PI / 180);
+            ctx.translate(-100, -100);
+            ctx.fillRect(80, 10, 40, 180);
+            ctx.restore();
+        }
+
+        function generateIcon(size) {
+            const canvas = document.getElementById('canvas' + size);
+            const ctx = canvas.getContext('2d');
+
+            // Clear canvas
+            ctx.clearRect(0, 0, size, size);
+            ctx.save();
+
+            // Draw white background
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, size, size);
+
+            // Draw star
+            drawStarOfLife(ctx, size);
+            ctx.restore();
+
+            // Download
+            canvas.toBlob(function (blob) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'icon-' + size + '.png';
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+
+            // Show preview
+            const preview = document.getElementById('preview');
+            const img = new Image();
+            img.src = canvas.toDataURL();
+            img.style.width = '100px';
+            img.style.height = '100px';
+            img.style.margin = '0.5rem';
+            img.style.border = '2px solid #ccc';
+            preview.appendChild(img);
+        }
+    </script>
+</body>
+
+</html>
