@@ -10,8 +10,9 @@ import { FooterSection } from "@/components/ui/footer-section";
 import {
   Edit2, User, Calendar, Phone, Mail, MapPin, AlertCircle, Heart, Activity,
   FileText, TrendingUp, Droplet, Stethoscope, Clock, Pill, FileCheck,
-  ArrowUpRight, ArrowDownRight, Scale, Users
+  ArrowUpRight, ArrowDownRight, Scale, Users, Sparkles, RefreshCw
 } from "lucide-react";
+import MedicalDataPrompt from "@/components/patient/MedicalDataPrompt";
 
 interface PatientData {
   name: string;
@@ -54,6 +55,13 @@ export default function PatientHome() {
   const [loading, setLoading] = useState(true);
   const [patientData, setPatientData] = useState<PatientData | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+
+  // AI Health Insights state
+  const [showDataPrompt, setShowDataPrompt] = useState(false);
+  const [medicalDataComplete, setMedicalDataComplete] = useState(false);
+  const [missingFields, setMissingFields] = useState<string[]>([]);
+  const [aiInsights, setAiInsights] = useState<any>(null);
+  const [loadingInsights, setLoadingInsights] = useState(false);
 
   async function linkWalletToAccount(walletAddress: string) {
     try {
@@ -126,7 +134,7 @@ export default function PatientHome() {
         const birthDate = new Date(Number(patient.dateOfBirth) * 1000);
         const dateOfBirth = birthDate.toISOString().split('T')[0];
 
-        setPatientData({
+        const data = {
           name: patient.name || "",
           dateOfBirth: dateOfBirth,
           gender: emergencyData.gender || "",
@@ -144,9 +152,14 @@ export default function PatientHome() {
           chronicConditions: emergencyData.chronicConditions || "",
           currentMedications: emergencyData.currentMedications || "",
           previousSurgeries: emergencyData.previousSurgeries || "",
-          height: emergencyData.height || "170", // Mock data in cm
-          weight: emergencyData.weight || "70" // Mock data in kg
-        });
+          height: emergencyData.height || "170",
+          weight: emergencyData.weight || "70"
+        };
+
+        setPatientData(data);
+
+        // Validate medical data completeness
+        validateMedicalData(data);
       }
     } catch (error) {
       console.error("Error loading patient data:", error);
@@ -241,6 +254,97 @@ export default function PatientHome() {
     });
     return score;
   };
+
+  // Validate medical data completeness
+  function validateMedicalData(data: PatientData) {
+    const missing: string[] = [];
+
+    if (!data.allergies || data.allergies.trim() === '') {
+      missing.push('allergies');
+    }
+    if (!data.chronicConditions || data.chronicConditions.trim() === '') {
+      missing.push('chronic conditions');
+    }
+    if (!data.currentMedications || data.currentMedications.trim() === '') {
+      missing.push('current medications');
+    }
+
+    setMissingFields(missing);
+    setMedicalDataComplete(missing.length === 0);
+
+    // Auto-generate insights if data is complete
+    if (missing.length === 0) {
+      generateAIInsights(data);
+    }
+  }
+
+  // Generate AI health insights
+  async function generateAIInsights(data: PatientData) {
+    setLoadingInsights(true);
+    try {
+      const age = calculateAge(data.dateOfBirth);
+      const healthMetrics = calculateHealthMetrics();
+
+      const response = await fetch('/api/ai/health-insights', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          age,
+          gender: data.gender,
+          bloodGroup: data.bloodGroup,
+          bmi: healthMetrics.bmi,
+          bmiCategory: healthMetrics.bmiCategory,
+          allergies: data.allergies,
+          chronicConditions: data.chronicConditions,
+          currentMedications: data.currentMedications,
+          previousSurgeries: data.previousSurgeries
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setAiInsights(result.insights);
+      } else {
+        console.error('Failed to generate AI insights');
+      }
+    } catch (error) {
+      console.error('Error generating AI insights:', error);
+    } finally {
+      setLoadingInsights(false);
+    }
+  }
+
+  // Save missing medical data
+  async function saveMedicalData(data: {
+    allergies: string;
+    chronicConditions: string;
+    currentMedications: string;
+  }) {
+    try {
+      const response = await fetch('/api/patient/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      if (response.ok) {
+        // Update local state
+        if (patientData) {
+          const updatedData = {
+            ...patientData,
+            ...data
+          };
+          setPatientData(updatedData);
+          validateMedicalData(updatedData);
+        }
+      } else {
+        throw new Error('Failed to update profile');
+      }
+    } catch (error) {
+      console.error('Error saving medical data:', error);
+      throw error;
+    }
+  }
 
   if (status === "loading" || loading) {
     return (
@@ -666,80 +770,169 @@ export default function PatientHome() {
               )}
             </div>
 
-            {/* Health Advisory Section */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/10 dark:to-indigo-900/10 rounded-2xl border border-blue-200 dark:border-blue-800 p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 bg-blue-100 dark:bg-blue-900/50 rounded-xl">
-                  <Heart className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50">
-                    Health Advisory
-                  </h2>
-                  <p className="text-sm text-neutral-600 dark:text-neutral-400">Based on your health profile</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white dark:bg-neutral-800 rounded-xl p-4 border border-blue-100 dark:border-blue-900">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-green-100 dark:bg-green-900/50 rounded-lg">
-                      <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-neutral-900 dark:text-neutral-50 mb-1">BMI Status: {healthMetrics.bmiCategory}</h3>
-                      <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                        Your BMI is {healthMetrics.bmi}. {healthMetrics.bmiCategory === "Normal"
-                          ? "Great job maintaining a healthy weight!"
-                          : "Consider consulting with a nutritionist for personalized advice."}
-                      </p>
-                    </div>
+            {/* AI Health Insights Section */}
+            <div className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/10 dark:to-indigo-900/10 rounded-2xl border border-purple-200 dark:border-purple-800 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-purple-100 dark:bg-purple-900/50 rounded-xl">
+                    <Sparkles className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50">
+                      AI Health Insights
+                    </h2>
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                      Personalized for your medical profile
+                    </p>
                   </div>
                 </div>
-                <div className="bg-white dark:bg-neutral-800 rounded-xl p-4 border border-blue-100 dark:border-blue-900">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-amber-100 dark:bg-amber-900/50 rounded-lg">
-                      <Calendar className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-neutral-900 dark:text-neutral-50 mb-1">Regular Checkups</h3>
-                      <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                        Last checkup was 45 days ago. Schedule your next appointment within 2 weeks.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                {patientData.allergies && (
-                  <div className="bg-white dark:bg-neutral-800 rounded-xl p-4 border border-red-100 dark:border-red-900">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-red-100 dark:bg-red-900/50 rounded-lg">
-                        <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-neutral-900 dark:text-neutral-50 mb-1">Allergy Alert</h3>
-                        <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                          Always inform healthcare providers about your allergies: {patientData.allergies}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                {medicalDataComplete && aiInsights && (
+                  <button
+                    onClick={() => patientData && generateAIInsights(patientData)}
+                    disabled={loadingInsights}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${loadingInsights ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </button>
                 )}
-                <div className="bg-white dark:bg-neutral-800 rounded-xl p-4 border border-blue-100 dark:border-blue-900">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg">
-                      <Pill className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                    </div>
+              </div>
+
+              {/* Missing Data Prompt */}
+              {!medicalDataComplete && (
+                <div className="bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-800 rounded-xl p-6">
+                  <div className="flex items-start gap-4">
+                    <AlertCircle className="w-8 h-8 text-amber-600 flex-shrink-0" />
                     <div className="flex-1">
-                      <h3 className="font-semibold text-neutral-900 dark:text-neutral-50 mb-1">Medication Adherence</h3>
-                      <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                        {healthMetrics.medicationCount > 0
-                          ? `Take your ${healthMetrics.medicationCount} prescribed medication(s) as directed.`
-                          : "No active medications. Keep up with preventive care!"}
+                      <h3 className="font-semibold text-amber-900 dark:text-amber-100 mb-2">
+                        Complete Your Medical Profile
+                      </h3>
+                      <p className="text-sm text-amber-800 dark:text-amber-200 mb-4">
+                        To receive personalized AI health insights, please provide:
                       </p>
+                      <ul className="space-y-2 mb-4">
+                        {missingFields.map(field => (
+                          <li key={field} className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200">
+                            <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                            {field.charAt(0).toUpperCase() + field.slice(1)}
+                          </li>
+                        ))}
+                      </ul>
+                      <button
+                        onClick={() => setShowDataPrompt(true)}
+                        className="px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition font-medium"
+                      >
+                        Complete Profile →
+                      </button>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
+
+              {/* AI Insights (when data complete) */}
+              {medicalDataComplete && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {loadingInsights ? (
+                    <div className="col-span-2 text-center py-12">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                      <p className="text-neutral-600 dark:text-neutral-400">
+                        Generating personalized insights...
+                      </p>
+                    </div>
+                  ) : aiInsights ? (
+                    <>
+                      {/* Condition Management */}
+                      <div className="bg-white dark:bg-neutral-800 rounded-xl p-4 border border-purple-100 dark:border-purple-900">
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
+                            <Heart className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-neutral-900 dark:text-neutral-50 mb-1">
+                              {aiInsights.conditionManagement?.title || "Condition Management"}
+                            </h3>
+                            <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                              {aiInsights.conditionManagement?.advice || "No advice available"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Medication Adherence */}
+                      <div className="bg-white dark:bg-neutral-800 rounded-xl p-4 border border-purple-100 dark:border-purple-900">
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg">
+                            <Pill className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-neutral-900 dark:text-neutral-50 mb-1">
+                              {aiInsights.medicationAdherence?.title || "Medication Guidance"}
+                            </h3>
+                            <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                              {aiInsights.medicationAdherence?.advice || "No advice available"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Allergy Safety */}
+                      <div className="bg-white dark:bg-neutral-800 rounded-xl p-4 border border-red-100 dark:border-red-900">
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 bg-red-100 dark:bg-red-900/50 rounded-lg">
+                            <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-neutral-900 dark:text-neutral-50 mb-1">
+                              {aiInsights.allergySafety?.title || "Allergy Safety"}
+                            </h3>
+                            <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                              {aiInsights.allergySafety?.advice || "No advice available"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Lifestyle Advice */}
+                      <div className="bg-white dark:bg-neutral-800 rounded-xl p-4 border border-green-100 dark:border-green-900">
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 bg-green-100 dark:bg-green-900/50 rounded-lg">
+                            <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-neutral-900 dark:text-neutral-50 mb-1">
+                              {aiInsights.lifestyleAdvice?.title || "Lifestyle Tips"}
+                            </h3>
+                            <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                              {aiInsights.lifestyleAdvice?.advice || "No advice available"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="col-span-2 text-center py-8">
+                      <p className="text-neutral-600 dark:text-neutral-400 mb-4">
+                        Click the button below to generate your personalized health insights
+                      </p>
+                      <button
+                        onClick={() => patientData && generateAIInsights(patientData)}
+                        className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-medium"
+                      >
+                        Generate Insights
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
+
+            {/* Medical Data Prompt Modal */}
+            <MedicalDataPrompt
+              isOpen={showDataPrompt}
+              onClose={() => setShowDataPrompt(false)}
+              onSave={saveMedicalData}
+              missingFields={missingFields}
+            />
 
             {/* Quick Actions Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
