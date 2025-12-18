@@ -590,7 +590,7 @@ export default function PatientHome() {
                                     onClose={() => setShowCustomInput(false)}
                                     onGenerate={generateCustomAIInsights}
                                     currentData={{
-                                        age: profile?.dateOfBirth ? calculateAge(profile.dateOfBirth) : 30,
+                                        age: typeof calculateAge(profile.dateOfBirth) === 'number' ? calculateAge(profile.dateOfBirth) as number : 30,
                                         bloodGroup: profile?.bloodGroup || '',
                                         bmi: calculateBMI() ? parseFloat(calculateBMI()!) : 22,
                                         allergies: profile?.allergies || '',
