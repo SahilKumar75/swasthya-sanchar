@@ -409,12 +409,15 @@ export default function PatientHome() {
       <main className="max-w-7xl mx-auto px-6 lg:px-8 py-12 pt-24">
         {/* Welcome Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h1 className="text-4xl md:text-5xl font-bold text-neutral-900 dark:text-neutral-50 mb-2">
-                Welcome back, {patientData?.name?.split(' ')[0] || "there"}!
+              <h1 className="text-3xl md:text-5xl font-bold text-neutral-900 dark:text-neutral-50">
+                <span className="block text-lg md:text-2xl font-normal text-neutral-600 dark:text-neutral-400 mb-1">
+                  Welcome back,
+                </span>
+                {patientData?.name || "there"}!
               </h1>
-              <p className="text-lg text-neutral-600 dark:text-neutral-400">
+              <p className="text-sm md:text-lg text-neutral-600 dark:text-neutral-400 mt-2">
                 Here's your health overview for today
               </p>
             </div>
@@ -439,35 +442,35 @@ export default function PatientHome() {
             <div className="grid grid-cols-12 gap-4 auto-rows-[180px]">
 
               {/* BMI Card - Large Feature */}
-              <div className="col-span-12 md:col-span-4 row-span-2 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-2xl border-2 border-emerald-200 dark:border-emerald-800 p-6 flex flex-col justify-between">
+              <div className="col-span-12 md:col-span-4 row-span-2 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-2xl border-2 border-emerald-200 dark:border-emerald-800 p-4 md:p-6 flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="p-3 bg-white/70 dark:bg-neutral-800/70 backdrop-blur-sm rounded-xl">
-                      <Scale className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
+                  <div className="flex items-center justify-between mb-3 md:mb-4">
+                    <div className="p-2 md:p-3 bg-white/70 dark:bg-neutral-800/70 backdrop-blur-sm rounded-xl">
+                      <Scale className="w-5 h-5 md:w-7 md:h-7 text-emerald-600 dark:text-emerald-400" />
                     </div>
-                    <span className="text-xs font-medium px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">
-                      Body Mass Index
+                    <span className="text-xs font-medium px-2 md:px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">
+                      BMI
                     </span>
                   </div>
-                  <div className="mb-6">
+                  <div className="mb-4 md:mb-6">
                     <div className="flex items-baseline gap-2 mb-2">
-                      <span className="text-6xl font-bold text-emerald-900 dark:text-emerald-100">
+                      <span className="text-4xl md:text-6xl font-bold text-emerald-900 dark:text-emerald-100">
                         {healthMetrics.bmi}
                       </span>
-                      <span className="text-2xl text-emerald-700 dark:text-emerald-300">kg/m²</span>
+                      <span className="text-lg md:text-2xl text-emerald-700 dark:text-emerald-300">kg/m²</span>
                     </div>
-                    <p className="text-lg font-semibold text-emerald-800 dark:text-emerald-200">
+                    <p className="text-base md:text-lg font-semibold text-emerald-800 dark:text-emerald-200">
                       {healthMetrics.bmiCategory}
                     </p>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm rounded-lg p-3">
+                  <div className="grid grid-cols-2 gap-2 md:gap-3">
+                    <div className="bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm rounded-lg p-2 md:p-3">
                       <p className="text-xs text-neutral-600 dark:text-neutral-400 mb-1">Weight</p>
-                      <p className="text-lg font-bold text-neutral-900 dark:text-neutral-100">{patientData.weight} kg</p>
+                      <p className="text-base md:text-lg font-bold text-neutral-900 dark:text-neutral-100">{patientData.weight} kg</p>
                     </div>
-                    <div className="bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm rounded-lg p-3">
+                    <div className="bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm rounded-lg p-2 md:p-3">
                       <p className="text-xs text-neutral-600 dark:text-neutral-400 mb-1">Height</p>
-                      <p className="text-lg font-bold text-neutral-900 dark:text-neutral-100">{patientData.height} cm</p>
+                      <p className="text-base md:text-lg font-bold text-neutral-900 dark:text-neutral-100">{patientData.height} cm</p>
                     </div>
                   </div>
                 </div>
@@ -506,22 +509,22 @@ export default function PatientHome() {
               </div>
 
               {/* Blood Group Rarity */}
-              <div className="col-span-12 md:col-span-4 row-span-1 bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-900/20 dark:to-red-900/20 rounded-2xl border-2 border-rose-200 dark:border-rose-800 p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-2.5 bg-white/70 dark:bg-neutral-800/70 backdrop-blur-sm rounded-lg">
-                    <Droplet className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+              <div className="col-span-12 md:col-span-4 row-span-1 bg-gradient-to-br from-rose-50 to-red-50 dark:from-rose-900/20 dark:to-red-900/20 rounded-2xl border-2 border-rose-200 dark:border-rose-800 p-4 md:p-5">
+                <div className="flex items-center justify-between mb-3 md:mb-4">
+                  <div className="p-2 md:p-2.5 bg-white/70 dark:bg-neutral-800/70 backdrop-blur-sm rounded-lg">
+                    <Droplet className="w-4 h-4 md:w-5 md:h-5 text-rose-600 dark:text-rose-400" />
                   </div>
-                  <span className="text-xs font-medium px-3 py-1 rounded-full bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300">
+                  <span className="text-xs font-medium px-2 md:px-3 py-1 rounded-full bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300">
                     {healthMetrics.bloodRarity}
                   </span>
                 </div>
-                <div className="flex items-baseline gap-3 mb-2">
-                  <span className="text-4xl font-bold text-rose-900 dark:text-rose-100">
+                <div className="flex items-baseline gap-2 md:gap-3 mb-2">
+                  <span className="text-3xl md:text-4xl font-bold text-rose-900 dark:text-rose-100">
                     {patientData.bloodGroup}
                   </span>
                   <div className="flex-1">
-                    <p className="text-sm text-rose-700 dark:text-rose-300 mb-1">
-                      {healthMetrics.bloodPercentage}% of population
+                    <p className="text-xs md:text-sm text-rose-700 dark:text-rose-300 mb-1">
+                      {healthMetrics.bloodPercentage}% population
                     </p>
                     <div className="w-full bg-white/50 dark:bg-neutral-800/50 rounded-full h-1.5">
                       <div
