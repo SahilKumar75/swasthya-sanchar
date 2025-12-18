@@ -9,9 +9,10 @@ import { FooterSection } from "@/components/ui/footer-section";
 import {
     FileText, Shield, QrCode, Loader2, CheckCircle,
     Heart, Activity, Droplet, Calendar, AlertCircle,
-    TrendingUp, ArrowUpRight, Scale, Pill
+    TrendingUp, ArrowUpRight, Scale, Pill, Sparkles, RefreshCw
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import MedicalDataPrompt from "@/components/patient/MedicalDataPrompt";
 
 interface PatientProfile {
     dateOfBirth?: string;
@@ -37,6 +38,13 @@ export default function PatientHome() {
     const [qrCode, setQrCode] = useState<string>("");
     const { t } = useLanguage();
 
+    // AI Health Insights state
+    const [showDataPrompt, setShowDataPrompt] = useState(false);
+    const [medicalDataComplete, setMedicalDataComplete] = useState(false);
+    const [missingFields, setMissingFields] = useState<string[]>([]);
+    const [aiInsights, setAiInsights] = useState<any>(null);
+    const [loadingInsights, setLoadingInsights] = useState(false);
+
     useEffect(() => {
 
 
@@ -61,6 +69,9 @@ export default function PatientHome() {
                 }
 
                 setProfile(data);
+
+                // Validate medical data for AI
+                validateMedicalData(data);
 
                 // Generate QR code if registered
                 if (data.isRegisteredOnChain && data.walletAddress) {
@@ -126,6 +137,94 @@ export default function PatientHome() {
         if (bmi < 25) return { category: t.portal.patientHome.normal, color: 'text-green-600 dark:text-green-400' };
         if (bmi < 30) return { category: t.portal.patientHome.overweight, color: 'text-orange-600 dark:text-orange-400' };
         return { category: t.portal.patientHome.obese, color: 'text-red-600 dark:text-red-400' };
+    };
+
+    // Validate medical data completeness for AI
+    const validateMedicalData = (data: PatientProfile) => {
+        const missing: string[] = [];
+
+        if (!data.allergies || data.allergies.trim() === '') {
+            missing.push('allergies');
+        }
+        if (!data.chronicConditions || data.chronicConditions.trim() === '') {
+            missing.push('chronic conditions');
+        }
+        if (!data.currentMedications || data.currentMedications.trim() === '') {
+            missing.push('current medications');
+        }
+
+        setMissingFields(missing);
+        setMedicalDataComplete(missing.length === 0);
+
+        // Auto-generate insights if data is complete
+        if (missing.length === 0) {
+            generateAIInsights(data);
+        }
+    };
+
+    // Generate AI health insights
+    const generateAIInsights = async (data: PatientProfile) => {
+        setLoadingInsights(true);
+        try {
+            const age = calculateAge(data.dateOfBirth);
+            const bmiValue = calculateBMI();
+            const bmiCategory = bmiValue ? getBMICategory(parseFloat(bmiValue)).category : 'Unknown';
+
+            const response = await fetch('/api/ai/health-insights', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    age: typeof age === 'number' ? age : 30,
+                    gender: 'Not specified',
+                    bloodGroup: data.bloodGroup || 'Unknown',
+                    bmi: bmiValue ? parseFloat(bmiValue) : 22,
+                    bmiCategory,
+                    allergies: data.allergies || '',
+                    chronicConditions: data.chronicConditions || '',
+                    currentMedications: data.currentMedications || '',
+                    previousSurgeries: ''
+                })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                setAiInsights(result.insights);
+            } else {
+                console.error('Failed to generate AI insights');
+            }
+        } catch (error) {
+            console.error('Error generating AI insights:', error);
+        } finally {
+            setLoadingInsights(false);
+        }
+    };
+
+    // Save missing medical data
+    const saveMedicalData = async (data: {
+        allergies: string;
+        chronicConditions: string;
+        currentMedications: string;
+    }) => {
+        try {
+            const response = await fetch('/api/patient/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                // Reload profile
+                const res = await fetch("/api/patient/status");
+                const updatedProfile = await res.json();
+                setProfile(updatedProfile);
+                validateMedicalData(updatedProfile);
+            } else {
+                throw new Error('Failed to update profile');
+            }
+        } catch (error) {
+            console.error('Error saving medical data:', error);
+            throw error;
+        }
     };
 
     if (status === "loading" || loading) {
@@ -268,52 +367,150 @@ export default function PatientHome() {
                                     </div>
                                 </div>
 
-                                {/* Dietary Tips & Medication Schedule - Side by Side */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {/* Dietary Tips */}
-                                    <div>
-                                        <h3 className="text-lg font-semibold text-neutral-700 dark:text-neutral-300 mb-3">{t.portal.patientHome.dietaryRecommendations}</h3>
-                                        <ul className="space-y-2 text-sm text-neutral-700 dark:text-neutral-300">
-                                            <li>
-                                                <span className="font-semibold text-green-700 dark:text-green-400">{t.portal.patientHome.doDietary}</span> Include iodine-rich foods (seafood, dairy, eggs)
-                                            </li>
-                                            <li>
-                                                <span className="font-semibold text-green-700 dark:text-green-400">{t.portal.patientHome.doDietary}</span> Consume selenium sources (Brazil nuts, tuna, sardines)
-                                            </li>
-                                            <li>
-                                                <span className="font-semibold text-red-700 dark:text-red-400">{t.portal.patientHome.dontDietary}</span> Limit soy products and cruciferous vegetables
-                                            </li>
-                                            <li>
-                                                <span className="font-semibold text-red-700 dark:text-red-400">{t.portal.patientHome.dontDietary}</span> Avoid excessive caffeine intake
-                                            </li>
-                                        </ul>
+                                {/* AI Health Insights */}
+                                <div className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/10 dark:to-indigo-900/10 rounded-xl border border-purple-200 dark:border-purple-800 p-6">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-2">
+                                            <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                                            <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">AI Health Insights</h3>
+                                        </div>
+                                        {medicalDataComplete && aiInsights && (
+                                            <button
+                                                onClick={() => profile && generateAIInsights(profile)}
+                                                disabled={loadingInsights}
+                                                className="px-3 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition flex items-center gap-1.5 disabled:opacity-50"
+                                            >
+                                                <RefreshCw className={`w-3.5 h-3.5 ${loadingInsights ? 'animate-spin' : ''}`} />
+                                                Refresh
+                                            </button>
+                                        )}
                                     </div>
 
-                                    {/* Medication Schedule */}
-                                    <div>
-                                        <h3 className="text-lg font-semibold text-neutral-700 dark:text-neutral-300 mb-3">{t.portal.patientHome.medicationSchedule}</h3>
-                                        <div className="space-y-3">
-                                            <div className="border-l-4 border-blue-500 pl-4 py-2">
-                                                <p className="font-medium text-neutral-900 dark:text-neutral-100">Aspirin</p>
-                                                <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
-                                                    <span className="font-medium">{t.portal.patientHome.dosage}:</span> 75mg daily
-                                                </p>
-                                                <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                                                    <span className="font-medium">{t.portal.patientHome.timing}:</span> After breakfast with water
-                                                </p>
-                                            </div>
-                                            <div className="border-l-4 border-purple-500 pl-4 py-2">
-                                                <p className="font-medium text-neutral-900 dark:text-neutral-100">Vitamin D</p>
-                                                <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
-                                                    <span className="font-medium">{t.portal.patientHome.dosage}:</span> 1000 IU daily
-                                                </p>
-                                                <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                                                    <span className="font-medium">{t.portal.patientHome.timing}:</span> Morning with meal
-                                                </p>
+                                    {/* Missing Data Prompt */}
+                                    {!medicalDataComplete && (
+                                        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                                            <div className="flex items-start gap-3">
+                                                <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                                                <div className="flex-1">
+                                                    <p className="font-medium text-amber-900 dark:text-amber-100 text-sm mb-2">
+                                                        Complete Your Medical Profile
+                                                    </p>
+                                                    <p className="text-xs text-amber-800 dark:text-amber-200 mb-3">
+                                                        To receive personalized AI health insights, please provide:
+                                                    </p>
+                                                    <ul className="space-y-1 mb-3">
+                                                        {missingFields.map(field => (
+                                                            <li key={field} className="flex items-center gap-1.5 text-xs text-amber-800 dark:text-amber-200">
+                                                                <div className="w-1.5 h-1.5 bg-amber-500 rounded-full"></div>
+                                                                {field.charAt(0).toUpperCase() + field.slice(1)}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                    <button
+                                                        onClick={() => setShowDataPrompt(true)}
+                                                        className="px-4 py-2 bg-amber-600 text-white text-sm rounded-lg hover:bg-amber-700 transition font-medium"
+                                                    >
+                                                        Complete Profile →
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    )}
+
+                                    {/* AI Insights */}
+                                    {medicalDataComplete && (
+                                        <div className="space-y-3">
+                                            {loadingInsights ? (
+                                                <div className="text-center py-8">
+                                                    <Loader2 className="w-8 h-8 animate-spin text-purple-600 mx-auto mb-2" />
+                                                    <p className="text-sm text-neutral-600 dark:text-neutral-400">Generating personalized insights...</p>
+                                                </div>
+                                            ) : aiInsights ? (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                    {/* Condition Management */}
+                                                    <div className="bg-white dark:bg-neutral-800 rounded-lg p-4 border border-purple-100 dark:border-purple-900">
+                                                        <div className="flex items-start gap-2">
+                                                            <Heart className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5" />
+                                                            <div className="flex-1">
+                                                                <h4 className="font-semibold text-sm text-neutral-900 dark:text-neutral-50 mb-1">
+                                                                    {aiInsights.conditionManagement?.title || "Condition Management"}
+                                                                </h4>
+                                                                <p className="text-xs text-neutral-600 dark:text-neutral-400">
+                                                                    {aiInsights.conditionManagement?.advice || "No advice available"}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Medication Guidance */}
+                                                    <div className="bg-white dark:bg-neutral-800 rounded-lg p-4 border border-purple-100 dark:border-purple-900">
+                                                        <div className="flex items-start gap-2">
+                                                            <Pill className="w-4 h-4 text-purple-600 dark:text-purple-400 mt-0.5" />
+                                                            <div className="flex-1">
+                                                                <h4 className="font-semibold text-sm text-neutral-900 dark:text-neutral-50 mb-1">
+                                                                    {aiInsights.medicationAdherence?.title || "Medication Guidance"}
+                                                                </h4>
+                                                                <p className="text-xs text-neutral-600 dark:text-neutral-400">
+                                                                    {aiInsights.medicationAdherence?.advice || "No advice available"}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Allergy Safety */}
+                                                    <div className="bg-white dark:bg-neutral-800 rounded-lg p-4 border border-red-100 dark:border-red-900">
+                                                        <div className="flex items-start gap-2">
+                                                            <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5" />
+                                                            <div className="flex-1">
+                                                                <h4 className="font-semibold text-sm text-neutral-900 dark:text-neutral-50 mb-1">
+                                                                    {aiInsights.allergySafety?.title || "Allergy Safety"}
+                                                                </h4>
+                                                                <p className="text-xs text-neutral-600 dark:text-neutral-400">
+                                                                    {aiInsights.allergySafety?.advice || "No advice available"}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Lifestyle Tips */}
+                                                    <div className="bg-white dark:bg-neutral-800 rounded-lg p-4 border border-green-100 dark:border-green-900">
+                                                        <div className="flex items-start gap-2">
+                                                            <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5" />
+                                                            <div className="flex-1">
+                                                                <h4 className="font-semibold text-sm text-neutral-900 dark:text-neutral-50 mb-1">
+                                                                    {aiInsights.lifestyleAdvice?.title || "Lifestyle Tips"}
+                                                                </h4>
+                                                                <p className="text-xs text-neutral-600 dark:text-neutral-400">
+                                                                    {aiInsights.lifestyleAdvice?.advice || "No advice available"}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="text-center py-6">
+                                                    <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-3">
+                                                        Generate personalized health insights
+                                                    </p>
+                                                    <button
+                                                        onClick={() => profile && generateAIInsights(profile)}
+                                                        className="px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition font-medium"
+                                                    >
+                                                        Generate Insights
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
+
+                                {/* Medical Data Prompt Modal */}
+                                <MedicalDataPrompt
+                                    isOpen={showDataPrompt}
+                                    onClose={() => setShowDataPrompt(false)}
+                                    onSave={saveMedicalData}
+                                    missingFields={missingFields}
+                                />
                             </div>
                         </div>
                     </>
