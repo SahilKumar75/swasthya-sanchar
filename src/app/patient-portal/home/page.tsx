@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import MedicalDataPrompt from "@/components/patient/MedicalDataPrompt";
+import CustomAIInputModal, { CustomHealthData } from "@/components/patient/CustomAIInputModal";
 
 interface PatientProfile {
     dateOfBirth?: string;
@@ -44,6 +45,7 @@ export default function PatientHome() {
     const [missingFields, setMissingFields] = useState<string[]>([]);
     const [aiInsights, setAiInsights] = useState<any>(null);
     const [loadingInsights, setLoadingInsights] = useState(false);
+    const [showCustomInput, setShowCustomInput] = useState(false);
 
     useEffect(() => {
 
@@ -183,6 +185,53 @@ export default function PatientHome() {
             };
 
             console.log('🤖 Generating AI insights with data:', requestBody);
+
+            const response = await fetch('/api/ai/health-insights', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
+
+            console.log('📡 AI API response status:', response.status);
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log('✅ AI insights received:', result);
+                setAiInsights(result.insights);
+            } else {
+                const errorText = await response.text();
+                console.error('❌ Failed to generate AI insights. Status:', response.status, 'Error:', errorText);
+                alert(`Failed to generate AI insights: ${errorText}`);
+            }
+        } catch (error) {
+            console.error('💥 Error generating AI insights:', error);
+            alert(`Error generating AI insights: ${error}`);
+        } finally {
+            setLoadingInsights(false);
+        }
+    };
+
+    // Generate AI insights with custom data
+    const generateCustomAIInsights = async (customData: CustomHealthData) => {
+        setLoadingInsights(true);
+        try {
+            const bmiCategory = customData.bmi < 18.5 ? 'Underweight' :
+                customData.bmi < 25 ? 'Normal' :
+                    customData.bmi < 30 ? 'Overweight' : 'Obese';
+
+            const requestBody = {
+                age: customData.age,
+                gender: 'Not specified',
+                bloodGroup: customData.bloodGroup,
+                bmi: customData.bmi,
+                bmiCategory,
+                allergies: customData.allergies,
+                chronicConditions: customData.chronicConditions,
+                currentMedications: customData.currentMedications,
+                previousSurgeries: ''
+            };
+
+            console.log('🤖 Generating AI insights with custom data:', requestBody);
 
             const response = await fetch('/api/ai/health-insights', {
                 method: 'POST',
@@ -388,14 +437,24 @@ export default function PatientHome() {
                                             <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">AI Health Insights</h3>
                                         </div>
                                         {medicalDataComplete && aiInsights && (
-                                            <button
-                                                onClick={() => profile && generateAIInsights(profile)}
-                                                disabled={loadingInsights}
-                                                className="px-3 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition flex items-center gap-1.5 disabled:opacity-50"
-                                            >
-                                                <RefreshCw className={`w-3.5 h-3.5 ${loadingInsights ? 'animate-spin' : ''}`} />
-                                                Refresh
-                                            </button>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => setShowCustomInput(true)}
+                                                    disabled={loadingInsights}
+                                                    className="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition flex items-center gap-1.5 disabled:opacity-50"
+                                                >
+                                                    <Sparkles className="w-3.5 h-3.5" />
+                                                    Customize
+                                                </button>
+                                                <button
+                                                    onClick={() => profile && generateAIInsights(profile)}
+                                                    disabled={loadingInsights}
+                                                    className="px-3 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition flex items-center gap-1.5 disabled:opacity-50"
+                                                >
+                                                    <RefreshCw className={`w-3.5 h-3.5 ${loadingInsights ? 'animate-spin' : ''}`} />
+                                                    Refresh
+                                                </button>
+                                            </div>
                                         )}
                                     </div>
 
@@ -523,6 +582,21 @@ export default function PatientHome() {
                                     onClose={() => setShowDataPrompt(false)}
                                     onSave={saveMedicalData}
                                     missingFields={missingFields}
+                                />
+
+                                {/* Custom AI Input Modal */}
+                                <CustomAIInputModal
+                                    isOpen={showCustomInput}
+                                    onClose={() => setShowCustomInput(false)}
+                                    onGenerate={generateCustomAIInsights}
+                                    currentData={{
+                                        age: profile?.dateOfBirth ? calculateAge(profile.dateOfBirth) : 30,
+                                        bloodGroup: profile?.bloodGroup || '',
+                                        bmi: calculateBMI() ? parseFloat(calculateBMI()!) : 22,
+                                        allergies: profile?.allergies || '',
+                                        chronicConditions: profile?.chronicConditions || '',
+                                        currentMedications: profile?.currentMedications || ''
+                                    }}
                                 />
                             </div>
                         </div>
