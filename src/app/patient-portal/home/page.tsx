@@ -170,30 +170,40 @@ export default function PatientHome() {
             const bmiValue = calculateBMI();
             const bmiCategory = bmiValue ? getBMICategory(parseFloat(bmiValue)).category : 'Unknown';
 
+            const requestBody = {
+                age: typeof age === 'number' ? age : 30,
+                gender: 'Not specified',
+                bloodGroup: data.bloodGroup || 'Unknown',
+                bmi: bmiValue ? parseFloat(bmiValue) : 22,
+                bmiCategory,
+                allergies: data.allergies || '',
+                chronicConditions: data.chronicConditions || '',
+                currentMedications: data.currentMedications || '',
+                previousSurgeries: ''
+            };
+
+            console.log('🤖 Generating AI insights with data:', requestBody);
+
             const response = await fetch('/api/ai/health-insights', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    age: typeof age === 'number' ? age : 30,
-                    gender: 'Not specified',
-                    bloodGroup: data.bloodGroup || 'Unknown',
-                    bmi: bmiValue ? parseFloat(bmiValue) : 22,
-                    bmiCategory,
-                    allergies: data.allergies || '',
-                    chronicConditions: data.chronicConditions || '',
-                    currentMedications: data.currentMedications || '',
-                    previousSurgeries: ''
-                })
+                body: JSON.stringify(requestBody)
             });
+
+            console.log('📡 AI API response status:', response.status);
 
             if (response.ok) {
                 const result = await response.json();
+                console.log('✅ AI insights received:', result);
                 setAiInsights(result.insights);
             } else {
-                console.error('Failed to generate AI insights');
+                const errorText = await response.text();
+                console.error('❌ Failed to generate AI insights. Status:', response.status, 'Error:', errorText);
+                alert(`Failed to generate AI insights: ${errorText}`);
             }
         } catch (error) {
-            console.error('Error generating AI insights:', error);
+            console.error('💥 Error generating AI insights:', error);
+            alert(`Error generating AI insights: ${error}`);
         } finally {
             setLoadingInsights(false);
         }
@@ -252,10 +262,13 @@ export default function PatientHome() {
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
                 {/* Header */}
                 <div className="mb-8">
-                    <h2 className="text-3xl font-bold text-neutral-900 dark:text-neutral-50">
-                        {t.portal.patientHome.welcomeBack}, {profile?.fullName || session?.user?.email?.split('@')[0] || 'Developer'}!
+                    <h2 className="text-2xl md:text-3xl font-bold text-neutral-900 dark:text-neutral-50">
+                        <span className="block text-base md:text-lg font-normal text-neutral-600 dark:text-neutral-400 mb-1">
+                            {t.portal.patientHome.welcomeBack},
+                        </span>
+                        {profile?.fullName || session?.user?.email?.split('@')[0] || 'Developer'}!
                     </h2>
-                    <p className="text-neutral-600 dark:text-neutral-400 mt-1">
+                    <p className="text-neutral-600 dark:text-neutral-400 mt-1 hidden md:block">
                         {session?.user?.email || 'dev@example.com'}
                     </p>
                 </div>
