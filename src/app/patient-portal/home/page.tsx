@@ -303,30 +303,30 @@ export default function PatientHome() {
                             {/* Left Column: BMI, Blood Group, and Current Medications */}
                             <div className="space-y-8">
                                 {/* BMI | Blood Group - Side by Side with Values on Top */}
-                                <div className="flex items-start gap-8">
+                                <div className="flex items-start gap-4 md:gap-8">
                                     {/* BMI */}
                                     {bmi && bmiInfo && (
                                         <div className="flex flex-col">
-                                            <div className="flex items-baseline gap-3 mb-2">
-                                                <span className="text-5xl font-bold text-neutral-900 dark:text-neutral-50">{bmi}</span>
-                                                <span className={`text-xl font-medium ${bmiInfo.color}`}>{bmiInfo.category}</span>
+                                            <div className="flex items-baseline gap-2 md:gap-3 mb-1 md:mb-2">
+                                                <span className="text-3xl md:text-5xl font-bold text-neutral-900 dark:text-neutral-50">{bmi}</span>
+                                                <span className={`text-base md:text-xl font-medium ${bmiInfo.color}`}>{bmiInfo.category}</span>
                                             </div>
-                                            <h3 className="text-sm font-medium text-neutral-600 dark:text-neutral-400">{t.portal.patientHome.bodyMassIndex}</h3>
+                                            <h3 className="text-xs md:text-sm font-medium text-neutral-600 dark:text-neutral-400">{t.portal.patientHome.bodyMassIndex}</h3>
                                         </div>
                                     )}
 
                                     {/* Separator */}
-                                    {bmi && bmiInfo && <span className="text-3xl text-neutral-300 dark:text-neutral-600 mt-2">|</span>}
+                                    {bmi && bmiInfo && <span className="text-2xl md:text-3xl text-neutral-300 dark:text-neutral-600 mt-1 md:mt-2">|</span>}
 
                                     {/* Blood Group */}
                                     <div className="flex flex-col">
-                                        <div className="flex items-baseline gap-3 mb-2">
-                                            <span className="text-5xl font-bold text-rose-600 dark:text-rose-400">{profile.bloodGroup || "N/A"}</span>
-                                            <span className="text-sm text-neutral-600 dark:text-neutral-400">
+                                        <div className="flex items-baseline gap-2 md:gap-3 mb-1 md:mb-2">
+                                            <span className="text-3xl md:text-5xl font-bold text-rose-600 dark:text-rose-400">{profile.bloodGroup || "N/A"}</span>
+                                            <span className="text-xs md:text-sm text-neutral-600 dark:text-neutral-400">
                                                 {bloodInfo.rarity} • {bloodInfo.percentage}%
                                             </span>
                                         </div>
-                                        <h3 className="text-sm font-medium text-neutral-600 dark:text-neutral-400">{t.portal.patientHome.bloodGroup}</h3>
+                                        <h3 className="text-xs md:text-sm font-medium text-neutral-600 dark:text-neutral-400">{t.portal.patientHome.bloodGroup}</h3>
                                     </div>
                                 </div>
 
@@ -356,7 +356,7 @@ export default function PatientHome() {
                                                         <div>
                                                             <p className="font-medium text-neutral-900 dark:text-neutral-100">{med.trim()}</p>
                                                             <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
-                                                                {t.portal.patientHome.prescribedBy} Dr. Smith • Jan 15, 2024
+                                                                Self-reported medication
                                                             </p>
                                                         </div>
                                                     </div>

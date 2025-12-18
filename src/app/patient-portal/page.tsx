@@ -46,6 +46,19 @@ export default function PatientPortal() {
   const [editFormData, setEditFormData] = useState<PatientData | null>(null);
   const [updating, setUpdating] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string>("");
+  const [loadingAddress, setLoadingAddress] = useState(false);
+
+  const INDIAN_STATES = [
+    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar",
+    "Chhattisgarh", "Goa", "Gujarat", "Haryana", "Himachal Pradesh",
+    "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra",
+    "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha",
+    "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana",
+    "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
+    "Andaman and Nicobar Islands", "Chandigarh",
+    "Dadra and Nagar Haveli and Daman and Diu", "Delhi",
+    "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
+  ];
 
   useEffect(() => {
     // Development bypass - skip auth checks if enabled
@@ -185,6 +198,33 @@ export default function PatientPortal() {
   const handleEditChange = (field: keyof PatientData, value: string) => {
     if (editFormData) {
       setEditFormData({ ...editFormData, [field]: value });
+    }
+  };
+
+  // Fetch address from Indian Postal API
+  const fetchAddressFromPincode = async (pincode: string) => {
+    if (pincode.length !== 6) return;
+
+    setLoadingAddress(true);
+
+    try {
+      const response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+      const data = await response.json();
+
+      if (data[0].Status === "Success" && data[0].PostOffice?.length > 0) {
+        const postOffice = data[0].PostOffice[0];
+        if (editFormData) {
+          setEditFormData({
+            ...editFormData,
+            city: postOffice.District,
+            state: postOffice.State
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch address from pincode", err);
+    } finally {
+      setLoadingAddress(false);
     }
   };
 
@@ -435,7 +475,28 @@ export default function PatientPortal() {
                         placeholder="Street address"
                         className="w-full px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 mb-2 text-sm"
                       />
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={editFormData?.pincode || ""}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                              handleEditChange("pincode", value);
+                              if (value.length === 6) {
+                                fetchAddressFromPincode(value);
+                              }
+                            }}
+                            placeholder="Pincode"
+                            maxLength={6}
+                            className="w-full px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 text-sm"
+                          />
+                          {loadingAddress && (
+                            <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                          )}
+                        </div>
                         <input
                           type="text"
                           value={editFormData?.city || ""}
@@ -443,20 +504,16 @@ export default function PatientPortal() {
                           placeholder="City"
                           className="px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 text-sm"
                         />
-                        <input
-                          type="text"
+                        <select
                           value={editFormData?.state || ""}
                           onChange={(e) => handleEditChange("state", e.target.value)}
-                          placeholder="State"
                           className="px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 text-sm"
-                        />
-                        <input
-                          type="text"
-                          value={editFormData?.pincode || ""}
-                          onChange={(e) => handleEditChange("pincode", e.target.value)}
-                          placeholder="Pincode"
-                          className="px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 text-sm"
-                        />
+                        >
+                          <option value="">Select State</option>
+                          {INDIAN_STATES.map(state => (
+                            <option key={state} value={state}>{state}</option>
+                          ))}
+                        </select>
                       </div>
                     </>
                   ) : (
