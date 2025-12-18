@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
 
 export const dynamic = 'force-dynamic';
 
@@ -19,10 +19,12 @@ interface HealthInsightsRequest {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Skip auth in dev mode
+    if (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH !== 'true') {
+      const session = await getServerSession(authOptions);
+      if (!session?.user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
     }
 
     const data: HealthInsightsRequest = await request.json();
@@ -35,17 +37,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check for Gemini API key
-    if (!process.env.GEMINI_API_KEY) {
+    // Check for Groq API key
+    if (!process.env.GROQ_API_KEY) {
       return NextResponse.json(
-        { error: "AI service not configured. Please add GEMINI_API_KEY to environment variables." },
+        { error: "AI service not configured. Please add GROQ_API_KEY to environment variables." },
         { status: 500 }
       );
     }
 
-    // Initialize Gemini AI
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    // Initialize Groq AI
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
     // Create personalized prompt
     const prompt = `You are a medical AI assistant providing personalized health advice.
@@ -54,44 +55,45 @@ Patient Profile:
 - Age: ${data.age}, Gender: ${data.gender}
 - Blood Group: ${data.bloodGroup}
 - BMI: ${data.bmi} (${data.bmiCategory})
-- Allergies: ${data.allergies}
-- Chronic Conditions: ${data.chronicConditions}
-- Current Medications: ${data.currentMedications}
+- Allergies: ${data.allergies || 'None'}
+- Chronic Conditions: ${data.chronicConditions || 'None'}
+- Current Medications: ${data.currentMedications || 'None'}
 ${data.previousSurgeries ? `- Previous Surgeries: ${data.previousSurgeries}` : ''}
 
-Generate 4 personalized health recommendations in JSON format:
+Generate personalized health recommendations in JSON format with 4 DO's and 4 DON'Ts.
+Each item should be ONE SHORT LINE (max 10-12 words).
 
 {
-  "conditionManagement": {
-    "title": "Condition Management",
-    "advice": "Specific advice for managing their chronic conditions (2-3 sentences)"
-  },
-  "medicationAdherence": {
-    "title": "Medication Guidance",
-    "advice": "Tips for their specific medications (2-3 sentences)"
-  },
-  "allergySafety": {
-    "title": "Allergy Safety",
-    "advice": "Important warnings based on their allergies (2-3 sentences)"
-  },
-  "lifestyleAdvice": {
-    "title": "Lifestyle Tips",
-    "advice": "Personalized lifestyle recommendations based on BMI and conditions (2-3 sentences)"
-  }
+  "dos": [
+    "First do recommendation",
+    "Second do recommendation",
+    "Third do recommendation",
+    "Fourth do recommendation"
+  ],
+  "donts": [
+    "First don't recommendation",
+    "Second don't recommendation",
+    "Third don't recommendation",
+    "Fourth don't recommendation"
+  ]
 }
 
 Keep advice concise, actionable, and medically accurate. Focus on their specific conditions and medications.
 IMPORTANT: Return ONLY the JSON object, no additional text.`;
 
-    // Generate AI insights
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    // Generate AI insights using Groq
+    const completion = await groq.chat.completions.create({
+      messages: [{ role: "user", content: prompt }],
+      model: "llama-3.3-70b-versatile",
+      temperature: 0.7,
+      max_tokens: 1024,
+    });
+
+    const text = completion.choices[0]?.message?.content || "";
 
     // Parse JSON response
     let insights;
     try {
-      // Remove markdown code blocks if present
       const cleanedText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       insights = JSON.parse(cleanedText);
     } catch (parseError) {

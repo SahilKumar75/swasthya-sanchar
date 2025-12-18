@@ -9,11 +9,12 @@ import { FooterSection } from "@/components/ui/footer-section";
 import {
     FileText, Shield, QrCode, Loader2, CheckCircle,
     Heart, Activity, Droplet, Calendar, AlertCircle,
-    TrendingUp, ArrowUpRight, Scale, Pill, Sparkles, RefreshCw
+    TrendingUp, ArrowUpRight, Scale, Pill, Sparkles, RefreshCw, Settings, RotateCw, XCircle
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import MedicalDataPrompt from "@/components/patient/MedicalDataPrompt";
 import CustomAIInputModal, { CustomHealthData } from "@/components/patient/CustomAIInputModal";
+import { AnimatedInsightText } from "@/components/ui/AnimatedInsightText";
 
 interface PatientProfile {
     dateOfBirth?: string;
@@ -57,38 +58,6 @@ export default function PatientHome() {
     const [showCustomInput, setShowCustomInput] = useState(false);
 
     useEffect(() => {
-        // Skip auth check in development if bypass is enabled
-        if (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') {
-            // Set mock profile data for testing
-            const mockProfile: PatientProfile = {
-                isRegisteredOnChain: true,
-                walletAddress: '0x1234567890abcdef',
-                fullName: 'Test Patient',
-                dateOfBirth: '1990-01-01',
-                gender: 'Male',
-                bloodGroup: 'O+',
-                phone: '+91 9876543210',
-                address: '123 Test Street',
-                city: 'Mumbai',
-                state: 'Maharashtra',
-                pincode: '400001',
-                height: '175',
-                weight: '70',
-                allergies: 'Penicillin',
-                chronicConditions: 'Hypertension',
-                currentMedications: 'Aspirin 75mg daily',
-                previousSurgeries: 'Appendectomy',
-                emergencyName: 'Emergency Contact',
-                emergencyRelation: 'Spouse',
-                emergencyPhone: '+91 9876543211',
-                profilePicture: ''
-            };
-            setProfile(mockProfile);
-            validateMedicalData(mockProfile);
-            setLoading(false);
-            return;
-        }
-
         if (status === "unauthenticated") {
             router.push("/");
             return;
@@ -343,7 +312,7 @@ export default function PatientHome() {
         );
     }
 
-    if (!session && process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH !== 'true') {
+    if (!session) {
         return null;
     }
 
@@ -396,10 +365,10 @@ export default function PatientHome() {
 
                 {isRegistered && profile ? (
                     <>
-                        {/* Simplified Layout - Two Column Grid */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                            {/* Left Column: BMI, Blood Group, and Current Medications */}
-                            <div className="space-y-8">
+                        {/* 2-Panel Layout: Left = Patient Info (60%), Right = AI Insights (40%) */}
+                        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-8">
+                            {/* Left Panel: Patient Information (60% = 3/5) */}
+                            <div className="lg:col-span-3 space-y-8">
                                 {/* BMI | Blood Group - Side by Side with Values on Top */}
                                 <div className="flex items-start gap-4 md:gap-8">
                                     {/* BMI */}
@@ -426,6 +395,19 @@ export default function PatientHome() {
                                         </div>
                                         <h3 className="text-xs md:text-sm font-medium text-neutral-600 dark:text-neutral-400">{t.portal.patientHome.bloodGroup}</h3>
                                     </div>
+
+                                    {/* Separator */}
+                                    {profile?.chronicConditions && <span className="text-2xl md:text-3xl text-neutral-300 dark:text-neutral-600 mt-1 md:mt-2">|</span>}
+
+                                    {/* Diagnosed With */}
+                                    {profile?.chronicConditions && (
+                                        <div className="flex flex-col">
+                                            <div className="flex items-baseline gap-2 md:gap-3 mb-1 md:mb-2">
+                                                <span className="text-xl md:text-3xl font-bold text-neutral-900 dark:text-neutral-50 line-clamp-1">{profile.chronicConditions}</span>
+                                            </div>
+                                            <h3 className="text-xs md:text-sm font-medium text-neutral-600 dark:text-neutral-400">Diagnosed With</h3>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Current Medications */}
@@ -465,43 +447,78 @@ export default function PatientHome() {
                                 )}
                             </div>
 
-                            {/* Right Column: Diagnosis & Health Tips */}
-                            <div className="space-y-6">
-                                {/* Diagnosed Conditions */}
-                                <div>
-                                    <h3 className="text-lg font-semibold text-neutral-700 dark:text-neutral-300 mb-3">{t.portal.patientHome.diagnosedWith}</h3>
-                                    <div className="flex items-center gap-2">
-                                        <span className="px-3 py-1.5 bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 rounded-lg text-sm font-medium">
-                                            Hypothyroidism
-                                        </span>
-                                        <span className="text-xs text-neutral-500 dark:text-neutral-400">{t.portal.patientHome.since} Dec 2023</span>
-                                    </div>
-                                </div>
-
+                            {/* Right Panel: AI Health Insights (40% = 2/5) */}
+                            <div className="lg:col-span-2 space-y-6 lg:border-l lg:border-neutral-200 lg:dark:border-neutral-700 lg:pl-8">
                                 {/* AI Health Insights */}
-                                <div className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/10 dark:to-indigo-900/10 rounded-xl border border-purple-200 dark:border-purple-800 p-6">
+                                <div className="space-y-4">
                                     <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center gap-2">
                                             <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                                             <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-50">AI Health Insights</h3>
                                         </div>
                                         {medicalDataComplete && aiInsights && (
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => setShowCustomInput(true)}
-                                                    disabled={loadingInsights}
-                                                    className="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition flex items-center gap-1.5 disabled:opacity-50"
-                                                >
-                                                    <Sparkles className="w-3.5 h-3.5" />
-                                                    Customize
-                                                </button>
+                                            <div className="flex gap-2 relative">
+                                                <div className="relative">
+                                                    <button
+                                                        onClick={() => setShowCustomInput(!showCustomInput)}
+                                                        disabled={loadingInsights}
+                                                        className="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition flex items-center gap-1.5 disabled:opacity-50"
+                                                    >
+                                                        <Settings className="w-3.5 h-3.5" />
+                                                        Customize
+                                                    </button>
+
+                                                    {/* Dropdown Menu */}
+                                                    {showCustomInput && (
+                                                        <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-neutral-800 rounded-lg shadow-xl border border-neutral-200 dark:border-neutral-700 z-50 p-4 space-y-3">
+                                                            <div className="flex items-center justify-between mb-3">
+                                                                <h4 className="font-semibold text-sm text-neutral-900 dark:text-neutral-50">Quick Edit</h4>
+                                                                <button
+                                                                    onClick={() => setShowCustomInput(false)}
+                                                                    className="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded"
+                                                                >
+                                                                    <XCircle className="w-4 h-4 text-neutral-500" />
+                                                                </button>
+                                                            </div>
+
+                                                            <div>
+                                                                <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Age</label>
+                                                                <input
+                                                                    type="number"
+                                                                    defaultValue={profile?.dateOfBirth ? calculateAgeNumber(profile.dateOfBirth) : 30}
+                                                                    className="w-full px-2 py-1.5 text-sm rounded border border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-purple-500"
+                                                                />
+                                                            </div>
+
+                                                            <div>
+                                                                <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">BMI</label>
+                                                                <input
+                                                                    type="number"
+                                                                    step="0.1"
+                                                                    defaultValue={calculateBMI() || 22}
+                                                                    className="w-full px-2 py-1.5 text-sm rounded border border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-purple-500"
+                                                                />
+                                                            </div>
+
+                                                            <button
+                                                                onClick={() => {
+                                                                    setShowCustomInput(false);
+                                                                    profile && generateAIInsights(profile);
+                                                                }}
+                                                                className="w-full px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition font-medium"
+                                                            >
+                                                                Generate Insights
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+
                                                 <button
                                                     onClick={() => profile && generateAIInsights(profile)}
                                                     disabled={loadingInsights}
-                                                    className="px-3 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition flex items-center gap-1.5 disabled:opacity-50"
+                                                    className="p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition disabled:opacity-50"
                                                 >
-                                                    <RefreshCw className={`w-3.5 h-3.5 ${loadingInsights ? 'animate-spin' : ''}`} />
-                                                    Refresh
+                                                    <RotateCw className={`w-4 h-4 ${loadingInsights ? 'animate-spin' : ''}`} />
                                                 </button>
                                             </div>
                                         )}
@@ -547,65 +564,37 @@ export default function PatientHome() {
                                                     <p className="text-sm text-neutral-600 dark:text-neutral-400">Generating personalized insights...</p>
                                                 </div>
                                             ) : aiInsights ? (
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                    {/* Condition Management */}
-                                                    <div className="bg-white dark:bg-neutral-800 rounded-lg p-4 border border-purple-100 dark:border-purple-900">
-                                                        <div className="flex items-start gap-2">
-                                                            <Heart className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5" />
-                                                            <div className="flex-1">
-                                                                <h4 className="font-semibold text-sm text-neutral-900 dark:text-neutral-50 mb-1">
-                                                                    {aiInsights.conditionManagement?.title || "Condition Management"}
-                                                                </h4>
-                                                                <p className="text-xs text-neutral-600 dark:text-neutral-400">
-                                                                    {aiInsights.conditionManagement?.advice || "No advice available"}
-                                                                </p>
-                                                            </div>
-                                                        </div>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    {/* Left Column: DO's */}
+                                                    <div>
+                                                        <h4 className="font-semibold text-lg text-green-600 dark:text-green-400 mb-4 flex items-center gap-2">
+                                                            <CheckCircle className="w-5 h-5" />
+                                                            DO's
+                                                        </h4>
+                                                        <ul className="space-y-3">
+                                                            {aiInsights.dos?.map((item: string, idx: number) => (
+                                                                <li key={idx} className="flex items-start gap-2 text-sm text-neutral-700 dark:text-neutral-300">
+                                                                    <span className="text-green-600 dark:text-green-400 mt-0.5">✓</span>
+                                                                    <AnimatedInsightText text={item} speed="fast" />
+                                                                </li>
+                                                            ))}
+                                                        </ul>
                                                     </div>
 
-                                                    {/* Medication Guidance */}
-                                                    <div className="bg-white dark:bg-neutral-800 rounded-lg p-4 border border-purple-100 dark:border-purple-900">
-                                                        <div className="flex items-start gap-2">
-                                                            <Pill className="w-4 h-4 text-purple-600 dark:text-purple-400 mt-0.5" />
-                                                            <div className="flex-1">
-                                                                <h4 className="font-semibold text-sm text-neutral-900 dark:text-neutral-50 mb-1">
-                                                                    {aiInsights.medicationAdherence?.title || "Medication Guidance"}
-                                                                </h4>
-                                                                <p className="text-xs text-neutral-600 dark:text-neutral-400">
-                                                                    {aiInsights.medicationAdherence?.advice || "No advice available"}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Allergy Safety */}
-                                                    <div className="bg-white dark:bg-neutral-800 rounded-lg p-4 border border-red-100 dark:border-red-900">
-                                                        <div className="flex items-start gap-2">
-                                                            <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5" />
-                                                            <div className="flex-1">
-                                                                <h4 className="font-semibold text-sm text-neutral-900 dark:text-neutral-50 mb-1">
-                                                                    {aiInsights.allergySafety?.title || "Allergy Safety"}
-                                                                </h4>
-                                                                <p className="text-xs text-neutral-600 dark:text-neutral-400">
-                                                                    {aiInsights.allergySafety?.advice || "No advice available"}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Lifestyle Tips */}
-                                                    <div className="bg-white dark:bg-neutral-800 rounded-lg p-4 border border-green-100 dark:border-green-900">
-                                                        <div className="flex items-start gap-2">
-                                                            <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5" />
-                                                            <div className="flex-1">
-                                                                <h4 className="font-semibold text-sm text-neutral-900 dark:text-neutral-50 mb-1">
-                                                                    {aiInsights.lifestyleAdvice?.title || "Lifestyle Tips"}
-                                                                </h4>
-                                                                <p className="text-xs text-neutral-600 dark:text-neutral-400">
-                                                                    {aiInsights.lifestyleAdvice?.advice || "No advice available"}
-                                                                </p>
-                                                            </div>
-                                                        </div>
+                                                    {/* Right Column: DON'Ts */}
+                                                    <div>
+                                                        <h4 className="font-semibold text-lg text-red-600 dark:text-red-400 mb-4 flex items-center gap-2">
+                                                            <AlertCircle className="w-5 h-5" />
+                                                            DON'Ts
+                                                        </h4>
+                                                        <ul className="space-y-3">
+                                                            {aiInsights.donts?.map((item: string, idx: number) => (
+                                                                <li key={idx} className="flex items-start gap-2 text-sm text-neutral-700 dark:text-neutral-300">
+                                                                    <span className="text-red-600 dark:text-red-400 mt-0.5">✗</span>
+                                                                    <AnimatedInsightText text={item} speed="fast" />
+                                                                </li>
+                                                            ))}
+                                                        </ul>
                                                     </div>
                                                 </div>
                                             ) : (
