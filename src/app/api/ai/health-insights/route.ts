@@ -27,8 +27,8 @@ export async function POST(request: NextRequest) {
 
     const data: HealthInsightsRequest = await request.json();
 
-    // Validate required fields
-    if (!data.allergies || !data.chronicConditions || !data.currentMedications) {
+    // Validate required fields (allow empty strings, just check they exist)
+    if (data.allergies === undefined || data.chronicConditions === undefined || data.currentMedications === undefined) {
       return NextResponse.json(
         { error: "Missing required medical data. Please complete your profile." },
         { status: 400 }
