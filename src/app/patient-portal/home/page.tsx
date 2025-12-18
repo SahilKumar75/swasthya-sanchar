@@ -57,18 +57,19 @@ export default function PatientHome() {
     const [showCustomInput, setShowCustomInput] = useState(false);
 
     useEffect(() => {
-
+        // Skip auth check in development if bypass is enabled
+        if (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') {
+            setLoading(false);
+            return;
+        }
 
         if (status === "unauthenticated") {
-            router.push("/auth/login");
+            router.push("/");
+            return;
         }
-    }, [status, router]);
 
-    useEffect(() => {
         const fetchProfile = async () => {
             try {
-
-
                 const res = await fetch("/api/patient/status");
                 const data = await res.json();
 
@@ -101,7 +102,7 @@ export default function PatientHome() {
         if (session) {
             fetchProfile();
         }
-    }, [session, router]);
+    }, [session, router, status]);
 
     const calculateAge = (dob?: string): number | string => {
         if (!dob) return "N/A";
