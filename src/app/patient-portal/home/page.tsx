@@ -17,11 +17,20 @@ import CustomAIInputModal, { CustomHealthData } from "@/components/patient/Custo
 
 interface PatientProfile {
     dateOfBirth?: string;
+    gender?: string;
     bloodGroup?: string;
+    phone?: string;
+    streetAddress?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
     allergies?: string;
     chronicConditions?: string;
     currentMedications?: string;
+    previousSurgeries?: string;
     emergencyName?: string;
+    emergencyRelation?: string;
     emergencyPhone?: string;
     isRegisteredOnChain?: boolean;
     walletAddress?: string;
@@ -94,8 +103,20 @@ export default function PatientHome() {
         }
     }, [session, router]);
 
-    const calculateAge = (dob?: string) => {
+    const calculateAge = (dob?: string): number | string => {
         if (!dob) return "N/A";
+        const today = new Date();
+        const birthDate = new Date(dob);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        return age;
+    };
+
+    const calculateAgeNumber = (dob?: string): number => {
+        if (!dob) return 30; // Default age if not provided
         const today = new Date();
         const birthDate = new Date(dob);
         let age = today.getFullYear() - birthDate.getFullYear();
@@ -170,18 +191,19 @@ export default function PatientHome() {
         try {
             const age = calculateAge(data.dateOfBirth);
             const bmiValue = calculateBMI();
-            const bmiCategory = bmiValue ? getBMICategory(parseFloat(bmiValue)).category : 'Unknown';
+            const bmiNumber = bmiValue ? parseFloat(bmiValue) : 22; // Default BMI if not available
+            const bmiCategory = bmiValue ? getBMICategory(bmiNumber).category : 'Normal';
 
             const requestBody = {
                 age: typeof age === 'number' ? age : 30,
-                gender: 'Not specified',
+                gender: data.gender || 'Not specified',
                 bloodGroup: data.bloodGroup || 'Unknown',
-                bmi: bmiValue ? parseFloat(bmiValue) : 22,
+                bmi: bmiNumber,
                 bmiCategory,
                 allergies: data.allergies || '',
                 chronicConditions: data.chronicConditions || '',
                 currentMedications: data.currentMedications || '',
-                previousSurgeries: ''
+                previousSurgeries: data.previousSurgeries || ''
             };
 
             console.log('🤖 Generating AI insights with data:', requestBody);
@@ -590,7 +612,7 @@ export default function PatientHome() {
                                     onClose={() => setShowCustomInput(false)}
                                     onGenerate={generateCustomAIInsights}
                                     currentData={{
-                                        age: typeof calculateAge(profile.dateOfBirth) === 'number' ? calculateAge(profile.dateOfBirth) as number : 30,
+                                        age: profile?.dateOfBirth ? calculateAgeNumber(profile.dateOfBirth) : 30,
                                         bloodGroup: profile?.bloodGroup || '',
                                         bmi: calculateBMI() ? parseFloat(calculateBMI()!) : 22,
                                         allergies: profile?.allergies || '',
