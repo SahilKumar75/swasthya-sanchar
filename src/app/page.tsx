@@ -104,37 +104,37 @@ export default function Home() {
       id: 1,
       title: t.landing.blockchain.feature1Title,
       description: t.landing.blockchain.feature1Description,
-      image: "https://images.unsplash.com/photo-1639322537228-f710d846310a?q=80&w=2232&auto=format&fit=crop",
+      image: "/data-ownership.png",
     },
     {
       id: 2,
       title: t.landing.blockchain.feature2Title,
       description: t.landing.blockchain.feature2Description,
-      image: "https://images.unsplash.com/photo-1516574187841-693083f0498c?q=80&w=2370&auto=format&fit=crop",
+      image: "/emergency-ready.png",
     },
     {
       id: 3,
       title: t.landing.blockchain.feature3Title,
       description: t.landing.blockchain.feature3Description,
-      image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=2070&auto=format&fit=crop",
+      image: "/permanent-portable.jpg",
     },
     {
       id: 4,
       title: t.landing.blockchain.feature4Title,
       description: t.landing.blockchain.feature4Description,
-      image: "https://images.unsplash.com/photo-1576091160550-217358c7db81?q=80&w=2070&auto=format&fit=crop",
+      image: "/consent-sharing.jpg",
     },
     {
       id: 5,
       title: t.landing.blockchain.feature5Title,
       description: t.landing.blockchain.feature5Description,
-      image: "https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?q=80&w=2070&auto=format&fit=crop",
+      image: "/global-access.jpg",
     },
     {
       id: 6,
       title: t.landing.blockchain.feature6Title,
       description: t.landing.blockchain.feature6Description,
-      image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop",
+      image: "/tamper-proof.jpg",
     },
   ];
 
