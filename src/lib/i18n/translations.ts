@@ -183,6 +183,21 @@ export interface Translations {
     privacyPolicy: string
     termsOfService: string
     healthcareCompliance: string
+    aboutTeam: string
+    teamAITians: string
+    hackathonTitle: string
+    hackathonSubtitle: string
+    hackathonDescription: string
+    problemStatement: string
+    projectTitle: string
+    domain: string
+    teamLeader: string
+    learnMore: string
+    keyFeatures: string
+    dataOwnership: string
+    emergencyReady: string
+    permanentPortable: string
+    consentSharing: string
   }
   // Emergency
   emergency: {
@@ -638,6 +653,21 @@ export const translations: Record<Language, Translations> = {
       privacyPolicy: 'Privacy Policy',
       termsOfService: 'Terms of Service',
       healthcareCompliance: 'Healthcare Compliance',
+      aboutTeam: 'About This Project',
+      teamAITians: 'Team AITians',
+      hackathonTitle: 'Project Morpheus 2026',
+      hackathonSubtitle: 'The Awakening',
+      hackathonDescription: 'This is our team project for Project Morpheus 2026 hackathon.',
+      problemStatement: 'Problem Statement ID: HC008',
+      projectTitle: 'Medical Records Blockchain System',
+      domain: 'Domain: Healthcare',
+      teamLeader: 'Team Leader: Sahil Kumar Singh',
+      learnMore: 'Learn More',
+      keyFeatures: 'Key Features',
+      dataOwnership: 'You Own Your Data',
+      emergencyReady: 'Emergency Ready QR',
+      permanentPortable: 'Permanent & Portable',
+      consentSharing: 'Consent Based Sharing',
     },
     emergency: {
       title: 'Emergency Medical Information',
@@ -692,20 +722,20 @@ export const translations: Record<Language, Translations> = {
         title: 'Meet the Team',
         description: 'The passionate developers behind Swasthya Sanchar working to revolutionize healthcare data access.',
         member1Name: 'Sahil Kumar Singh',
-        member1Role: 'Lead Developer',
-        member1Bio: 'Full-stack developer passionate about blockchain and healthcare innovation. Leading the technical architecture of Swasthya Sanchar.',
+        member1Role: 'Team Leader & Blockchain Expert',
+        member1Bio: 'Team leader and blockchain expert driving the technical vision of Swasthya Sanchar. Specialized in decentralized healthcare solutions and smart contract development.',
         member2Name: 'Siddhant Tiwari',
-        member2Role: 'Developer',
-        member2Bio: 'Blockchain enthusiast and frontend specialist. Focused on creating seamless user experiences for patients and doctors.',
+        member2Role: 'Design & AI Innovation',
+        member2Bio: 'Design and AI innovation specialist creating intelligent and beautiful healthcare interfaces. Focused on integrating AI-driven features and user-centered design.',
         member3Name: 'Akshit Thakur',
-        member3Role: 'Developer',
-        member3Bio: 'Backend wizard ensuring secure and efficient data handling. dedicated to building robust medical record systems.',
+        member3Role: 'Backend Developer',
+        member3Bio: 'Backend developer ensuring secure and efficient data handling. Dedicated to building robust medical record systems and API infrastructure.',
         member4Name: 'Shivam Rana',
-        member4Role: 'Developer',
-        member4Bio: 'Smart contract developer with a keen eye for security. Implementing the core decentralized logic of the platform.',
+        member4Role: 'Frontend Developer',
+        member4Bio: 'Frontend developer crafting responsive and intuitive user interfaces. Focused on creating seamless experiences for patients and healthcare providers.',
         member5Name: 'Nancy',
-        member5Role: 'Developer',
-        member5Bio: 'UI/UX designer and frontend developer creating intuitive healthcare interfaces. Ensuring accessibility and user-centered design.',
+        member5Role: 'Frontend Developer',
+        member5Bio: 'Frontend developer creating intuitive healthcare interfaces. Ensuring accessibility, responsive design, and exceptional user experiences.',
       },
     },
     auth: {
@@ -1088,6 +1118,21 @@ export const translations: Record<Language, Translations> = {
       privacyPolicy: 'गोपनीयता नीति',
       termsOfService: 'सेवा की शर्तें',
       healthcareCompliance: 'स्वास्थ्य देखभाल अनुपालन',
+      aboutTeam: 'इस प्रोजेक्ट के बारे में',
+      teamAITians: 'टीम AITians',
+      hackathonTitle: 'प्रोजेक्ट मॉर्फियस 2026',
+      hackathonSubtitle: 'द अवेकनिंग',
+      hackathonDescription: 'यह प्रोजेक्ट मॉर्फियस 2026 हैकथॉन के लिए हमारी टीम का प्रोजेक्ट है।',
+      problemStatement: 'समस्या विवरण ID: HC008',
+      projectTitle: 'मेडिकल रिकॉर्ड्स ब्लॉकचेन सिस्टम',
+      domain: 'डोमेन: स्वास्थ्य सेवा',
+      teamLeader: 'टीम लीडर: साहिल कुमार सिंह',
+      learnMore: 'और जानें',
+      keyFeatures: 'मुख्य विशेषताएं',
+      dataOwnership: 'आप अपने डेटा के मालिक हैं',
+      emergencyReady: 'आपातकालीन तैयार QR',
+      permanentPortable: 'स्थायी और पोर्टेबल',
+      consentSharing: 'सहमति आधारित साझाकरण',
     },
     emergency: {
       title: 'आपातकालीन चिकित्सा जानकारी',
@@ -1142,20 +1187,20 @@ export const translations: Record<Language, Translations> = {
         title: 'टीम से मिलें',
         description: 'स्वास्थ्य संचार के पीछे के भावुक डेवलपर्स जो स्वास्थ्य डेटा पहुंच में क्रांति लाने के लिए काम कर रहे हैं।',
         member1Name: 'साहिल कुमार सिंह',
-        member1Role: 'लीड डेवलपर',
-        member1Bio: 'ब्लॉकचेन और स्वास्थ्य सेवा नवाचार के बारे में भावुक फुल-स्टैक डेवलपर। स्वास्थ्य संचार की तकनीकी वास्तुकला का नेतृत्व कर रहे हैं।',
+        member1Role: 'टीम लीडर और ब्लॉकचेन विशेषज्ञ',
+        member1Bio: 'टीम लीडर और ब्लॉकचेन विशेषज्ञ स्वास्थ्य संचार की तकनीकी दृष्टि को आगे बढ़ा रहे हैं। विकेंद्रीकृत स्वास्थ्य समाधान और स्मार्ट कॉन्ट्रैक्ट विकास में विशेषज्ञ।',
         member2Name: 'सिद्धांत तिवारी',
-        member2Role: 'डेवलपर',
-        member2Bio: 'ब्लॉकचेन उत्साही और फ्रंटएंड विशेषज्ञ। रोगियों और डॉक्टरों के लिए सहज उपयोगकर्ता अनुभव बनाने पर ध्यान केंद्रित।',
+        member2Role: 'डिज़ाइन और AI नवाचार',
+        member2Bio: 'डिज़ाइन और AI नवाचार विशेषज्ञ बुद्धिमान और सुंदर स्वास्थ्य इंटरफेस बना रहे हैं। AI-संचालित सुविधाओं और उपयोगकर्ता-केंद्रित डिज़ाइन को एकीकृत करने पर ध्यान केंद्रित।',
         member3Name: 'अक्षित ठाकुर',
-        member3Role: 'डेवलपर',
-        member3Bio: 'बैकएंड विज़ार्ड सुरक्षित और कुशल डेटा हैंडलिंग सुनिश्चित करते हैं। समर्पित चिकित्सा रिकॉर्ड प्रणाली बनाने के लिए।',
+        member3Role: 'बैकएंड डेवलपर',
+        member3Bio: 'बैकएंड डेवलपर सुरक्षित और कुशल डेटा हैंडलिंग सुनिश्चित करते हैं। मजबूत चिकित्सा रिकॉर्ड प्रणाली और API बुनियादी ढांचे के निर्माण के लिए समर्पित।',
         member4Name: 'शिवम राणा',
-        member4Role: 'डेवलपर',
-        member4Bio: 'सुरक्षा के लिए गहरी नज़र रखने वाले स्मार्ट कॉन्ट्रैक्ट डेवलपर। प्लेटफ़ॉर्म के मुख्य विकेंद्रीकृत तर्क को लागू कर रहे हैं।',
+        member4Role: 'फ्रंटएंड डेवलपर',
+        member4Bio: 'फ्रंटएंड डेवलपर उत्तरदायी और सहज उपयोगकर्ता इंटरफेस तैयार कर रहे हैं। रोगियों और स्वास्थ्य सेवा प्रदाताओं के लिए सहज अनुभव बनाने पर ध्यान केंद्रित।',
         member5Name: 'नैन्सी',
-        member5Role: 'डेवलपर',
-        member5Bio: 'UI/UX डिज़ाइनर और फ्रंटएंड डेवलपर सहज स्वास्थ्य सेवा इंटरफेस बना रहे हैं। पहुंच और उपयोगकर्ता-केंद्रित डिज़ाइन सुनिश्चित करना।',
+        member5Role: 'फ्रंटएंड डेवलपर',
+        member5Bio: 'फ्रंटएंड डेवलपर सहज स्वास्थ्य सेवा इंटरफेस बना रहे हैं। पहुंच, उत्तरदायी डिज़ाइन और असाधारण उपयोगकर्ता अनुभव सुनिश्चित करना।',
       },
     },
     auth: {
@@ -1538,6 +1583,21 @@ export const translations: Record<Language, Translations> = {
       privacyPolicy: 'गोपनीयता धोरण',
       termsOfService: 'सेवा अटी',
       healthcareCompliance: 'आरोग्य सेवा अनुपालन',
+      aboutTeam: 'या प्रोजेक्टबद्दल',
+      teamAITians: 'टीम AITians',
+      hackathonTitle: 'प्रोजेक्ट मॉर्फियस 2026',
+      hackathonSubtitle: 'द अवेकनिंग',
+      hackathonDescription: 'हा प्रोजेक्ट मॉर्फियस 2026 हॅकथॉनसाठी आमचा टीम प्रोजेक्ट आहे.',
+      problemStatement: 'समस्या विवरण ID: HC008',
+      projectTitle: 'मेडिकल रेकॉर्ड्स ब्लॉकचेन सिस्टीम',
+      domain: 'डोमेन: आरोग्य सेवा',
+      teamLeader: 'टीम लीडर: साहिल कुमार सिंह',
+      learnMore: 'अधिक जाणून घ्या',
+      keyFeatures: 'मुख्य वैशिष्ट्ये',
+      dataOwnership: 'तुम्ही तुमच्या डेटाचे मालक आहात',
+      emergencyReady: 'आणीबाणी तयार QR',
+      permanentPortable: 'कायमस्वरूपी आणि पोर्टेबल',
+      consentSharing: 'संमती आधारित सामायिकरण',
     },
     emergency: {
       title: 'आणीबाणी वैद्यकीय माहिती',
@@ -1988,6 +2048,21 @@ export const translations: Record<Language, Translations> = {
       privacyPolicy: 'गोपनीयता नीति',
       termsOfService: 'सेवा के शर्तें',
       healthcareCompliance: 'स्वास्थ्य देखभाल अनुपालन',
+      aboutTeam: 'एह प्रोजेक्ट के बारे में',
+      teamAITians: 'टीम AITians',
+      hackathonTitle: 'प्रोजेक्ट मॉर्फियस 2026',
+      hackathonSubtitle: 'द अवेकनिंग',
+      hackathonDescription: 'ई प्रोजेक्ट मॉर्फियस 2026 हैकथॉन खातिर हमार टीम के प्रोजेक्ट बा।',
+      problemStatement: 'समस्या विवरण ID: HC008',
+      projectTitle: 'मेडिकल रिकॉर्ड्स ब्लॉकचेन सिस्टम',
+      domain: 'डोमेन: स्वास्थ्य सेवा',
+      teamLeader: 'टीम लीडर: साहिल कुमार सिंह',
+      learnMore: 'अउर जानीं',
+      keyFeatures: 'मुख्य फीचर',
+      dataOwnership: 'रउआ अपना डेटा के मालिक बानी',
+      emergencyReady: 'आपातकालीन तैयार QR',
+      permanentPortable: 'स्थायी आ पोर्टेबल',
+      consentSharing: 'सहमति आधारित साझा',
     },
     emergency: {
       title: 'आपातकालीन चिकित्सा जानकारी',

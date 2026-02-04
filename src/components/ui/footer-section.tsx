@@ -45,35 +45,37 @@ function FooterSection() {
             </nav>
           </div>
 
-          {/* Features */}
+          {/* Key Features */}
           <div>
-            <h3 className="mb-4 text-lg font-semibold">Key Features</h3>
+            <h3 className="mb-4 text-lg font-semibold">{t.footer.keyFeatures}</h3>
             <nav className="space-y-2 text-sm">
               <Link href="#" className="block transition-colors hover:text-blue-600 dark:hover:text-blue-400">
-                You Own Your Data
+                {t.footer.dataOwnership}
               </Link>
               <Link href="#" className="block transition-colors hover:text-blue-600 dark:hover:text-blue-400">
-                Emergency Ready QR
+                {t.footer.emergencyReady}
               </Link>
               <Link href="#" className="block transition-colors hover:text-blue-600 dark:hover:text-blue-400">
-                Permanent & Portable
+                {t.footer.permanentPortable}
               </Link>
               <Link href="#" className="block transition-colors hover:text-blue-600 dark:hover:text-blue-400">
-                Consent Based Sharing
+                {t.footer.consentSharing}
               </Link>
             </nav>
           </div>
 
-          {/* About */}
+          {/* About Our Team - Project Morpheus */}
           <div className="relative">
-            <h3 className="mb-4 text-lg font-semibold">Why Blockchain?</h3>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-4">
-              Empowering you with complete ownership of your medical history. Instant emergency access for first responders, seamless sharing for doctors, and privacy by design.
+            <h3 className="mb-4 text-lg font-semibold">{t.footer.aboutTeam}</h3>
+            <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-3">{t.footer.teamAITians}</p>
+            <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-3">
+              {t.footer.hackathonDescription}
             </p>
-            <div className="space-y-2 text-sm text-neutral-600 dark:text-neutral-400">
-              <p>✓ Global Access Anywhere</p>
-              <p>✓ Tamper-Proof Records</p>
-              <p>✓ Decentralized & Secure</p>
+            <div className="space-y-1 text-xs text-neutral-600 dark:text-neutral-400 mb-3">
+              <p className="font-semibold text-neutral-900 dark:text-neutral-100">• {t.footer.problemStatement}</p>
+              <p>• {t.footer.projectTitle}</p>
+              <p>• {t.footer.domain}</p>
+              <p>• {t.footer.teamLeader}</p>
             </div>
           </div>
         </div>
