@@ -56,3 +56,25 @@ public/worker-*.js.map
 
 /src/generated/prisma
 
+# test reports
+/playwright-report
+/test-results
+
+# IDE
+.vscode
+.idea
+
+# temp files
+*.log
+*.tmp
+test-*.js
+test-*.txt
+
+# AI assistants & editors
+.agents
+.claude
+.codex
+.opencode
+.vscode
+.idea
+.cursor
