@@ -110,10 +110,23 @@ IMPORTANT: Return ONLY the JSON object, no additional text.`;
       generatedAt: new Date().toISOString()
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error generating health insights:", error);
+    console.error("Error details:", {
+      message: error?.message,
+      name: error?.name,
+      stack: error?.stack?.substring(0, 500)
+    });
+    
+    // Return more specific error message
+    const errorMessage = error?.message?.includes('API key') 
+      ? "AI service authentication failed. Please check GROQ_API_KEY."
+      : error?.message?.includes('rate limit')
+      ? "AI service rate limited. Please try again in a few seconds."
+      : error?.message || "Failed to generate health insights. Please try again later.";
+    
     return NextResponse.json(
-      { error: "Failed to generate health insights. Please try again later." },
+      { error: errorMessage },
       { status: 500 }
     );
   }
