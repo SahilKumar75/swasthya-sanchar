@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,108 +8,449 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// User model - stores authentication and wallet info
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String   // Hashed password
-  name      String?
-  role      String   // "patient" or "doctor"
-  
-  // Blockchain wallet (encrypted)
-  walletAddress    String   @unique
-  encryptedPrivateKey String // Encrypted with WALLET_ENCRYPTION_KEY
-  
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations
-  patientProfile PatientProfile?
-  doctorProfile  DoctorProfile?
-  
+  id                  String          @id @default(cuid())
+  email               String          @unique
+  password            String
+  name                String?
+  role                String
+  walletAddress       String          @unique
+  encryptedPrivateKey String
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  doctorProfile       DoctorProfile?
+  patientProfile      PatientProfile?
+
   @@index([email])
   @@index([walletAddress])
 }
 
-// Patient-specific data
 model PatientProfile {
-  id     String @id @default(cuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Personal info
-  fullName       String?
-  profilePicture String?   @db.Text // Base64 encoded image
-  dateOfBirth    DateTime?
-  gender         String?
-  bloodGroup     String?
-  phone          String?
-  streetAddress  String?
-  address        String?   // Keep for backward compatibility
-  city           String?
-  state          String?
-  pincode        String?
-  
-  // Medical info
-  allergies          String?
-  chronicConditions  String?
-  currentMedications String?
-  previousSurgeries  String?
-  height             String?
-  weight             String?
-  
-  // Emergency contact
-  emergencyName     String?
-  emergencyRelation String?
-  emergencyPhone    String?
-  
-  // Blockchain registration status
-  isRegisteredOnChain Boolean @default(false)
+  id                  String    @id @default(cuid())
+  userId              String    @unique
+  dateOfBirth         DateTime?
+  gender              String?
+  bloodGroup          String?
+  phone               String?
+  address             String?
+  city                String?
+  state               String?
+  pincode             String?
+  allergies           String?
+  chronicConditions   String?
+  currentMedications  String?
+  previousSurgeries   String?
+  height              String?
+  weight              String?
+  emergencyName       String?
+  emergencyRelation   String?
+  emergencyPhone      String?
+  isRegisteredOnChain Boolean   @default(false)
   registeredAt        DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  fullName            String?
+  profilePicture      String?
+  streetAddress       String?
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  // Journey tracking
+  journeys            PatientJourney[]
 }
 
-// Doctor-specific data
 model DoctorProfile {
-  id     String @id @default(cuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Professional info
-  medicalLicense String?
-  specialization String?
-  hospital       String?
-  phone          String?
-  
-  // Blockchain registration status
-  isRegisteredOnChain Boolean @default(false)
+  id                  String    @id @default(cuid())
+  userId              String    @unique
+  medicalLicense      String?
+  specialization      String?
+  hospital            String?
+  phone               String?
+  isRegisteredOnChain Boolean   @default(false)
   registeredAt        DateTime?
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// Transaction log for audit trail
 model TransactionLog {
-  id String @id @default(cuid())
-  
-  // Transaction details
+  id              String   @id @default(cuid())
   transactionHash String   @unique
-  transactionType String   // "register", "grantAccess", "revokeAccess", "createRecord"
+  transactionType String
   fromAddress     String
   toAddress       String?
-  status          String   // "pending", "success", "failed"
+  status          String
   errorMessage    String?
-  
-  // Metadata
-  metadata Json?
-  
-  createdAt DateTime @default(now())
-  
+  metadata        Json?
+  createdAt       DateTime @default(now())
+
   @@index([transactionHash])
   @@index([fromAddress])
   @@index([transactionType])
+}
+
+// ============================================
+// JOURNEY TRACKING MODELS
+// ============================================
+
+model Hospital {
+  id          String   @id @default(cuid())
+  name        String
+  code        String   @unique  // e.g., "AIIMS-DEL"
+  address     String?
+  city        String
+  state       String
+  pincode     String?
+  phone       String?
+  email       String?
+  type        String   @default("government") // government, private, clinic
+  
+  // Operating hours
+  openTime    String?  // e.g., "08:00"
+  closeTime   String?  // e.g., "20:00"
+  
+  // Features
+  hasEmergency    Boolean @default(true)
+  hasPharmacy     Boolean @default(true)
+  hasLab          Boolean @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  departments     Department[]
+  journeys        PatientJourney[]
+  staff           HospitalStaff[]
+  queueStatistics QueueStatistics[]
+  
+  @@index([code])
+  @@index([city])
+}
+
+model Department {
+  id           String   @id @default(cuid())
+  hospitalId   String
+  hospital     Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  
+  name         String   // e.g., "OPD Registration", "X-Ray", "Cardiology"
+  code         String   // e.g., "REG", "XRAY", "CARD"
+  type         String   // registration, consultation, diagnostic, pharmacy, billing
+  floor        Int      @default(0)
+  wing         String?  // A, B, C, etc.
+  
+  // Queue settings
+  avgServiceTime   Int   @default(15)  // minutes
+  maxCapacity      Int   @default(50)
+  currentQueue     Int   @default(0)
+  isOpen           Boolean @default(true)
+  
+  // Display
+  icon         String?  // Lucide icon name
+  color        String?  // Tailwind color
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  checkpoints  JourneyCheckpoint[]
+  predictions  WaitTimePrediction[]
+  
+  @@unique([hospitalId, code])
+  @@index([hospitalId])
+}
+
+model PatientJourney {
+  id            String   @id @default(cuid())
+  
+  // Patient reference
+  patientId     String
+  patient       PatientProfile @relation(fields: [patientId], references: [id])
+  
+  hospitalId    String
+  hospital      Hospital @relation(fields: [hospitalId], references: [id])
+  
+  // Journey metadata
+  visitType     String   // opd, emergency, follow-up, diagnostic
+  chiefComplaint String?
+  tokenNumber   String?  // e.g., "OPD-2024-0001"
+  
+  // Status
+  status        String   @default("active") // active, completed, cancelled, paused
+  startedAt     DateTime @default(now())
+  completedAt   DateTime?
+  
+  // Estimated total time
+  estimatedTotalMinutes Int?
+  actualTotalMinutes    Int?
+  
+  // Progress (0-100)
+  progressPercent Int @default(0)
+  
+  // Current position
+  currentCheckpointId String?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  checkpoints   JourneyCheckpoint[]
+  shares        JourneyShare[]
+  
+  @@index([patientId])
+  @@index([hospitalId])
+  @@index([status])
+}
+
+model JourneyCheckpoint {
+  id            String   @id @default(cuid())
+  
+  journeyId     String
+  journey       PatientJourney @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  
+  departmentId  String
+  department    Department @relation(fields: [departmentId], references: [id])
+  
+  // Sequence
+  sequence      Int      // Order in journey (1, 2, 3...)
+  
+  // Status
+  status        String   @default("pending") // pending, in_queue, in_progress, completed, skipped
+  
+  // Queue position
+  queuePosition Int?
+  
+  // Timing
+  estimatedWaitMinutes  Int?
+  actualWaitMinutes     Int?
+  estimatedServiceMinutes Int?
+  actualServiceMinutes  Int?
+  
+  arrivedAt     DateTime?
+  startedAt     DateTime?
+  completedAt   DateTime?
+  
+  // Staff assignment (optional)
+  assignedStaffId String?
+  assignedStaff   HospitalStaff? @relation(fields: [assignedStaffId], references: [id])
+  
+  // Notes
+  notes         String?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([journeyId])
+  @@index([departmentId])
+  @@index([status])
+}
+
+model JourneyShare {
+  id            String   @id @default(cuid())
+  
+  journeyId     String
+  journey       PatientJourney @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  
+  // Who it's shared with
+  sharedWithPhone   String?
+  sharedWithEmail   String?
+  sharedWithUserId  String?
+  
+  // Share settings
+  shareType     String   @default("view") // view, full
+  accessCode    String?  // 6-digit code for verification
+  
+  // Expiry
+  expiresAt     DateTime?
+  
+  // Notifications
+  notifyOnUpdate    Boolean @default(true)
+  notifyViaWhatsApp Boolean @default(true)
+  notifyViaSMS      Boolean @default(false)
+  
+  isActive      Boolean  @default(true)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([journeyId])
+  @@index([sharedWithPhone])
+}
+
+// ============================================
+// AI DOCUMENTATION MODELS
+// ============================================
+
+model ClinicalNote {
+  id            String   @id @default(cuid())
+  
+  // References
+  doctorId      String
+  patientId     String
+  journeyId     String?  // Optional link to journey
+  
+  // Content
+  chiefComplaint    String?
+  historyOfPresent  String?
+  examination       String?
+  diagnosis         String?
+  plan              String?
+  medications       String?
+  followUp          String?
+  
+  // Raw data
+  rawTranscript     String?   // Original speech-to-text
+  structuredData    Json?     // AI-extracted structured data
+  
+  // AI metadata
+  aiModelUsed       String?
+  confidenceScore   Float?
+  processingTimeMs  Int?
+  
+  // Status
+  status            String   @default("draft") // draft, reviewed, finalized
+  reviewedBy        String?
+  reviewedAt        DateTime?
+  
+  // IPFS storage (for blockchain)
+  ipfsHash          String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([doctorId])
+  @@index([patientId])
+}
+
+model VoiceSession {
+  id            String   @id @default(cuid())
+  
+  doctorId      String
+  patientId     String?
+  
+  // Session metadata
+  duration      Int?     // seconds
+  language      String   @default("hi-IN")
+  
+  // Status
+  status        String   @default("recording") // recording, processing, completed, error
+  
+  // Results
+  transcript    String?
+  clinicalNoteId String?
+  
+  // Error handling
+  errorMessage  String?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  chunks        VoiceChunk[]
+  
+  @@index([doctorId])
+  @@index([status])
+}
+
+model VoiceChunk {
+  id            String   @id @default(cuid())
+  
+  sessionId     String
+  session       VoiceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  // Chunk data
+  sequence      Int
+  audioUrl      String?  // IPFS or Supabase storage URL
+  transcript    String?
+  durationMs    Int?
+  
+  createdAt     DateTime @default(now())
+}
+
+// ============================================
+// QUEUE & PREDICTION MODELS
+// ============================================
+
+model QueueStatistics {
+  id            String   @id @default(cuid())
+  
+  hospitalId    String
+  hospital      Hospital @relation(fields: [hospitalId], references: [id])
+  
+  departmentCode String
+  
+  // Time bucket (hourly)
+  date          DateTime @db.Date
+  hour          Int      // 0-23
+  dayOfWeek     Int      // 0=Sunday, 6=Saturday
+  
+  // Statistics
+  avgWaitTime       Int      // minutes
+  maxWaitTime       Int
+  minWaitTime       Int
+  totalPatients     Int
+  avgServiceTime    Int
+  
+  // For ML training
+  weatherCondition  String?
+  isHoliday         Boolean @default(false)
+  specialEvents     String?
+  
+  createdAt     DateTime @default(now())
+  
+  @@unique([hospitalId, departmentCode, date, hour])
+  @@index([hospitalId])
+  @@index([date])
+}
+
+model WaitTimePrediction {
+  id            String   @id @default(cuid())
+  
+  departmentId  String
+  department    Department @relation(fields: [departmentId], references: [id])
+  
+  // Prediction
+  predictedAt   DateTime @default(now())
+  predictedWaitMinutes Int
+  confidenceLow     Int   // 90% CI low
+  confidenceHigh    Int   // 90% CI high
+  
+  // Model metadata
+  modelVersion  String
+  features      Json?    // Input features used
+  
+  // Accuracy tracking
+  actualWaitMinutes Int?
+  predictionError   Int?
+  
+  createdAt     DateTime @default(now())
+  
+  @@index([departmentId])
+}
+
+// ============================================
+// HOSPITAL STAFF MANAGEMENT
+// ============================================
+
+model HospitalStaff {
+  id            String   @id @default(cuid())
+  
+  userId        String?  // Optional link to User
+  hospitalId    String
+  hospital      Hospital @relation(fields: [hospitalId], references: [id])
+  
+  // Staff info
+  name          String
+  role          String   // doctor, nurse, receptionist, technician, admin
+  employeeId    String?
+  phone         String?
+  
+  // Department assignment
+  primaryDepartment String?
+  
+  // Status
+  isActive      Boolean  @default(true)
+  isOnDuty      Boolean  @default(false)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  assignedCheckpoints JourneyCheckpoint[]
+  
+  @@index([hospitalId])
+  @@index([role])
 }

@@ -74,6 +74,7 @@ export default function PatientEmergencyQR() {
                     setZeroNetQR(data.qrCode);
                     setZeroNetData(data.zeroNetData);
                     setQrDataSize(data.dataSize);
+                    console.log('[Zero-Net] QR generated, URL length:', data.urlSize, 'Data size:', data.dataSize);
                 }
             } catch (error) {
                 console.error("Error generating Zero-Net QR:", error);

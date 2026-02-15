@@ -12,6 +12,19 @@ export default withPWA({
   disable: process.env.NODE_ENV === 'development', // Disable PWA in dev mode for faster iteration
   runtimeCaching: [
     {
+      // CRITICAL: Cache emergency pages for offline Zero-Net access
+      // This catches /emergency/SS1:... URLs
+      urlPattern: /\/emergency\/.*/,
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'emergency-pages-cache',
+        expiration: {
+          maxEntries: 100,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+        },
+      },
+    },
+    {
       // Cache emergency API responses with network-first strategy
       urlPattern: /^\/api\/emergency\/.*/,
       handler: 'NetworkFirst',
@@ -22,6 +35,18 @@ export default withPWA({
           maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
         },
         networkTimeoutSeconds: 5, // Fallback to cache after 5s
+      },
+    },
+    {
+      // Cache Next.js static assets (JS/CSS) for offline
+      urlPattern: /\/_next\/static\/.*/,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'nextjs-static-cache',
+        expiration: {
+          maxEntries: 200,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+        },
       },
     },
     {

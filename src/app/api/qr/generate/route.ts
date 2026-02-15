@@ -51,34 +51,36 @@ export async function GET(req: NextRequest) {
       walletAddress: user.walletAddress
     });
 
-    // Generate QR code image
-    // The QR contains the Zero-Net data directly (works offline)
-    const qrDataUrl = await QRCode.toDataURL(zeroNetData, {
+    // Generate URL with embedded Zero-Net data
+    // This URL works because the emergency page decodes SS1: data from URL params
+    const baseUrl = process.env.NEXTAUTH_URL || 'https://swasthya-sanchar.vercel.app';
+    const zeroNetUrl = `${baseUrl}/emergency/${encodeURIComponent(zeroNetData)}`;
+    
+    // Generate QR code with the URL (not raw data)
+    // When scanned, phone opens browser → page decodes SS1: data from URL
+    // With PWA caching, this works even offline!
+    const qrDataUrl = await QRCode.toDataURL(zeroNetUrl, {
       width: 300,
       margin: 2,
-      errorCorrectionLevel: 'M',
+      errorCorrectionLevel: 'L', // Lower error correction to fit longer URL
       color: {
         dark: '#000000',
         light: '#ffffff'
       }
     });
 
-    // Also generate a URL-based QR for fallback
-    // This URL will handle both Zero-Net and legacy modes
-    const baseUrl = process.env.NEXTAUTH_URL || 'https://swasthya-sanchar.vercel.app';
-    const fallbackUrl = `${baseUrl}/emergency/${encodeURIComponent(zeroNetData)}`;
-
     return NextResponse.json({
       success: true,
       qrCode: qrDataUrl,
       zeroNetData: zeroNetData,
-      fallbackUrl: fallbackUrl,
+      zeroNetUrl: zeroNetUrl,
       dataSize: zeroNetData.length,
+      urlSize: zeroNetUrl.length,
       encodedFields: [
         'name', 'dateOfBirth', 'gender', 'bloodGroup',
         'allergies', 'medications', 'conditions', 'emergencyContact'
       ],
-      message: 'This QR code works 100% offline - no internet needed!'
+      message: 'QR opens browser with embedded data - works offline with PWA!'
     });
 
   } catch (error) {
