@@ -155,6 +155,7 @@ export default function Home() {
   const [signupPassword, setSignupPassword] = useState("");
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
   const [signupRole, setSignupRole] = useState<"patient" | "doctor">("patient");
+  const [signupLanguage, setSignupLanguage] = useState<"en" | "hi" | "mr" | "bh">("en");
   const [signupError, setSignupError] = useState("");
   const [signupLoading, setSignupLoading] = useState(false);
 
@@ -203,7 +204,12 @@ export default function Home() {
       const signupRes = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: signupEmail, password: signupPassword, role: signupRole }),
+        body: JSON.stringify({ 
+          email: signupEmail, 
+          password: signupPassword, 
+          role: signupRole,
+          preferredLanguage: signupLanguage 
+        }),
       });
 
       const data = await signupRes.json();
@@ -589,6 +595,32 @@ export default function Home() {
                               >
                                 {t.auth.doctor}
                               </button>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-3">
+                              Preferred Language
+                            </label>
+                            <div className="grid grid-cols-4 gap-2">
+                              {[
+                                { code: 'en' as const, label: 'English' },
+                                { code: 'hi' as const, label: 'Hindi' },
+                                { code: 'mr' as const, label: 'Marathi' },
+                                { code: 'bh' as const, label: 'Bhojpuri' },
+                              ].map((lang) => (
+                                <button
+                                  key={lang.code}
+                                  type="button"
+                                  onClick={() => setSignupLanguage(lang.code)}
+                                  className={`px-3 py-2 rounded-xl transition-all text-sm font-medium border ${signupLanguage === lang.code
+                                    ? "bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-neutral-900 dark:border-white"
+                                    : "bg-transparent text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700 hover:border-neutral-400"
+                                    }`}
+                                >
+                                  {lang.label}
+                                </button>
+                              ))}
                             </div>
                           </div>
 

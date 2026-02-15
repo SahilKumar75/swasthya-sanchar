@@ -195,7 +195,8 @@ export function generateEmergencyVoiceText(
   }
   
   if (profile.e.n && profile.e.p) {
-    parts.push(`${t.emergencyContact}: ${profile.e.n}, ${profile.e.r}, ${t.phone}: ${profile.e.p}`);
+    const spokenPhone = phoneToSpeakable(profile.e.p, language);
+    parts.push(`${t.emergencyContact}: ${profile.e.n}, ${profile.e.r}, ${t.phone}: ${spokenPhone}`);
   }
   
   return parts.join(separator);
@@ -253,6 +254,37 @@ export function stopSpeaking(): void {
 // ============================================
 // UTILITY FUNCTIONS
 // ============================================
+
+/**
+ * Convert phone number to digit-by-digit speech format
+ * e.g., "9876543210" -> "9 8 7 6 5 4 3 2 1 0"
+ * Supports multiple languages for digit pronunciation
+ */
+function phoneToSpeakable(phone: string, language: 'en' | 'hi' | 'mr' | 'ta' = 'en'): string {
+  if (!phone) return '';
+  
+  // Digit names in different languages
+  const digitNames: Record<string, string[]> = {
+    en: ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'],
+    hi: ['शून्य', 'एक', 'दो', 'तीन', 'चार', 'पाँच', 'छह', 'सात', 'आठ', 'नौ'],
+    mr: ['शून्य', 'एक', 'दोन', 'तीन', 'चार', 'पाच', 'सहा', 'सात', 'आठ', 'नऊ'],
+    ta: ['பூஜ்ஜியம்', 'ஒன்று', 'இரண்டு', 'மூன்று', 'நான்கு', 'ஐந்து', 'ஆறு', 'ஏழு', 'எட்டு', 'ஒன்பது']
+  };
+  
+  const digits = digitNames[language] || digitNames.en;
+  
+  // Extract only digits from phone number
+  const phoneDigits = phone.replace(/\D/g, '');
+  
+  // Convert each digit to its spoken name
+  const spokenDigits = phoneDigits.split('').map(d => {
+    const num = parseInt(d, 10);
+    return isNaN(num) ? d : digits[num];
+  });
+  
+  // Join with commas for natural pauses in speech
+  return spokenDigits.join(', ');
+}
 
 function expandGender(g: string): string {
   switch (g) {
@@ -361,8 +393,8 @@ export function getFreshnessMessage(freshness: DataFreshness, language: 'en' | '
       hi: 'डेटा पुराना हो सकता है - नवीनतम के लिए इंटरनेट से कनेक्ट करें'
     },
     very_stale: {
-      en: '⚠️ Data is very old - update required',
-      hi: '⚠️ डेटा बहुत पुराना है - अपडेट आवश्यक'
+      en: 'Warning: Data is very old - update required',
+      hi: 'चेतावनी: डेटा बहुत पुराना है - अपडेट आवश्यक'
     }
   };
   

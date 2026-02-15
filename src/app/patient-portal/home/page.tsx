@@ -9,7 +9,8 @@ import { FooterSection } from "@/components/ui/footer-section";
 import {
     FileText, Shield, QrCode, Loader2, CheckCircle,
     Heart, Activity, Droplet, Calendar, AlertCircle,
-    TrendingUp, ArrowUpRight, Scale, Pill, Sparkles, RefreshCw, Settings, RotateCw, XCircle
+    TrendingUp, ArrowUpRight, Scale, Pill, Sparkles, RefreshCw, Settings, RotateCw, XCircle,
+    Check, X
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import MedicalDataPrompt from "@/components/patient/MedicalDataPrompt";
@@ -574,7 +575,7 @@ export default function PatientHome() {
                                                         <ul className="space-y-3">
                                                             {aiInsights.dos?.map((item: string, idx: number) => (
                                                                 <li key={idx} className="flex items-start gap-2 text-sm text-neutral-700 dark:text-neutral-300">
-                                                                    <span className="text-green-600 dark:text-green-400 mt-0.5">✓</span>
+                                                                    <Check className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
                                                                     <AnimatedInsightText text={item} speed="fast" />
                                                                 </li>
                                                             ))}
@@ -590,7 +591,7 @@ export default function PatientHome() {
                                                         <ul className="space-y-3">
                                                             {aiInsights.donts?.map((item: string, idx: number) => (
                                                                 <li key={idx} className="flex items-start gap-2 text-sm text-neutral-700 dark:text-neutral-300">
-                                                                    <span className="text-red-600 dark:text-red-400 mt-0.5">✗</span>
+                                                                    <X className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
                                                                     <AnimatedInsightText text={item} speed="fast" />
                                                                 </li>
                                                             ))}

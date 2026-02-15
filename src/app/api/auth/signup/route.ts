@@ -3,10 +3,12 @@ import { hash } from "bcryptjs";
 import { prisma, createWallet, encryptPrivateKey } from "@/lib/wallet-service";
 import { fundNewUserWallet } from "@/lib/wallet-funding";
 
+const VALID_LANGUAGES = ['en', 'hi', 'mr', 'bh'];
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { email, password, role, name } = body;
+    const { email, password, role, name, preferredLanguage } = body;
 
     // Validate input
     if (!email || !password || !role) {
@@ -58,6 +60,9 @@ export async function POST(req: NextRequest) {
         role,
         walletAddress: address,
         encryptedPrivateKey: encryptedKey,
+        preferredLanguage: preferredLanguage && VALID_LANGUAGES.includes(preferredLanguage) 
+          ? preferredLanguage 
+          : 'en',
       },
     });
 

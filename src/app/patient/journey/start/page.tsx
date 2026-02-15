@@ -7,7 +7,8 @@ import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import {
   ArrowLeft, Building2, MapPin, Clock, CheckCircle2,
-  Search, Loader2, AlertCircle, ChevronRight, Navigation
+  Search, Loader2, AlertCircle, ChevronRight, Navigation,
+  Stethoscope, ClipboardList, TestTube, Ambulance
 } from "lucide-react";
 
 interface Department {
@@ -36,10 +37,10 @@ interface Hospital {
 }
 
 const visitTypes = [
-  { id: 'opd', label: 'OPD Visit', icon: '🏥', description: 'General outpatient consultation' },
-  { id: 'follow-up', label: 'Follow-up', icon: '📋', description: 'Returning for scheduled follow-up' },
-  { id: 'diagnostic', label: 'Diagnostic', icon: '🔬', description: 'Tests, X-rays, or scans' },
-  { id: 'emergency', label: 'Emergency', icon: '🚑', description: 'Urgent medical attention' }
+  { id: 'opd', label: 'OPD Visit', Icon: Stethoscope, description: 'General outpatient consultation' },
+  { id: 'follow-up', label: 'Follow-up', Icon: ClipboardList, description: 'Returning for scheduled follow-up' },
+  { id: 'diagnostic', label: 'Diagnostic', Icon: TestTube, description: 'Tests, X-rays, or scans' },
+  { id: 'emergency', label: 'Emergency', Icon: Ambulance, description: 'Urgent medical attention' }
 ];
 
 const departmentTypeOrder = ['registration', 'consultation', 'diagnostic', 'pharmacy', 'billing'];
@@ -315,7 +316,7 @@ export default function StartJourneyPage() {
                         : 'border-neutral-200 dark:border-neutral-700 hover:border-neutral-300'
                     }`}
                   >
-                    <span className="text-2xl">{type.icon}</span>
+                    <type.Icon className="w-8 h-8 text-blue-600" />
                     <h4 className="font-semibold mt-2">{type.label}</h4>
                     <p className="text-sm text-neutral-500 mt-1">{type.description}</p>
                   </button>

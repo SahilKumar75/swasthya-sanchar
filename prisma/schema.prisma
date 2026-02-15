@@ -16,6 +16,7 @@ model User {
   role                String
   walletAddress       String          @unique
   encryptedPrivateKey String
+  preferredLanguage   String          @default("en") // en, hi, mr, bh
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
   doctorProfile       DoctorProfile?
