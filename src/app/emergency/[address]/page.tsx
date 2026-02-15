@@ -2,11 +2,21 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Shield, RefreshCw } from "lucide-react";
+import { Shield, RefreshCw, Volume2, VolumeX, WifiOff, Wifi, Phone, AlertTriangle } from "lucide-react";
 import OfflineIndicator from "@/components/OfflineIndicator";
+import { 
+  isZeroNetQR, 
+  decodeEmergencyProfile, 
+  profileToDisplayData,
+  speakEmergencyProfile,
+  stopSpeaking,
+  getDataFreshness,
+  getFreshnessColor,
+  getFreshnessMessage,
+  type EmergencyProfile
+} from "@/lib/zero-net-qr-client";
 
 interface PrivacySettings {
-  // Only optional fields - name, DOB, bloodGroup, emergencyContact are ALWAYS visible
   gender: boolean;
   phone: boolean;
   email: boolean;
@@ -49,8 +59,10 @@ const CACHE_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
 function saveToCache(address: string, data: PatientEmergencyData) {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(`emergency_${address}`, JSON.stringify(data));
-    localStorage.setItem(`emergency_${address}_timestamp`, Date.now().toString());
+    // Use a hash of the address to avoid overly long keys
+    const cacheKey = `emergency_${address.substring(0, 20)}`;
+    localStorage.setItem(cacheKey, JSON.stringify(data));
+    localStorage.setItem(`${cacheKey}_timestamp`, Date.now().toString());
   } catch (error) {
     console.warn('Failed to save to cache:', error);
   }
@@ -59,7 +71,8 @@ function saveToCache(address: string, data: PatientEmergencyData) {
 function loadFromCache(address: string): PatientEmergencyData | null {
   if (typeof window === 'undefined') return null;
   try {
-    const cached = localStorage.getItem(`emergency_${address}`);
+    const cacheKey = `emergency_${address.substring(0, 20)}`;
+    const cached = localStorage.getItem(cacheKey);
     return cached ? JSON.parse(cached) : null;
   } catch (error) {
     console.warn('Failed to load from cache:', error);
@@ -69,7 +82,8 @@ function loadFromCache(address: string): PatientEmergencyData | null {
 
 function getCacheAge(address: string): number | null {
   if (typeof window === 'undefined') return null;
-  const timestamp = localStorage.getItem(`emergency_${address}_timestamp`);
+  const cacheKey = `emergency_${address.substring(0, 20)}`;
+  const timestamp = localStorage.getItem(`${cacheKey}_timestamp`);
   if (!timestamp) return null;
   return Date.now() - parseInt(timestamp);
 }
@@ -85,25 +99,32 @@ function formatCacheAge(ageMs: number): string {
   return 'just now';
 }
 
+type DataSource = 'zeronet' | 'server' | 'cache';
+
 export default function EmergencyResponderPage({ params }: { params: { address: string } }) {
-  const [address, setAddress] = useState<string>(params.address || "");
   const [loading, setLoading] = useState(true);
   const [patientData, setPatientData] = useState<PatientEmergencyData | null>(null);
   const [error, setError] = useState<string>("");
   const [isOnline, setIsOnline] = useState(true);
-  const [usingCache, setUsingCache] = useState(false);
+  const [dataSource, setDataSource] = useState<DataSource>('server');
   const [cacheAge, setCacheAge] = useState<number | null>(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [zeroNetProfile, setZeroNetProfile] = useState<EmergencyProfile | null>(null);
+  const [dataAge, setDataAge] = useState<number>(0);
+  const [language, setLanguage] = useState<'en' | 'hi' | 'mr'>('hi');
+
+  // Decode the address parameter (might be URL-encoded Zero-Net data)
+  const decodedAddress = decodeURIComponent(params.address);
 
   useEffect(() => {
     // Set initial online status
     setIsOnline(navigator.onLine);
 
-    // Listen for online/offline events
     const handleOnline = () => {
       setIsOnline(true);
-      // Auto-refresh when back online if using cached data
-      if (usingCache) {
-        loadEmergencyData();
+      // If we were using Zero-Net or cache, try to get enhanced data
+      if (dataSource !== 'server' && zeroNetProfile?.w) {
+        fetchEnhancedData(zeroNetProfile.w);
       }
     };
     const handleOffline = () => setIsOnline(false);
@@ -114,22 +135,79 @@ export default function EmergencyResponderPage({ params }: { params: { address: 
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      stopSpeaking();
     };
-  }, [usingCache]);
+  }, [dataSource, zeroNetProfile]);
 
   useEffect(() => {
     loadEmergencyData();
-  }, [address]);
+  }, [decodedAddress]);
 
   async function loadEmergencyData() {
     try {
       setLoading(true);
       setError("");
-      setUsingCache(false);
-      setCacheAge(null);
 
-      // Fetch emergency data from database API
-      const response = await fetch(`/api/emergency/${address}`);
+      // Check if this is Zero-Net QR data (starts with SS1:)
+      if (isZeroNetQR(decodedAddress)) {
+        const decoded = decodeEmergencyProfile(decodedAddress);
+        
+        if (decoded) {
+          setZeroNetProfile(decoded.profile);
+          setDataAge(decoded.dataAge);
+          setDataSource('zeronet');
+          
+          // Convert to display format
+          const displayData = profileToDisplayData(decoded.profile);
+          setPatientData({
+            ...displayData,
+            phone: '',
+            email: '',
+            address: '',
+            city: '',
+            state: '',
+            pincode: '',
+            previousSurgeries: '',
+            height: '',
+            weight: '',
+            waistCircumference: '',
+            profilePicture: undefined,
+            privacySettings: {
+              gender: true,
+              phone: false,
+              email: false,
+              address: false,
+              height: false,
+              weight: false,
+              waistCircumference: false,
+              previousSurgeries: false
+            }
+          });
+          
+          // Try to fetch enhanced data in background if online
+          if (navigator.onLine && decoded.profile.w) {
+            fetchEnhancedData(decoded.profile.w);
+          }
+          
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Legacy mode: treat as wallet address and fetch from server
+      await fetchFromServer(decodedAddress);
+      
+    } catch (error) {
+      console.error("Error loading emergency data:", error);
+      handleFetchError();
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function fetchFromServer(walletAddress: string) {
+    try {
+      const response = await fetch(`/api/emergency/${walletAddress}`);
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -137,53 +215,74 @@ export default function EmergencyResponderPage({ params }: { params: { address: 
         } else {
           setError("Failed to load patient emergency data");
         }
-
-        // If offline, try loading from cache
-        if (!navigator.onLine) {
-          const cached = loadFromCache(address);
-          if (cached) {
-            setPatientData(cached);
-            setUsingCache(true);
-            setCacheAge(getCacheAge(address));
-            setError(""); // Clear error if we have cached data
-          }
-        }
+        handleFetchError();
         return;
       }
 
       const data = await response.json();
-
-      // Save to cache for offline use
-      saveToCache(address, data);
-
       setPatientData(data);
-      setUsingCache(false);
+      setDataSource('server');
+      
+      // Save to cache for offline use
+      saveToCache(walletAddress, data);
+      
     } catch (error) {
-      console.error("Error loading emergency data:", error);
-
-      // Network error - try cache fallback
-      if (!navigator.onLine) {
-        const cached = loadFromCache(address);
-        if (cached) {
-          setPatientData(cached);
-          setUsingCache(true);
-          setCacheAge(getCacheAge(address));
-          setError(""); // Clear error since we have cached data
-        } else {
-          setError("No cached data available. Please connect to internet.");
-        }
-      } else {
-        setError("Failed to load patient emergency data");
-      }
-    } finally {
-      setLoading(false);
+      console.error("Fetch error:", error);
+      handleFetchError();
     }
   }
 
+  async function fetchEnhancedData(walletAddress: string) {
+    try {
+      const response = await fetch(`/api/emergency/${walletAddress}`);
+      if (response.ok) {
+        const data = await response.json();
+        setPatientData(data);
+        // Keep zeronet as source but note we have enhanced data
+        saveToCache(walletAddress, data);
+      }
+    } catch (error) {
+      // Silent fail - Zero-Net data is sufficient
+      console.log('Enhanced data unavailable, using Zero-Net data');
+    }
+  }
+
+  function handleFetchError() {
+    // Try cache fallback
+    const cached = loadFromCache(decodedAddress);
+    if (cached) {
+      setPatientData(cached);
+      setDataSource('cache');
+      setCacheAge(getCacheAge(decodedAddress));
+      setError("");
+    } else if (!patientData) {
+      setError("No data available. Please connect to internet.");
+    }
+  }
+
+  const toggleSpeech = () => {
+    if (isSpeaking) {
+      stopSpeaking();
+      setIsSpeaking(false);
+    } else if (zeroNetProfile) {
+      speakEmergencyProfile(zeroNetProfile, language);
+      setIsSpeaking(true);
+      
+      // Reset speaking state when done (approximate)
+      setTimeout(() => setIsSpeaking(false), 15000);
+    }
+  };
+
   const isVisible = (field: keyof PrivacySettings): boolean => {
     if (!patientData) return false;
-    return patientData.privacySettings[field] ?? false;
+    // In Zero-Net mode, only certain fields are available
+    if (dataSource === 'zeronet') {
+      return ['gender'].includes(field);
+    }
+    return patientData.privacySettings?.[field] ?? false;
   };
+
+  const freshnessLevel = dataSource === 'zeronet' ? getDataFreshness(dataAge) : null;
 
   if (loading) {
     return (
@@ -198,6 +297,7 @@ export default function EmergencyResponderPage({ params }: { params: { address: 
 
   return (
     <div className="min-h-screen bg-white dark:bg-neutral-900">
+      {/* Header */}
       <header className="border-b border-neutral-200 dark:border-neutral-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
@@ -209,34 +309,82 @@ export default function EmergencyResponderPage({ params }: { params: { address: 
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-red-600">Emergency Access</h1>
-                <p className="text-sm text-gray-600">First Responder View</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">First Responder View</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
               <OfflineIndicator />
-              <Link href="/" className="text-sm text-gray-600 hover:text-gray-900 dark:text-neutral-400 dark:hover:text-neutral-100">Back to Home</Link>
+              <Link href="/" className="text-sm text-gray-600 hover:text-gray-900 dark:text-neutral-400 dark:hover:text-neutral-100">
+                Back to Home
+              </Link>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Offline Cache Banner */}
-        {usingCache && cacheAge !== null && (
-          <div className={`rounded-lg p-4 mb-6 flex items-center justify-between gap-3 ${cacheAge > CACHE_DURATION_MS
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Data Source Banner */}
+        {dataSource === 'zeronet' && (
+          <div className={`rounded-xl p-4 mb-6 ${getFreshnessColor(freshnessLevel || 'fresh')} border-2`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <WifiOff className="w-6 h-6" />
+                <div>
+                  <p className="font-bold text-lg">Zero-Net Mode Active</p>
+                  <p className="text-sm">Data loaded from QR code • Works 100% offline</p>
+                  {freshnessLevel && (
+                    <p className="text-xs mt-1">{getFreshnessMessage(freshnessLevel, 'en')}</p>
+                  )}
+                </div>
+              </div>
+              
+              {/* Voice Button */}
+              <button
+                onClick={toggleSpeech}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
+                  isSpeaking 
+                    ? 'bg-red-600 text-white' 
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                {isSpeaking ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                {isSpeaking ? 'Stop' : 'Read Aloud'}
+              </button>
+            </div>
+            
+            {/* Language Selector for Voice */}
+            <div className="mt-3 flex items-center gap-2">
+              <span className="text-sm">Voice Language:</span>
+              {(['hi', 'en', 'mr'] as const).map((lang) => (
+                <button
+                  key={lang}
+                  onClick={() => setLanguage(lang)}
+                  className={`px-3 py-1 text-sm rounded-full transition ${
+                    language === lang
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white/50 hover:bg-white/80'
+                  }`}
+                >
+                  {lang === 'hi' ? 'हिंदी' : lang === 'mr' ? 'मराठी' : 'English'}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {dataSource === 'cache' && cacheAge !== null && (
+          <div className={`rounded-lg p-4 mb-6 flex items-center justify-between gap-3 ${
+            cacheAge > CACHE_DURATION_MS
               ? 'bg-red-50 dark:bg-red-900/20 border-2 border-red-300 dark:border-red-800'
               : cacheAge > 24 * 60 * 60 * 1000
-                ? 'bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-800'
-                : 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-300 dark:border-blue-800'
-            }`}>
+              ? 'bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-800'
+              : 'bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-300 dark:border-blue-800'
+          }`}>
             <div className="flex items-center gap-3">
               <Shield className="w-6 h-6 flex-shrink-0" />
               <div>
                 <p className="font-semibold">Viewing Offline Cached Data</p>
                 <p className="text-sm">Last updated: {formatCacheAge(cacheAge)}</p>
-                {cacheAge > CACHE_DURATION_MS && (
-                  <p className="text-sm font-semibold mt-1">⚠️ Cache is very old. Connect to internet for latest data.</p>
-                )}
               </div>
             </div>
             {isOnline && (
@@ -251,13 +399,30 @@ export default function EmergencyResponderPage({ params }: { params: { address: 
           </div>
         )}
 
+        {dataSource === 'server' && (
+          <div className="rounded-lg p-4 mb-6 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-300 dark:border-blue-800 flex items-center gap-3">
+            <Wifi className="w-6 h-6 text-blue-600" />
+            <div>
+              <p className="font-semibold text-blue-900 dark:text-blue-100">Live Data from Server</p>
+              <p className="text-sm text-blue-700 dark:text-blue-300">Connected to blockchain-verified records</p>
+            </div>
+          </div>
+        )}
+
+        {/* Emergency Alert Banner */}
         <div className="bg-red-600 dark:bg-red-700 text-white rounded-lg p-4 mb-6 flex items-center gap-3 border border-red-700 dark:border-red-800" role="alert">
-          <svg className="w-8 h-8 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
+          <AlertTriangle className="w-8 h-8 flex-shrink-0" />
           <div>
-            <p className="font-semibold text-lg">Instant Emergency Access{!isOnline && ' (Offline Mode)'}</p>
-            <p className="text-sm">{isOnline ? 'Critical patient info from blockchain, accessible via QR scan' : 'Showing cached emergency data - works without internet'}</p>
+            <p className="font-semibold text-lg">
+              Emergency Medical Information
+              {dataSource === 'zeronet' && ' (Offline Mode)'}
+            </p>
+            <p className="text-sm">
+              {dataSource === 'zeronet' 
+                ? 'Critical data decoded from QR code - works without internet'
+                : 'Critical patient info from blockchain, accessible via QR scan'
+              }
+            </p>
           </div>
         </div>
 
@@ -275,7 +440,7 @@ export default function EmergencyResponderPage({ params }: { params: { address: 
 
         {patientData && (
           <div className="space-y-6">
-            <div className="bg-white dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700 p-6">
+            <div className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6 shadow-lg">
               <div className="flex items-start gap-6 mb-6">
                 {/* Profile Picture */}
                 {patientData.profilePicture ? (
@@ -295,109 +460,191 @@ export default function EmergencyResponderPage({ params }: { params: { address: 
                 )}
 
                 <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 mb-4">Patient Emergency Profile</h2>
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50 mb-4">
+                    Patient Emergency Profile
+                  </h2>
 
-                  {/* Personal Info - Name and DOB always visible */}
-                  <div className="grid grid-cols-3 gap-4">
-                    {patientData.name && (<div><p className="text-sm text-neutral-600 dark:text-neutral-400">Name</p><p className="font-semibold">{patientData.name}</p></div>)}
-                    {patientData.dateOfBirth && (<div><p className="text-sm text-neutral-600 dark:text-neutral-400">DOB</p><p className="font-semibold">{patientData.dateOfBirth}</p></div>)}
-                    {isVisible('gender') && patientData.gender && (<div><p className="text-sm text-neutral-600 dark:text-neutral-400">Gender</p><p className="font-semibold capitalize">{patientData.gender}</p></div>)}
+                  {/* Personal Info */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    {patientData.name && (
+                      <div>
+                        <p className="text-sm text-neutral-600 dark:text-neutral-400">Name</p>
+                        <p className="font-semibold text-lg">{patientData.name}</p>
+                      </div>
+                    )}
+                    {patientData.dateOfBirth && (
+                      <div>
+                        <p className="text-sm text-neutral-600 dark:text-neutral-400">DOB</p>
+                        <p className="font-semibold">{patientData.dateOfBirth}</p>
+                      </div>
+                    )}
+                    {patientData.gender && (
+                      <div>
+                        <p className="text-sm text-neutral-600 dark:text-neutral-400">Gender</p>
+                        <p className="font-semibold capitalize">{patientData.gender}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
-                <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-lg p-4">
-                  <h3 className="font-bold text-red-900 dark:text-red-100 mb-2">Blood Type</h3>
-                  <p className="text-3xl font-bold text-red-900 dark:text-red-100">{patientData.bloodGroup || "Not specified"}</p>
+              {/* Critical Info Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                {/* Blood Type - CRITICAL */}
+                <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-4">
+                  <h3 className="font-bold text-red-900 dark:text-red-100 mb-2 flex items-center gap-2">
+                    <span className="text-2xl">🩸</span> Blood Type
+                  </h3>
+                  <p className="text-4xl font-bold text-red-900 dark:text-red-100">
+                    {patientData.bloodGroup || "Not specified"}
+                  </p>
                 </div>
 
-                <div className="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-800 rounded-lg p-4">
-                  <h3 className="font-bold text-yellow-900 dark:text-yellow-100 mb-2">Allergies</h3>
-                  {patientData.allergies ? patientData.allergies.split(',').map((a, i) => (<div key={i} className="bg-yellow-200 dark:bg-yellow-800 px-2 py-1 rounded text-sm mb-1">{a.trim()}</div>)) : <p>None reported</p>}
+                {/* Allergies - CRITICAL */}
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-800 rounded-xl p-4">
+                  <h3 className="font-bold text-yellow-900 dark:text-yellow-100 mb-2 flex items-center gap-2">
+                    <span className="text-2xl">⚠️</span> Allergies
+                  </h3>
+                  {patientData.allergies && patientData.allergies !== 'None reported' ? (
+                    <div className="flex flex-wrap gap-2">
+                      {patientData.allergies.split(',').map((a, i) => (
+                        <span 
+                          key={i} 
+                          className="bg-yellow-200 dark:bg-yellow-800 px-3 py-1 rounded-full text-sm font-medium"
+                        >
+                          {a.trim()}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-yellow-800 dark:text-yellow-200">None reported</p>
+                  )}
                 </div>
 
-                <div className="border-2 border-neutral-300 dark:border-neutral-700 rounded-lg p-4">
-                  <h3 className="font-bold mb-2">Conditions</h3>
-                  {patientData.chronicConditions ? (<ul>{patientData.chronicConditions.split(',').map((c, i) => (<li key={i}>• {c.trim()}</li>))}</ul>) : <p>None</p>}
+                {/* Conditions */}
+                <div className="border-2 border-neutral-300 dark:border-neutral-700 rounded-xl p-4">
+                  <h3 className="font-bold mb-2 flex items-center gap-2">
+                    <span className="text-xl">🏥</span> Medical Conditions
+                  </h3>
+                  {patientData.chronicConditions && patientData.chronicConditions !== 'None reported' ? (
+                    <ul className="space-y-1">
+                      {patientData.chronicConditions.split(',').map((c, i) => (
+                        <li key={i} className="flex items-center gap-2">
+                          <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                          {c.trim()}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-neutral-500">None reported</p>
+                  )}
                 </div>
 
-                <div className="border-2 border-neutral-300 dark:border-neutral-700 rounded-lg p-4">
-                  <h3 className="font-bold mb-2">Medications</h3>
-                  {patientData.currentMedications ? (<ul>{patientData.currentMedications.split(',').map((m, i) => (<li key={i}>• {m.trim()}</li>))}</ul>) : <p>None</p>}
+                {/* Medications */}
+                <div className="border-2 border-neutral-300 dark:border-neutral-700 rounded-xl p-4">
+                  <h3 className="font-bold mb-2 flex items-center gap-2">
+                    <span className="text-xl">💊</span> Current Medications
+                  </h3>
+                  {patientData.currentMedications && patientData.currentMedications !== 'None reported' ? (
+                    <ul className="space-y-1">
+                      {patientData.currentMedications.split(',').map((m, i) => (
+                        <li key={i} className="flex items-center gap-2">
+                          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                          {m.trim()}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-neutral-500">None reported</p>
+                  )}
                 </div>
               </div>
 
               {/* Emergency Contact - Always visible */}
               {(patientData.emergencyName || patientData.emergencyPhone) && (
-                <div className="mt-6 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-300 dark:border-blue-800 rounded-lg p-4">
-                  <h3 className="font-bold text-blue-900 dark:text-blue-100 mb-2">Emergency Contact</h3>
-                  {patientData.emergencyName && <p><span className="font-semibold">Name:</span> {patientData.emergencyName}</p>}
-                  {patientData.emergencyRelation && <p><span className="font-semibold">Relationship:</span> {patientData.emergencyRelation}</p>}
-                  {patientData.emergencyPhone && <p><span className="font-semibold">Phone:</span> <a href={`tel:${patientData.emergencyPhone}`} className="text-blue-600 underline">{patientData.emergencyPhone}</a></p>}
-                </div>
-              )}
-
-              {/* Contact Information - Optional */}
-              {(isVisible('phone') || isVisible('email') || isVisible('address')) && (patientData.phone || patientData.email || patientData.address) && (
-                <div className="mt-6 border-2 border-neutral-300 dark:border-neutral-700 rounded-lg p-4">
-                  <h3 className="font-bold mb-3">Contact Information</h3>
-                  <div className="space-y-2">
-                    {isVisible('phone') && patientData.phone && (
-                      <p><span className="font-semibold">Phone:</span> <a href={`tel:${patientData.phone}`} className="text-blue-600 underline">{patientData.phone}</a></p>
+                <div className="bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-300 dark:border-blue-800 rounded-xl p-4">
+                  <h3 className="font-bold text-blue-900 dark:text-blue-100 mb-3 flex items-center gap-2">
+                    <Phone className="w-5 h-5" /> Emergency Contact
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {patientData.emergencyName && (
+                      <div>
+                        <p className="text-sm text-blue-700 dark:text-blue-300">Name</p>
+                        <p className="font-semibold text-blue-900 dark:text-blue-100">
+                          {patientData.emergencyName}
+                        </p>
+                      </div>
                     )}
-                    {isVisible('email') && patientData.email && (
-                      <p><span className="font-semibold">Email:</span> <a href={`mailto:${patientData.email}`} className="text-blue-600 underline">{patientData.email}</a></p>
+                    {patientData.emergencyRelation && (
+                      <div>
+                        <p className="text-sm text-blue-700 dark:text-blue-300">Relationship</p>
+                        <p className="font-semibold text-blue-900 dark:text-blue-100">
+                          {patientData.emergencyRelation}
+                        </p>
+                      </div>
                     )}
-                    {isVisible('address') && (patientData.address || patientData.city || patientData.state) && (
-                      <p><span className="font-semibold">Address:</span> {[patientData.address, patientData.city, patientData.state, patientData.pincode].filter(Boolean).join(', ')}</p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Physical Measurements - Optional */}
-              {(isVisible('height') || isVisible('weight') || isVisible('waistCircumference')) && (patientData.height || patientData.weight || patientData.waistCircumference) && (
-                <div className="mt-6 border-2 border-neutral-300 dark:border-neutral-700 rounded-lg p-4">
-                  <h3 className="font-bold mb-3">Physical Measurements</h3>
-                  <div className="grid grid-cols-3 gap-4">
-                    {isVisible('height') && patientData.height && (
-                      <div><p className="text-sm text-neutral-600 dark:text-neutral-400">Height</p><p className="font-semibold">{patientData.height}</p></div>
-                    )}
-                    {isVisible('weight') && patientData.weight && (
-                      <div><p className="text-sm text-neutral-600 dark:text-neutral-400">Weight</p><p className="font-semibold">{patientData.weight}</p></div>
-                    )}
-                    {isVisible('waistCircumference') && patientData.waistCircumference && (
-                      <div><p className="text-sm text-neutral-600 dark:text-neutral-400">Waist</p><p className="font-semibold">{patientData.waistCircumference}</p></div>
+                    {patientData.emergencyPhone && (
+                      <div>
+                        <p className="text-sm text-blue-700 dark:text-blue-300">Phone</p>
+                        <a 
+                          href={`tel:${patientData.emergencyPhone}`} 
+                          className="font-semibold text-blue-600 underline text-lg"
+                        >
+                          {patientData.emergencyPhone}
+                        </a>
+                      </div>
                     )}
                   </div>
                 </div>
               )}
 
-              {/* Previous Surgeries - Optional */}
-              {isVisible('previousSurgeries') && patientData.previousSurgeries && (
-                <div className="mt-6 border-2 border-neutral-300 dark:border-neutral-700 rounded-lg p-4">
-                  <h3 className="font-bold mb-3">Previous Surgeries</h3>
-                  <ul className="list-disc list-inside">
-                    {patientData.previousSurgeries.split(',').map((surgery, i) => (
-                      <li key={i}>{surgery.trim()}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              <div className="mt-6 pt-6 border-t">
+              {/* Privacy Notice */}
+              <div className="mt-6 pt-6 border-t border-neutral-200 dark:border-neutral-700">
                 <div className="flex items-center gap-2 mb-2">
                   <Shield className="w-4 h-4 text-purple-600" />
-                  <p className="text-sm font-semibold">Privacy Notice</p>
+                  <p className="text-sm font-semibold text-purple-800 dark:text-purple-200">Privacy Notice</p>
                 </div>
-                <p className="text-sm text-neutral-600 italic">Essential information (name, age, blood type, emergency contact, allergies, conditions, medications) is always visible for safety. Patient controls visibility of optional fields.</p>
+                <p className="text-sm text-neutral-600 dark:text-neutral-400 italic">
+                  {dataSource === 'zeronet' 
+                    ? 'Showing essential emergency data embedded in QR code. Connect to internet for complete profile.'
+                    : 'Essential information is always visible for safety. Patient controls visibility of optional fields.'
+                  }
+                </p>
               </div>
             </div>
 
-            <div className="flex gap-4">
-              <button onClick={() => window.print()} className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Print Info</button>
-              {patientData.emergencyPhone && (<a href={`tel:${patientData.emergencyPhone}`} className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-center">Call Emergency Contact</a>)}
+            {/* Action Buttons */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button 
+                onClick={() => window.print()} 
+                className="flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-semibold text-lg"
+              >
+                🖨️ Print Info
+              </button>
+              {patientData.emergencyPhone && (
+                <a 
+                  href={`tel:${patientData.emergencyPhone}`} 
+                  className="flex items-center justify-center gap-2 px-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition font-semibold text-lg"
+                >
+                  📞 Call Emergency Contact
+                </a>
+              )}
+            </div>
+
+            {/* Emergency Helplines */}
+            <div className="bg-red-600 dark:bg-red-700 text-white rounded-xl p-4 text-center">
+              <p className="font-bold text-lg mb-2">🚑 Emergency Helplines</p>
+              <div className="flex flex-wrap justify-center gap-4">
+                <a href="tel:108" className="px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition">
+                  <span className="font-bold">108</span> - Ambulance
+                </a>
+                <a href="tel:102" className="px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition">
+                  <span className="font-bold">102</span> - Medical Emergency
+                </a>
+                <a href="tel:112" className="px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition">
+                  <span className="font-bold">112</span> - All Emergencies
+                </a>
+              </div>
             </div>
           </div>
         )}

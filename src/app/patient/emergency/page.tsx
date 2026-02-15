@@ -9,7 +9,7 @@ import { Navbar } from "@/components/Navbar";
 import { CardFlip, CardFlipFront, CardFlipBack } from "@/components/ui/card-flip";
 import {
     ArrowLeft, Download, Printer, Share2, AlertCircle, Shield,
-    Heart, QrCode, CheckCircle, Info
+    Heart, QrCode, CheckCircle, Info, Wifi, WifiOff, Volume2
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -20,12 +20,16 @@ export default function PatientEmergencyQR() {
     const [loading, setLoading] = useState(true);
     const [patientData, setPatientData] = useState<any>(null);
     const qrRef = useRef<HTMLDivElement>(null);
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
+    
+    // Zero-Net QR state
+    const [zeroNetQR, setZeroNetQR] = useState<string>("");
+    const [zeroNetData, setZeroNetData] = useState<string>("");
+    const [qrDataSize, setQrDataSize] = useState<number>(0);
+    const [isZeroNetEnabled, setIsZeroNetEnabled] = useState(true);
 
     useEffect(() => {
-        async function loadWalletAddress() {
-
-
+        async function loadData() {
             if (status === "loading") return;
 
             if (status === "unauthenticated" || !session?.user) {
@@ -62,17 +66,47 @@ export default function PatientEmergencyQR() {
                 console.error("Error fetching patient data:", error);
             }
 
+            // Fetch Zero-Net QR code
+            try {
+                const response = await fetch("/api/qr/generate");
+                if (response.ok) {
+                    const data = await response.json();
+                    setZeroNetQR(data.qrCode);
+                    setZeroNetData(data.zeroNetData);
+                    setQrDataSize(data.dataSize);
+                }
+            } catch (error) {
+                console.error("Error generating Zero-Net QR:", error);
+                setIsZeroNetEnabled(false);
+            }
+
             setLoading(false);
         }
 
-        loadWalletAddress();
+        loadData();
     }, [session, status, router]);
 
+    // Legacy URL for fallback
     const emergencyUrl = walletAddress
         ? `${window.location.origin}/emergency/${walletAddress}`
         : "";
+    
+    // Zero-Net URL (data embedded in URL)
+    const zeroNetUrl = zeroNetData
+        ? `${window.location.origin}/emergency/${encodeURIComponent(zeroNetData)}`
+        : "";
 
     const downloadQR = () => {
+        // If Zero-Net QR is available, download it directly
+        if (zeroNetQR) {
+            const downloadLink = document.createElement("a");
+            downloadLink.download = "emergency-qr-zeronet.png";
+            downloadLink.href = zeroNetQR;
+            downloadLink.click();
+            return;
+        }
+
+        // Fallback to SVG conversion
         if (!qrRef.current) return;
 
         const svg = qrRef.current.querySelector('svg');
@@ -172,24 +206,49 @@ export default function PatientEmergencyQR() {
                     <CardFlip height="700px">
                         <CardFlipFront className="bg-white dark:bg-neutral-800 rounded-lg border-2 border-neutral-200 dark:border-neutral-700 p-8">
                             <div className="h-full flex flex-col">
-                                <div className="text-center mb-6">
+                                <div className="text-center mb-4">
                                     <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50">
                                         {t.portal.emergency.yourQRCode}
                                     </h2>
+                                    
+                                    {/* Zero-Net Indicator */}
+                                    {isZeroNetEnabled && zeroNetQR && (
+                                        <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
+                                            <WifiOff className="w-4 h-4" />
+                                            <span>Works 100% Offline</span>
+                                        </div>
+                                    )}
                                 </div>
 
-                                {/* QR Code */}
+                                {/* QR Code - Zero-Net or Legacy */}
                                 <div
                                     ref={qrRef}
-                                    className="bg-white p-8 rounded-lg border-4 border-neutral-900 dark:border-neutral-100 mb-6 flex items-center justify-center print:border-8 flex-1"
+                                    className="bg-white p-6 rounded-lg border-4 border-neutral-900 dark:border-neutral-100 mb-4 flex flex-col items-center justify-center print:border-8 flex-1"
                                 >
-                                    <QRCodeSVG
-                                        value={emergencyUrl}
-                                        size={320}
-                                        level="H"
-                                        includeMargin={true}
-                                        className="w-full h-auto max-w-[320px]"
-                                    />
+                                    {zeroNetQR ? (
+                                        // Zero-Net QR Code (embedded data)
+                                        <img 
+                                            src={zeroNetQR} 
+                                            alt="Emergency QR Code (Offline Enabled)" 
+                                            className="w-full h-auto max-w-[280px]"
+                                        />
+                                    ) : (
+                                        // Legacy QR Code (URL-based)
+                                        <QRCodeSVG
+                                            value={emergencyUrl}
+                                            size={280}
+                                            level="H"
+                                            includeMargin={true}
+                                            className="w-full h-auto max-w-[280px]"
+                                        />
+                                    )}
+                                    
+                                    {/* Data size indicator */}
+                                    {qrDataSize > 0 && (
+                                        <p className="text-xs text-neutral-500 mt-2">
+                                            {qrDataSize} bytes embedded • No internet needed
+                                        </p>
+                                    )}
                                 </div>
 
                                 {/* Action Buttons */}
@@ -221,58 +280,81 @@ export default function PatientEmergencyQR() {
                             </div>
                         </CardFlipFront>
 
-                        {/* Back - Blockchain Info */}
-                        <CardFlipBack className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-lg border-2 border-blue-200 dark:border-blue-800 p-8">
+                        {/* Back - Zero-Net & Blockchain Info */}
+                        <CardFlipBack className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg border-2 border-green-200 dark:border-green-800 p-8">
                             <div className="h-full flex flex-col">
                                 <div className="text-center mb-6">
-                                    <div className="p-3 bg-blue-100 dark:bg-blue-900/50 rounded-xl w-fit mx-auto mb-3">
-                                        <Info className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                                    <div className="p-3 bg-green-100 dark:bg-green-900/50 rounded-xl w-fit mx-auto mb-3">
+                                        <WifiOff className="w-8 h-8 text-green-600 dark:text-green-400" />
                                     </div>
-                                    <h2 className="text-2xl font-bold text-blue-900 dark:text-blue-100 mb-2">
-                                        {t.portal.emergency.qrDetails}
+                                    <h2 className="text-2xl font-bold text-green-900 dark:text-green-100 mb-2">
+                                        Zero-Net Protocol
                                     </h2>
-                                    <p className="text-sm text-blue-700 dark:text-blue-300">
-                                        {t.portal.emergency.technicalInfo}
+                                    <p className="text-sm text-green-700 dark:text-green-300">
+                                        Works without internet connection
                                     </p>
                                 </div>
 
                                 <div className="flex-1 space-y-4 overflow-y-auto">
-                                    {/* Blockchain Address */}
+                                    {/* How it works */}
                                     <div className="bg-white/50 dark:bg-neutral-900/50 rounded-lg p-4">
-                                        <p className="text-xs text-blue-600 dark:text-blue-400 mb-1 font-semibold">
-                                            {t.portal.emergency.blockchainAddress}
-                                        </p>
-                                        <p className="text-xs font-mono text-blue-900 dark:text-blue-100 break-all">
-                                            {walletAddress}
-                                        </p>
+                                        <h3 className="text-sm font-semibold text-green-900 dark:text-green-100 mb-2">
+                                            How Zero-Net Works
+                                        </h3>
+                                        <ul className="space-y-1 text-xs text-green-800 dark:text-green-200">
+                                            <li>• Your emergency data is <strong>embedded directly</strong> in the QR code</li>
+                                            <li>• No internet connection needed to read it</li>
+                                            <li>• Works in rural areas, tunnels, or network outages</li>
+                                            <li>• Data is compressed to fit in a standard QR code</li>
+                                        </ul>
                                     </div>
 
-                                    {/* Emergency URL */}
+                                    {/* What's embedded */}
                                     <div className="bg-white/50 dark:bg-neutral-900/50 rounded-lg p-4">
-                                        <p className="text-xs text-blue-600 dark:text-blue-400 mb-1 font-semibold">
-                                            {t.portal.emergency.emergencyPageUrl}
+                                        <h3 className="text-sm font-semibold text-green-900 dark:text-green-100 mb-2">
+                                            Data Embedded in QR
+                                        </h3>
+                                        <div className="grid grid-cols-2 gap-2 text-xs text-green-800 dark:text-green-200">
+                                            <span>✓ Name</span>
+                                            <span>✓ Blood Group</span>
+                                            <span>✓ Allergies</span>
+                                            <span>✓ Medications</span>
+                                            <span>✓ Conditions</span>
+                                            <span>✓ Emergency Contact</span>
+                                        </div>
+                                        {qrDataSize > 0 && (
+                                            <p className="text-xs text-green-600 mt-2">
+                                                Total: {qrDataSize} bytes (fits in standard QR)
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* Blockchain Address */}
+                                    <div className="bg-white/50 dark:bg-neutral-900/50 rounded-lg p-4">
+                                        <p className="text-xs text-green-600 dark:text-green-400 mb-1 font-semibold">
+                                            Blockchain Address (for full records)
                                         </p>
-                                        <p className="text-xs font-mono text-blue-900 dark:text-blue-100 break-all">
-                                            {emergencyUrl}
+                                        <p className="text-xs font-mono text-green-900 dark:text-green-100 break-all">
+                                            {walletAddress}
                                         </p>
                                     </div>
 
                                     {/* Security Info */}
                                     <div className="bg-white/50 dark:bg-neutral-900/50 rounded-lg p-4">
-                                        <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">
-                                            {t.portal.emergency.securityFeatures}
+                                        <h3 className="text-sm font-semibold text-green-900 dark:text-green-100 mb-2">
+                                            Security Features
                                         </h3>
-                                        <ul className="space-y-1 text-xs text-blue-800 dark:text-blue-200">
-                                            <li>{t.portal.emergency.security1}</li>
-                                            <li>{t.portal.emergency.security2}</li>
-                                            <li>{t.portal.emergency.security3}</li>
-                                            <li>{t.portal.emergency.security4}</li>
+                                        <ul className="space-y-1 text-xs text-green-800 dark:text-green-200">
+                                            <li>✓ Cryptographically signed data</li>
+                                            <li>✓ Tampering detection</li>
+                                            <li>✓ Timestamp for data freshness</li>
+                                            <li>✓ Wallet link for verification</li>
                                         </ul>
                                     </div>
                                 </div>
 
-                                <div className="mt-4 pt-4 border-t border-blue-200 dark:border-blue-700">
-                                    <p className="text-xs text-blue-700 dark:text-blue-300 text-center">
+                                <div className="mt-4 pt-4 border-t border-green-200 dark:border-green-700">
+                                    <p className="text-xs text-green-700 dark:text-green-300 text-center">
                                         {t.portal.emergency.flipBack}
                                     </p>
                                 </div>
@@ -413,15 +495,30 @@ export default function PatientEmergencyQR() {
                         </div>
                     </div>
 
-                    {/* Test QR Code Button */}
-                    <div className="lg:col-span-2">
+                    {/* Test QR Code Buttons */}
+                    <div className="lg:col-span-2 space-y-3">
+                        {/* Zero-Net Test (Primary) */}
+                        {zeroNetData && (
+                            <a
+                                href={zeroNetUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-center gap-2 w-full px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition font-medium"
+                            >
+                                <WifiOff className="w-5 h-5" />
+                                Test Zero-Net QR (Works Offline) →
+                            </a>
+                        )}
+                        
+                        {/* Legacy Test (Fallback) */}
                         <a
                             href={emergencyUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="block w-full px-6 py-4 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-lg hover:from-red-700 hover:to-rose-700 transition font-medium text-center"
+                            className="flex items-center justify-center gap-2 w-full px-6 py-3 bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-200 rounded-lg hover:bg-neutral-300 dark:hover:bg-neutral-600 transition font-medium text-sm"
                         >
-                            {t.portal.emergency.testPage} →
+                            <Wifi className="w-4 h-4" />
+                            Test Legacy Mode (Requires Internet)
                         </a>
                     </div>
                 </div>
