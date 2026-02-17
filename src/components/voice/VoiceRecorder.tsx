@@ -3,14 +3,6 @@
 import { useState, useRef, useCallback } from "react";
 import { Mic, Square, Loader2 } from "lucide-react";
 
-declare global {
-  interface Window {
-    // Use loose typing to avoid depending on DOM SpeechRecognition types
-    SpeechRecognition?: any;
-    webkitSpeechRecognition?: any;
-  }
-}
-
 interface VoiceRecorderProps {
   onTranscriptReady?: (transcript: string) => void;
   onNoteGenerated?: (noteId: string) => void;
@@ -34,7 +26,7 @@ export function VoiceRecorder({
 
   const isSupported =
     typeof window !== "undefined" &&
-    (window.SpeechRecognition || window.webkitSpeechRecognition);
+    (Boolean((window as any).SpeechRecognition) || Boolean((window as any).webkitSpeechRecognition));
 
   const startRecording = useCallback(() => {
     if (!isSupported || disabled) {
@@ -45,7 +37,8 @@ export function VoiceRecorder({
     setTranscript("");
     setDuration(0);
 
-    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const Recognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     const recognition = new Recognition();
     recognition.continuous = true;
     recognition.interimResults = true;
