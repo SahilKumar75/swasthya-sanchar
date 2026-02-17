@@ -5,8 +5,9 @@ import { Mic, Square, Loader2 } from "lucide-react";
 
 declare global {
   interface Window {
-    SpeechRecognition: typeof SpeechRecognition;
-    webkitSpeechRecognition: typeof SpeechRecognition;
+    // Use loose typing to avoid depending on DOM SpeechRecognition types
+    SpeechRecognition?: any;
+    webkitSpeechRecognition?: any;
   }
 }
 
