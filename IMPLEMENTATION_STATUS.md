@@ -60,6 +60,14 @@
 ### User Preferences
 - `GET/POST /api/user/language` - Language preference
 
+### Queue & Prediction
+- `GET /api/queue/predict?departmentId=` - Predicted wait (historical or rule-based)
+- `POST /api/queue/stats/log` - Log queue statistics (auth required)
+
+### WhatsApp & SMS
+- `GET/POST /api/whatsapp/webhook` - Twilio incoming messages; Meta hub verification (GET)
+- `POST /api/sms/send` - Send SMS (body: `{ to, message }`, auth required)
+
 ### Demo/Testing
 - `POST /api/seed` - Seed demo hospital data
 
@@ -102,30 +110,27 @@ NEXTAUTH_URL=
 ## Next Steps (From HACKVERSE_PLAN.md)
 
 ### Phase 4: AI Voice Documentation
-- [ ] VoiceRecorder component with MediaRecorder API
-- [ ] Whisper transcription endpoint
-- [ ] Llama 3 SOAP note generation
-- [ ] Clinical Note Editor UI
-- [ ] Link notes to journey checkpoints
+- [x] VoiceRecorder component (browser SpeechRecognition for transcript)
+- [x] SOAP note generation from transcript (Groq/Llama) - POST /api/voice/soap-note
+- [x] Clinical notes list and detail - GET /api/voice/notes, GET /api/voice/notes/[id]
+- [x] Doctor portal Voice page and note detail page
+- [ ] Link notes to journey checkpoints (optional)
 
 ### Phase 5: WhatsApp Integration
-- [ ] WhatsApp Business API setup (Twilio/Gupshup)
-- [ ] Webhook handler (/api/whatsapp)
-- [ ] Bot commands (status, qr, help)
-- [ ] Auto-notifications for journey updates
-- [ ] Voice message handling
+- [x] Twilio WhatsApp integration (templates, processor, sender)
+- [x] Webhook handler GET/POST /api/whatsapp/webhook (Twilio form/Meta verify)
+- [x] Bot commands (status, qr, help) via processWhatsAppMessage
+- [x] Journey share notifications (WhatsApp or SMS fallback)
 
-### Phase 6: Accessibility Enhancements
-- [ ] Voice commands (speech recognition)
-- [ ] Simple Mode toggle
-- [ ] High contrast theme
-- [ ] SMS fallback for non-WhatsApp users
+### Phase 6: Accessibility & SMS
+- [x] Voice commands (useVoiceCommand) for patients
+- [x] Simple Mode, High contrast, Reduced motion (AccessibilityContext)
+- [x] SMS fallback: POST /api/sms/send; journey share uses SMS when WhatsApp not configured or notifyViaSMS
 
-### Phase 7: Wait Time ML Prediction
-- [ ] Queue statistics collection
-- [ ] GradientBoosting model training
-- [ ] Prediction API integration
-- [ ] Display in journey tracker
+### Phase 7: Wait Time Prediction
+- [x] Queue statistics model and POST /api/queue/stats/log
+- [x] GET /api/queue/predict?departmentId= (historical stats or rule-based)
+- [x] JourneyTracker shows predicted wait range (min–max) for current checkpoint
 
 ## Testing Checklist (Local)
 

@@ -13,7 +13,7 @@ function FooterSection() {
   return (
     <footer className="relative border-t bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 transition-colors duration-300">
       <div className="container mx-auto px-4 py-12 md:px-6 lg:px-8">
-        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-3">
           {/* Brand Section */}
           <div className="relative">
             <div className="flex items-center gap-2 mb-4">
@@ -62,21 +62,6 @@ function FooterSection() {
                 {t.footer.consentSharing}
               </Link>
             </nav>
-          </div>
-
-          {/* About Our Team - Project Morpheus */}
-          <div className="relative">
-            <h3 className="mb-4 text-lg font-semibold">{t.footer.aboutTeam}</h3>
-            <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-3">{t.footer.teamAITians}</p>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-3">
-              {t.footer.hackathonDescription}
-            </p>
-            <div className="space-y-1 text-xs text-neutral-600 dark:text-neutral-400 mb-3">
-              <p className="font-semibold text-neutral-900 dark:text-neutral-100">• {t.footer.problemStatement}</p>
-              <p>• {t.footer.projectTitle}</p>
-              <p>• {t.footer.domain}</p>
-              <p>• {t.footer.teamLeader}</p>
-            </div>
           </div>
         </div>
 

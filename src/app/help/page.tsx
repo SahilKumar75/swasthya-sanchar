@@ -50,142 +50,58 @@ export default function HelpSupportPage() {
                     </p>
                 </div>
 
-                {/* Contact Section - Team Members */}
-                <div id="contact">
-                    <h2 className="text-4xl font-bold text-neutral-900 dark:text-neutral-50 mb-4 text-center">
-                        Contact These Idiots
+                {/* Contact Section */}
+                <section
+                    id="contact"
+                    className="max-w-3xl mx-auto bg-white dark:bg-neutral-800 rounded-2xl border border-neutral-200 dark:border-neutral-700 p-8 shadow-sm"
+                >
+                    <h2 className="text-3xl font-semibold text-neutral-900 dark:text-neutral-50 mb-4 text-center">
+                        Need more help?
                     </h2>
-                    <p className="text-xl text-neutral-600 dark:text-neutral-400 mb-14 text-center">
-                        They made this website
+                    <p className="text-lg text-neutral-600 dark:text-neutral-400 mb-6 text-center">
+                        If you&apos;re facing an issue that isn&apos;t covered here, reach out and we&apos;ll do our best to assist.
                     </p>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 md:gap-8">
-                        {/* Sahil Kumar Singh */}
-                        <div className="bg-white dark:bg-neutral-800 rounded-2xl border-2 border-neutral-200 dark:border-neutral-700 overflow-hidden hover:shadow-2xl hover:scale-105 hover:border-blue-500 dark:hover:border-blue-500 transition-all duration-300 group">
-                            <div className="aspect-square overflow-hidden bg-neutral-100 dark:bg-neutral-700">
-                                <img
-                                    src="/sahil-kumar-singh.jpg"
-                                    alt="Sahil Kumar Singh"
-                                    className="w-full h-full object-cover group-hover:scale-110 transition duration-300"
-                                />
-                            </div>
-                            <div className="p-6">
-                                <h3 className="font-bold text-base text-neutral-900 dark:text-neutral-50 mb-2">
-                                    Sahil Kumar Singh
-                                </h3>
-                                <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-4">
-                                    Full Stack Developer
+                    <div className="space-y-4 text-sm text-neutral-700 dark:text-neutral-300">
+                        <div className="flex items-start gap-3">
+                            <MessageCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                            <div>
+                                <p className="font-semibold">Support email</p>
+                                <p className="text-neutral-600 dark:text-neutral-400">
+                                    Contact our support team at{" "}
+                                    <a
+                                        href="mailto:support@swasthyasanchar.com"
+                                        className="text-blue-600 dark:text-blue-400 hover:underline"
+                                    >
+                                        support@swasthyasanchar.com
+                                    </a>
+                                    .
                                 </p>
-                                <a
-                                    href="mailto:sahil@example.com"
-                                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-semibold inline-flex items-center gap-1"
-                                >
-                                    Contact →
-                                </a>
                             </div>
                         </div>
 
-                        {/* Shivam Rana */}
-                        <div className="bg-white dark:bg-neutral-800 rounded-2xl border-2 border-neutral-200 dark:border-neutral-700 overflow-hidden hover:shadow-2xl hover:scale-105 hover:border-blue-500 dark:hover:border-blue-500 transition-all duration-300 group">
-                            <div className="aspect-square overflow-hidden bg-neutral-100 dark:bg-neutral-700">
-                                <img
-                                    src="/shivam-rana.jpg"
-                                    alt="Shivam Rana"
-                                    className="w-full h-full object-cover group-hover:scale-110 transition duration-300"
-                                />
-                            </div>
-                            <div className="p-6">
-                                <h3 className="font-bold text-base text-neutral-900 dark:text-neutral-50 mb-2">
-                                    Shivam Rana
-                                </h3>
-                                <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-4">
-                                    Blockchain Developer
+                        <div className="flex items-start gap-3">
+                            <FileQuestion className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                            <div>
+                                <p className="font-semibold">Feature or bug reports</p>
+                                <p className="text-neutral-600 dark:text-neutral-400">
+                                    Share issues, suggestions, or feedback so we can continue improving the platform.
                                 </p>
-                                <a
-                                    href="mailto:shivam@example.com"
-                                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-semibold inline-flex items-center gap-1"
-                                >
-                                    Contact →
-                                </a>
                             </div>
                         </div>
 
-                        {/* Siddhant Tiwari */}
-                        <div className="bg-white dark:bg-neutral-800 rounded-2xl border-2 border-neutral-200 dark:border-neutral-700 overflow-hidden hover:shadow-2xl hover:scale-105 hover:border-blue-500 dark:hover:border-blue-500 transition-all duration-300 group">
-                            <div className="aspect-square overflow-hidden bg-neutral-100 dark:bg-neutral-700">
-                                <img
-                                    src="/siddhant-tiwari.jpg"
-                                    alt="Siddhant Tiwari"
-                                    className="w-full h-full object-cover group-hover:scale-110 transition duration-300"
-                                />
-                            </div>
-                            <div className="p-6">
-                                <h3 className="font-bold text-base text-neutral-900 dark:text-neutral-50 mb-2">
-                                    Siddhant Tiwari
-                                </h3>
-                                <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-4">
-                                    UI/UX Designer
+                        <div className="flex items-start gap-3">
+                            <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                            <div>
+                                <p className="font-semibold">Emergency</p>
+                                <p className="text-neutral-600 dark:text-neutral-400">
+                                    For medical emergencies, please contact your local emergency services immediately. This platform
+                                    is not a substitute for professional medical care.
                                 </p>
-                                <a
-                                    href="mailto:siddhant@example.com"
-                                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-semibold inline-flex items-center gap-1"
-                                >
-                                    Contact →
-                                </a>
-                            </div>
-                        </div>
-
-                        {/* Akshit Thakur */}
-                        <div className="bg-white dark:bg-neutral-800 rounded-2xl border-2 border-neutral-200 dark:border-neutral-700 overflow-hidden hover:shadow-2xl hover:scale-105 hover:border-blue-500 dark:hover:border-blue-500 transition-all duration-300 group">
-                            <div className="aspect-square overflow-hidden bg-neutral-100 dark:bg-neutral-700">
-                                <img
-                                    src="/akshit-thakur.jpg"
-                                    alt="Akshit Thakur"
-                                    className="w-full h-full object-cover group-hover:scale-110 transition duration-300"
-                                />
-                            </div>
-                            <div className="p-6">
-                                <h3 className="font-bold text-base text-neutral-900 dark:text-neutral-50 mb-2">
-                                    Akshit Thakur
-                                </h3>
-                                <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-4">
-                                    Backend Developer
-                                </p>
-                                <a
-                                    href="mailto:akshit@example.com"
-                                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-semibold inline-flex items-center gap-1"
-                                >
-                                    Contact →
-                                </a>
-                            </div>
-                        </div>
-
-                        {/* Nancy */}
-                        <div className="bg-white dark:bg-neutral-800 rounded-2xl border-2 border-neutral-200 dark:border-neutral-700 overflow-hidden hover:shadow-2xl hover:scale-105 hover:border-blue-500 dark:hover:border-blue-500 transition-all duration-300 group">
-                            <div className="aspect-square overflow-hidden bg-neutral-100 dark:bg-neutral-700">
-                                <img
-                                    src="/nancy.jpg"
-                                    alt="Nancy"
-                                    className="w-full h-full object-cover group-hover:scale-110 transition duration-300"
-                                />
-                            </div>
-                            <div className="p-6">
-                                <h3 className="font-bold text-base text-neutral-900 dark:text-neutral-50 mb-2">
-                                    Nancy
-                                </h3>
-                                <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-4">
-                                    Project Manager
-                                </p>
-                                <a
-                                    href="mailto:nancy@example.com"
-                                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-semibold inline-flex items-center gap-1"
-                                >
-                                    Contact →
-                                </a>
                             </div>
                         </div>
                     </div>
-                </div>
+                </section>
             </main>
         </div>
     );

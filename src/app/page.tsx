@@ -9,7 +9,6 @@ import { FeatureShowcase } from "@/components/landing/FeatureShowcase";
 import { Navbar } from "@/components/Navbar";
 import { FooterSection } from "@/components/ui/footer-section";
 import { Lock, Zap, Link as LinkIcon, CheckCircle, Globe, Shield } from "lucide-react";
-import { TeamMemberCard } from "@/components/landing/TeamMemberCard";
 import { AuthenticationLayout, GlassInputWrapper } from "@/components/ui/sign-in";
 import {
   ExpandableScreen,
@@ -681,51 +680,6 @@ export default function Home() {
           title={t.landing.blockchain.title}
           description={t.landing.blockchain.description}
         />
-      </div>
-
-      {/* Meet the Team Section */}
-      <div className="max-w-5xl mx-auto px-6 lg:px-8 py-20 md:py-28">
-        <div className="mb-12 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-neutral-900 dark:text-neutral-50 mb-4">
-            {t.landing.team.title}
-          </h2>
-          <p className="text-lg text-neutral-600 dark:text-neutral-400 max-w-2xl mx-auto">
-            {t.landing.team.description}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap justify-center gap-6">
-          <TeamMemberCard
-            name={t.landing.team.member1Name}
-            role={t.landing.team.member1Role}
-            image="/sahil-kumar-singh.jpg"
-            bio={t.landing.team.member1Bio}
-          />
-          <TeamMemberCard
-            name={t.landing.team.member2Name}
-            role={t.landing.team.member2Role}
-            image="/siddhant-tiwari.jpg"
-            bio={t.landing.team.member2Bio}
-          />
-          <TeamMemberCard
-            name={t.landing.team.member3Name}
-            role={t.landing.team.member3Role}
-            image="/akshit-thakur.jpg"
-            bio={t.landing.team.member3Bio}
-          />
-          <TeamMemberCard
-            name={t.landing.team.member4Name}
-            role={t.landing.team.member4Role}
-            image="/shivam-rana.jpg"
-            bio={t.landing.team.member4Bio}
-          />
-          <TeamMemberCard
-            name={t.landing.team.member5Name}
-            role={t.landing.team.member5Role}
-            image="/nancy.jpg"
-            bio={t.landing.team.member5Bio}
-          />
-        </div>
       </div>
 
       {/* Footer */}

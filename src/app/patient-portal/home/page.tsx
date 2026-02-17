@@ -10,9 +10,10 @@ import {
     FileText, Shield, QrCode, Loader2, CheckCircle,
     Heart, Activity, Droplet, Calendar, AlertCircle,
     TrendingUp, ArrowUpRight, Scale, Pill, Sparkles, RefreshCw, Settings, RotateCw, XCircle,
-    Check, X
+    Check, X, Mic, MicOff
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useVoiceCommand, type VoiceCommandIntent } from "@/hooks/useVoiceCommand";
 import MedicalDataPrompt from "@/components/patient/MedicalDataPrompt";
 import CustomAIInputModal, { CustomHealthData } from "@/components/patient/CustomAIInputModal";
 import { AnimatedInsightText } from "@/components/ui/AnimatedInsightText";
@@ -48,7 +49,7 @@ export default function PatientHome() {
     const [loading, setLoading] = useState(true);
     const [profile, setProfile] = useState<PatientProfile | null>(null);
     const [qrCode, setQrCode] = useState<string>("");
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
 
     // AI Health Insights state
     const [showDataPrompt, setShowDataPrompt] = useState(false);
@@ -57,6 +58,58 @@ export default function PatientHome() {
     const [aiInsights, setAiInsights] = useState<any>(null);
     const [loadingInsights, setLoadingInsights] = useState(false);
     const [showCustomInput, setShowCustomInput] = useState(false);
+    const [voiceFeedback, setVoiceFeedback] = useState("");
+
+    const handleVoiceResult = (intent: VoiceCommandIntent, transcript: string) => {
+        if (!profile) return;
+        const utterance = new SpeechSynthesisUtterance();
+        utterance.rate = 0.9;
+        utterance.lang = language === "hi" ? "hi-IN" : language === "mr" ? "mr-IN" : "en-IN";
+
+        const isHi = language === "hi";
+        switch (intent) {
+            case "medications":
+                const meds = profile.currentMedications || "No medications listed.";
+                utterance.text = isHi ? `आपकी दवाइयाँ: ${meds}` : `Your medications: ${meds}`;
+                setVoiceFeedback(meds);
+                break;
+            case "allergies":
+                const allergies = profile.allergies || "No allergies reported.";
+                utterance.text = isHi ? `एलर्जी: ${allergies}` : `Allergies: ${allergies}`;
+                setVoiceFeedback(allergies);
+                break;
+            case "conditions":
+                const conditions = profile.chronicConditions || "No conditions on file.";
+                utterance.text = isHi ? `स्वास्थ्य स्थितियाँ: ${conditions}` : `Conditions: ${conditions}`;
+                setVoiceFeedback(conditions);
+                break;
+            case "journey":
+                router.push("/patient/journey");
+                utterance.text = isHi ? "जर्नी पेज खोल रहा हूँ।" : "Opening journey page.";
+                break;
+            case "emergency":
+                router.push("/patient/emergency");
+                utterance.text = isHi ? "इमरजेंसी क्यू आर पेज खोल रहा हूँ।" : "Opening emergency QR page.";
+                break;
+            case "help":
+                utterance.text = isHi
+                    ? "आप बोल सकते हैं: दवाइयाँ, एलर्जी, स्थिति, जर्नी, इमरजेंसी।"
+                    : "You can say: medications, allergies, conditions, journey, emergency.";
+                setVoiceFeedback("Say: medications, allergies, journey, emergency");
+                break;
+            default:
+                utterance.text = isHi ? "मैं समझ नहीं पाया। मदद के लिए हेल्प बोलें।" : "I didn't understand. Say help for options.";
+        }
+        window.speechSynthesis?.cancel();
+        window.speechSynthesis?.speak(utterance);
+    };
+
+    const { isListening, isSupported, startListening, stopListening } = useVoiceCommand({
+        onResult: handleVoiceResult,
+        onError: (err) => setVoiceFeedback(`Error: ${err}`),
+        lang: "en",
+        enabled: !!profile,
+    });
 
     useEffect(() => {
         if (status === "unauthenticated") {
@@ -329,16 +382,40 @@ export default function PatientHome() {
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
                 {/* Header */}
-                <div className="mb-8">
-                    <h2 className="text-2xl md:text-3xl font-bold text-neutral-900 dark:text-neutral-50">
-                        <span className="block text-base md:text-lg font-normal text-neutral-600 dark:text-neutral-400 mb-1">
-                            {t.portal.patientHome.welcomeBack},
-                        </span>
-                        {profile?.fullName || session?.user?.email?.split('@')[0] || 'Developer'}!
-                    </h2>
-                    <p className="text-neutral-600 dark:text-neutral-400 mt-1 hidden md:block">
-                        {session?.user?.email || 'dev@example.com'}
-                    </p>
+                <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                        <h2 className="text-2xl md:text-3xl font-bold text-neutral-900 dark:text-neutral-50" id="patient-welcome">
+                            <span className="block text-base md:text-lg font-normal text-neutral-600 dark:text-neutral-400 mb-1">
+                                {t.portal.patientHome.welcomeBack},
+                            </span>
+                            {profile?.fullName || session?.user?.email?.split('@')[0] || 'Developer'}!
+                        </h2>
+                        <p className="text-neutral-600 dark:text-neutral-400 mt-1 hidden md:block">
+                            {session?.user?.email || 'dev@example.com'}
+                        </p>
+                    </div>
+                    {isSupported && profile && (
+                        <div className="flex flex-col items-end gap-1">
+                            <button
+                                type="button"
+                                onClick={isListening ? stopListening : startListening}
+                                className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium border-2 transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${isListening
+                                    ? "bg-red-100 dark:bg-red-900/30 border-red-500 text-red-700 dark:text-red-300"
+                                    : "bg-blue-100 dark:bg-blue-900/30 border-blue-500 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800/40"
+                                    }`}
+                                aria-label={isListening ? "Stop listening" : "Start voice command"}
+                                aria-pressed={isListening}
+                            >
+                                {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                                {isListening ? "Listening..." : "Voice command"}
+                            </button>
+                            {voiceFeedback && (
+                                <p className="text-xs text-neutral-500 max-w-[200px] text-right" role="status" aria-live="polite">
+                                    {voiceFeedback}
+                                </p>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Registration Status Banner */}

@@ -104,8 +104,17 @@ export async function POST(
     const baseUrl = process.env.NEXTAUTH_URL || 'https://swasthya-sanchar.vercel.app';
     const shareUrl = `${baseUrl}/journey/track/${params.id}?share=${accessCode}`;
 
-    // TODO: Send WhatsApp/SMS notification
-    // For now, return the share link
+    // Notify via WhatsApp or SMS fallback
+    const notifyPhone = phone?.replace(/\D/g, "").length >= 10 ? phone : null;
+    if (notifyPhone) {
+      const { sendWhatsAppMessage, sendSMS, isWhatsAppConfigured } = await import("@/lib/whatsapp/sender");
+      const msg = `Swasthya Sanchar: Someone shared their hospital journey with you. Track here: ${shareUrl}`;
+      if (notifyViaWhatsApp && isWhatsAppConfigured()) {
+        await sendWhatsAppMessage(notifyPhone, msg);
+      } else if (notifyViaSMS) {
+        await sendSMS(notifyPhone, msg);
+      }
+    }
 
     return NextResponse.json({
       success: true,

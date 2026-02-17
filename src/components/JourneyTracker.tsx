@@ -115,6 +115,7 @@ export function JourneyTracker({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [predictedWait, setPredictedWait] = useState<{ min: number; max: number; source: string } | null>(null);
 
   const fetchJourney = async () => {
     if (!journeyId) return;
@@ -152,6 +153,28 @@ export function JourneyTracker({
 
     return () => clearInterval(interval);
   }, [journeyId, shareCode]);
+
+  // Fetch wait-time prediction for current checkpoint (in_queue)
+  useEffect(() => {
+    const cp = journey?.currentCheckpoint || journey?.checkpoints?.find(c => c.status === "in_queue" || c.status === "in_progress");
+    if (!cp?.department?.id || (cp.status !== "in_queue" && cp.status !== "in_progress")) {
+      setPredictedWait(null);
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/queue/predict?departmentId=${cp.department.id}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (cancelled || !data) return;
+        setPredictedWait({
+          min: data.confidenceLow,
+          max: data.confidenceHigh,
+          source: data.source === "historical" ? "historical" : "estimate",
+        });
+      })
+      .catch(() => setPredictedWait(null));
+    return () => { cancelled = true; };
+  }, [journey?.id, journey?.currentCheckpoint?.id, journey?.checkpoints]);
 
   const speakStatus = () => {
     if (!journey || !window.speechSynthesis) return;
@@ -267,9 +290,14 @@ export function JourneyTracker({
                   #{currentCheckpoint.queuePosition}
                 </div>
               )}
-              {currentCheckpoint.estimatedWaitMinutes && (
+              {currentCheckpoint.estimatedWaitMinutes != null && (
                 <p className="text-sm text-neutral-600 dark:text-neutral-400">
                   ~{currentCheckpoint.estimatedWaitMinutes} min wait
+                </p>
+              )}
+              {predictedWait && (
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                  {predictedWait.min}–{predictedWait.max} min {predictedWait.source === "historical" ? "(historical)" : ""}
                 </p>
               )}
             </div>

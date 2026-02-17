@@ -3,14 +3,16 @@
 import { Navbar } from "@/components/Navbar";
 import { useSession } from "next-auth/react";
 import { useTheme } from "@/components/ThemeProvider";
+import { useAccessibility } from "@/contexts/AccessibilityContext";
 import {
     Settings as SettingsIcon, Moon, Sun, Monitor,
-    User, Bell, Lock, Globe
+    User, Bell, Lock, Globe, Accessibility, Contrast, Move
 } from "lucide-react";
 
 export default function SettingsPage() {
     const { data: session } = useSession();
     const { theme, toggleTheme } = useTheme();
+    const { simpleMode, setSimpleMode, highContrast, setHighContrast, reducedMotion, setReducedMotion } = useAccessibility();
 
     return (
         <div className="min-h-screen bg-white dark:bg-neutral-900">
@@ -79,10 +81,79 @@ export default function SettingsPage() {
                         </div>
                     </div>
 
+                    {/* Accessibility */}
+                    <div className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6" role="region" aria-labelledby="accessibility-heading">
+                        <div className="flex items-center gap-3 mb-6">
+                            <Accessibility className="w-5 h-5 text-neutral-700 dark:text-neutral-300" aria-hidden />
+                            <h2 id="accessibility-heading" className="text-2xl font-bold text-neutral-900 dark:text-neutral-50">
+                                Accessibility
+                            </h2>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="font-medium text-neutral-900 dark:text-neutral-50">Simple Mode</p>
+                                    <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                                        Larger buttons and text, fewer options. Better for elderly and low vision.
+                                    </p>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer" aria-label="Toggle Simple Mode">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only peer"
+                                        checked={simpleMode}
+                                        onChange={(e) => setSimpleMode(e.target.checked)}
+                                        aria-checked={simpleMode}
+                                    />
+                                    <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-neutral-600 peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="font-medium text-neutral-900 dark:text-neutral-50">High Contrast</p>
+                                    <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                                        Stronger borders and text contrast for visibility.
+                                    </p>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer" aria-label="Toggle High Contrast">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only peer"
+                                        checked={highContrast}
+                                        onChange={(e) => setHighContrast(e.target.checked)}
+                                        aria-checked={highContrast}
+                                    />
+                                    <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-neutral-600 peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="font-medium text-neutral-900 dark:text-neutral-50">Reduce Motion</p>
+                                    <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                                        Minimize animations and transitions.
+                                    </p>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer" aria-label="Toggle Reduce Motion">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only peer"
+                                        checked={reducedMotion}
+                                        onChange={(e) => setReducedMotion(e.target.checked)}
+                                        aria-checked={reducedMotion}
+                                    />
+                                    <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-neutral-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-neutral-600 peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Account */}
                     <div className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-6">
                         <div className="flex items-center gap-3 mb-6">
-                            <User className="w-5 h-5 text-neutral-700 dark:text-neutral-300" />
+                            <User className="w-5 h-5 text-neutral-700 dark:text-neutral-300" aria-hidden />
                             <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-50">
                                 Account
                             </h2>

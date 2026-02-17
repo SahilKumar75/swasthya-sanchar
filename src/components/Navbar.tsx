@@ -6,7 +6,7 @@ import { Magnetic } from "@/components/core/magnetic";
 import { StarOfLife } from "@/components/icons/StarOfLife";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Moon, Sun, Activity, Home, AlertCircle, FileText, Users, Navigation } from "lucide-react";
+import { Moon, Sun, Activity, Home, AlertCircle, FileText, Users, Navigation, Mic } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
@@ -257,6 +257,17 @@ export function Navbar({ connection, minimal = false }: NavbarProps) {
                   <FileText className="w-5 h-5" />
                   <span className="text-[10px] font-medium">Upload</span>
                 </Link>
+
+                <Link
+                  href="/doctor-portal/voice"
+                  className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all min-w-[64px] ${pathname?.startsWith("/doctor-portal/voice")
+                    ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900"
+                    : "text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    }`}
+                >
+                  <Mic className="w-5 h-5" />
+                  <span className="text-[10px] font-medium">Voice</span>
+                </Link>
               </>
             )}
 
@@ -376,6 +387,15 @@ export function Navbar({ connection, minimal = false }: NavbarProps) {
                           }`}
                       >
                         {t.nav.patients}
+                      </Link>
+                      <Link
+                        href="/doctor-portal/voice"
+                        className={`px-4 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname?.startsWith("/doctor-portal/voice")
+                          ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
+                          : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
+                          }`}
+                      >
+                        Voice
                       </Link>
                       <Link
                         href="/doctor-portal/upload"
