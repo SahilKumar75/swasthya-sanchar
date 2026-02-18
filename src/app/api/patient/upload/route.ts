@@ -64,7 +64,13 @@ export async function POST(req: NextRequest) {
         );
 
         if (!pinataResponse.ok) {
-            throw new Error('Failed to upload to IPFS');
+            const errorText = await pinataResponse.text();
+            console.error('Pinata API Error:', {
+                status: pinataResponse.status,
+                statusText: pinataResponse.statusText,
+                body: errorText
+            });
+            throw new Error(`Failed to upload to IPFS: ${pinataResponse.status} ${errorText}`);
         }
 
         const pinataData = await pinataResponse.json();

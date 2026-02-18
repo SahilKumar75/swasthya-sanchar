@@ -295,7 +295,7 @@ export function Navbar({ connection, minimal = false }: NavbarProps) {
   return (
     <header className="w-full z-40 fixed top-0 left-0 bg-transparent">
       <div className="w-full px-6 py-4">
-        <div className="flex items-center justify-between gap-4">
+        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
           {/* Left: Logo + Title (Capsule) */}
           <Magnetic
             intensity={0.2}
@@ -323,95 +323,97 @@ export function Navbar({ connection, minimal = false }: NavbarProps) {
             </div>
           </Magnetic>
 
-          {/* Center: Navigation Links - Reduced spacing */}
-          {(session || process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') && pathname !== '/' && (
-            <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2">
-              <div className="bg-white dark:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 shadow-sm px-1 h-[44px] flex items-center gap-0.5">
-                <Menu setActive={setActive}>
-                  <Link
-                    href={session?.user?.role === "patient" ? "/patient-portal/home" : session?.user?.role === "doctor" ? "/doctor-portal/home" : "/patient-portal/home"}
-                    className={`px-4 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient-portal/home" || pathname === "/doctor-portal/home"
-                      ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
-                      : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
-                      }`}
-                  >
-                    {t.nav.home}
-                  </Link>
+          {/* Center: Navigation Links */}
+          <div className="flex justify-center">
+            {(session || process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true') && pathname !== '/' && (
+              <div className="hidden lg:flex">
+                <div className="bg-white dark:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 shadow-sm px-1 h-[44px] flex items-center gap-0.5">
+                  <Menu setActive={setActive}>
+                    <Link
+                      href={session?.user?.role === "patient" ? "/patient-portal/home" : session?.user?.role === "doctor" ? "/doctor-portal/home" : "/patient-portal/home"}
+                      className={`px-4 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient-portal/home" || pathname === "/doctor-portal/home"
+                        ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
+                        : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
+                        }`}
+                    >
+                      {t.nav.home}
+                    </Link>
 
-                  {(session?.user?.role === "patient" && process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH !== 'true') || (!session && process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH !== 'true') ? (
-                    <>
-                      <Link
-                        href="/patient/journey"
-                        className={`px-4 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname?.startsWith("/patient/journey")
-                          ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
-                          : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
-                          }`}
-                      >
-                        Journey
-                      </Link>
-                      <Link
-                        href="/patient/emergency"
-                        className={`px-4 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient/emergency"
-                          ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
-                          : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
-                          }`}
-                      >
-                        {t.nav.emergency}
-                      </Link>
-                      <Link
-                        href="/patient/records"
-                        className={`px-4 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient/records"
-                          ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
-                          : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
-                          }`}
-                      >
-                        {t.nav.medicalRecords}
-                      </Link>
-                      <Link
-                        href="/patient/permissions"
-                        className={`px-4 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient/permissions"
-                          ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
-                          : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
-                          }`}
-                      >
-                        {t.nav.doctorAccess}
-                      </Link>
-                    </>
-                  ) : (
-                    <>
-                      <Link
-                        href="/doctor-portal/patients"
-                        className={`px-4 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/doctor-portal/patients"
-                          ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
-                          : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
-                          }`}
-                      >
-                        {t.nav.patients}
-                      </Link>
-                      <Link
-                        href="/doctor-portal/voice"
-                        className={`px-4 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname?.startsWith("/doctor-portal/voice")
-                          ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
-                          : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
-                          }`}
-                      >
-                        Voice
-                      </Link>
-                      <Link
-                        href="/doctor-portal/upload"
-                        className={`px-4 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/doctor-portal/upload"
-                          ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
-                          : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
-                          }`}
-                      >
-                        {t.nav.uploadRecords}
-                      </Link>
-                    </>
-                  )}
-                </Menu>
+                    {(session?.user?.role === "patient") || (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true' && process.env.NEXT_PUBLIC_DEV_ROLE === 'patient') ? (
+                      <>
+                        <Link
+                          href="/patient/journey"
+                          className={`px-4 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname?.startsWith("/patient/journey")
+                            ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
+                            : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
+                            }`}
+                        >
+                          Journey
+                        </Link>
+                        <Link
+                          href="/patient/emergency"
+                          className={`px-4 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient/emergency"
+                            ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
+                            : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
+                            }`}
+                        >
+                          {t.nav.emergency}
+                        </Link>
+                        <Link
+                          href="/patient/records"
+                          className={`px-4 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient/records"
+                            ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
+                            : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
+                            }`}
+                        >
+                          {t.nav.medicalRecords}
+                        </Link>
+                        <Link
+                          href="/patient/permissions"
+                          className={`px-4 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/patient/permissions"
+                            ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
+                            : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
+                            }`}
+                        >
+                          {t.nav.doctorAccess}
+                        </Link>
+                      </>
+                    ) : (
+                      <>
+                        <Link
+                          href="/doctor-portal/patients"
+                          className={`px-4 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/doctor-portal/patients"
+                            ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
+                            : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
+                            }`}
+                        >
+                          {t.nav.patients}
+                        </Link>
+                        <Link
+                          href="/doctor-portal/voice"
+                          className={`px-4 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname?.startsWith("/doctor-portal/voice")
+                            ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
+                            : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
+                            }`}
+                        >
+                          Voice
+                        </Link>
+                        <Link
+                          href="/doctor-portal/upload"
+                          className={`px-4 py-2 text-sm font-medium rounded-full transition-all h-[36px] flex items-center ${pathname === "/doctor-portal/upload"
+                            ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-md"
+                            : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 hover:shadow-sm"
+                            }`}
+                        >
+                          {t.nav.uploadRecords}
+                        </Link>
+                      </>
+                    )}
+                  </Menu>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Right: Avatar + Theme Toggle + Language */}
           <div className="flex items-center gap-1 h-[44px] px-1 bg-white dark:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 shadow-sm">
@@ -423,7 +425,7 @@ export function Navbar({ connection, minimal = false }: NavbarProps) {
                     email: session?.user?.email || "dev@example.com",
                     image: profilePicture,
                   }}
-                  role={session?.user?.role || (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true' ? "doctor" : "patient")}
+                  role={session?.user?.role || (process.env.NEXT_PUBLIC_DEV_BYPASS_AUTH === 'true' ? (process.env.NEXT_PUBLIC_DEV_ROLE || "doctor") : "patient")}
                   theme={theme}
                   onThemeToggle={toggleTheme}
                 />
