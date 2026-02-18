@@ -7,9 +7,10 @@ import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import RecordViewer from "@/components/record-viewer";
 import {
-    ArrowLeft, FileText, Calendar, User, Eye, X, Loader2
+    ArrowLeft, FileText, Calendar, User, Eye, X, Loader2, Upload
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { PatientUploadModal } from "@/components/patient/PatientUploadModal";
 
 interface MedicalRecord {
     id: string;
@@ -28,12 +29,11 @@ export default function PatientRecords() {
     const [records, setRecords] = useState<MedicalRecord[]>([]);
     const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(null);
     const [loadingRecords, setLoadingRecords] = useState(false);
+    const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const { t } = useLanguage();
 
     useEffect(() => {
         async function checkAuth() {
-
-
             if (status === "loading") return;
 
             if (status === "unauthenticated" || !session?.user) {
@@ -52,8 +52,6 @@ export default function PatientRecords() {
 
         checkAuth();
     }, [session, status, router]);
-
-
 
     async function loadRecords() {
         try {
@@ -98,13 +96,22 @@ export default function PatientRecords() {
 
             <main className="max-w-7xl mx-auto px-6 lg:px-8 py-12 pt-24">
                 {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-4xl font-bold text-neutral-900 dark:text-neutral-50 mb-2">
-                        {t.portal.records.myRecords}
-                    </h1>
-                    <p className="text-lg text-neutral-600 dark:text-neutral-400">
-                        {t.portal.records.myRecordsDesc}
-                    </p>
+                <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-4xl font-bold text-neutral-900 dark:text-neutral-50 mb-2">
+                            {t.portal.records.myRecords}
+                        </h1>
+                        <p className="text-lg text-neutral-600 dark:text-neutral-400">
+                            {t.portal.records.myRecordsDesc}
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => setIsUploadModalOpen(true)}
+                        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium flex items-center justify-center gap-2"
+                    >
+                        <Upload className="w-5 h-5" />
+                        Upload Record
+                    </button>
                 </div>
 
                 {/* Records List */}
@@ -219,6 +226,13 @@ export default function PatientRecords() {
                     </div>
                 </div>
             )}
+
+            {/* Upload Modal */}
+            <PatientUploadModal
+                isOpen={isUploadModalOpen}
+                onClose={() => setIsUploadModalOpen(false)}
+                onUploadSuccess={loadRecords}
+            />
         </div>
     );
 }

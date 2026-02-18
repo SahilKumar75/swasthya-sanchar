@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
-import { ArrowLeft, Users, Shield, Clock, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, Users, Shield, Clock, CheckCircle, XCircle, UserPlus, Loader2 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { GrantAccessModal } from "@/components/patient/GrantAccessModal";
 
 interface DoctorAccess {
     id: string;
@@ -22,6 +23,7 @@ export default function DoctorPermissions() {
     const { data: session, status } = useSession();
     const [loading, setLoading] = useState(true);
     const [permissions, setPermissions] = useState<DoctorAccess[]>([]);
+    const [isGrantModalOpen, setIsGrantModalOpen] = useState(false);
     const { t } = useLanguage();
 
     useEffect(() => {
@@ -39,12 +41,24 @@ export default function DoctorPermissions() {
             }
 
             setLoading(false);
-            // TODO: Load doctor permissions from API
-            // await loadPermissions();
+            // Load doctor permissions from API
+            await loadPermissions();
         }
 
         checkAuth();
     }, [session, status, router]);
+
+    async function loadPermissions() {
+        try {
+            const res = await fetch("/api/patient/permissions");
+            const data = await res.json();
+            if (data.success) {
+                setPermissions(data.permissions);
+            }
+        } catch (error) {
+            console.error("Error loading permissions:", error);
+        }
+    }
 
     if (status === "loading" || loading) {
         return (
@@ -63,13 +77,23 @@ export default function DoctorPermissions() {
 
             <main className="max-w-7xl mx-auto px-6 lg:px-8 py-12 pt-24">
                 {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-4xl font-bold text-neutral-900 dark:text-neutral-50 mb-2">
-                        Doctor Access Permissions
-                    </h1>
-                    <p className="text-lg text-neutral-600 dark:text-neutral-400">
-                        Manage which doctors can access your medical records
-                    </p>
+                {/* Header */}
+                <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-4xl font-bold text-neutral-900 dark:text-neutral-50 mb-2">
+                            Doctor Access Permissions
+                        </h1>
+                        <p className="text-lg text-neutral-600 dark:text-neutral-400">
+                            Manage which doctors can access your medical records
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => setIsGrantModalOpen(true)}
+                        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium flex items-center justify-center gap-2"
+                    >
+                        <UserPlus className="w-5 h-5" />
+                        Grant Access
+                    </button>
                 </div>
 
                 {/* No Access Message */}
@@ -102,8 +126,8 @@ export default function DoctorPermissions() {
                                         <Shield className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                                     </div>
                                     <span className={`text-xs font-medium px-2 py-1 rounded-full ${permission.isActive
-                                            ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300'
-                                            : 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300'
+                                        ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300'
+                                        : 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300'
                                         }`}>
                                         {permission.isActive ? 'Active' : 'Revoked'}
                                     </span>
@@ -130,6 +154,12 @@ export default function DoctorPermissions() {
                     </div>
                 )}
             </main>
+
+            <GrantAccessModal
+                isOpen={isGrantModalOpen}
+                onClose={() => setIsGrantModalOpen(false)}
+                onGrantSuccess={loadPermissions}
+            />
         </div>
     );
 }
